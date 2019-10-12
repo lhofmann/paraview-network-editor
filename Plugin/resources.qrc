@@ -1,0 +1,14 @@
+<!DOCTYPE RCC><RCC version="1.0">
+    <qresource prefix="/">
+        <file>resources/arrow-down-enabled.svg</file>
+        <file>resources/arrow-down-disabled.svg</file>
+        <file>resources/arrow-right-enabled.svg</file>
+        <file>resources/arrow-right-disabled.svg</file>
+        <file>resources/arrow-up-enabled.svg</file>
+        <file>resources/arrow-up-disabled.svg</file>
+        <file>resources/arrow-menu-enabled.svg</file>
+        <file>resources/arrow-menu-disabled.svg</file>
+
+        <file>resources/dark.qss</file>
+    </qresource>
+</RCC>

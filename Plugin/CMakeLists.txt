@@ -1,6 +1,7 @@
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 set(interfaces)
+set(resources resources.qrc)
 set(sources
     NetworkEditorWidget.cpp
     NetworkEditorWidget.h
@@ -23,6 +24,7 @@ list(APPEND sources
 paraview_add_plugin(NetworkEditor
   VERSION "1.0"
   UI_INTERFACES ${interfaces}
+  UI_RESOURCES ${resources}
   SOURCES ${sources})
 
 target_link_libraries(NetworkEditor
