@@ -2,11 +2,16 @@ find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 set(interfaces)
 set(sources
-  NetworkEditor.cxx
-  NetworkEditor.h)
+    NetworkEditorWidget.cpp
+    NetworkEditorWidget.h
+    NetworkEditor.cpp
+    NetworkEditor.h
+    NetworkEditorView.cpp
+    NetworkEditorView.h
+    utilqt.cpp)
 
 paraview_plugin_add_dock_window(
-  CLASS_NAME NetworkEditor
+  CLASS_NAME NetworkEditorWidget
   DOCK_AREA Right
   INTERFACES dock_interfaces
   SOURCES dock_sources)

@@ -1,23 +1,33 @@
+#ifndef PARAVIEWNETWORKEDITOR_PLUGIN_NETWORKEDITOR_H_
+#define PARAVIEWNETWORKEDITOR_PLUGIN_NETWORKEDITOR_H_
 
-#include <QDockWidget>
+#include <QGraphicsScene>
+#include <QGraphicsItem>
 
-class NetworkEditor : public QDockWidget
-{
+class NetworkEditor : public QGraphicsScene {
   Q_OBJECT
-  typedef QDockWidget Superclass;
+ public:
+  NetworkEditor();
+  ~NetworkEditor() override;
 
-public:
-  NetworkEditor(const QString& t, QWidget* p = 0, Qt::WindowFlags f = 0)
-    : Superclass(t, p, f)
-  {
-    this->constructor();
-  }
-  NetworkEditor(QWidget* p = 0, Qt::WindowFlags f = 0)
-    : Superclass(p, f)
-  {
-    this->constructor();
-  }
+ private:
+  // Get QGraphicsItems
+  template <typename T>
+  T* getGraphicsItemAt(const QPointF pos) const;
 
-private:
-  void constructor();
+  void drawBackground(QPainter* painter, const QRectF& rect) override;
+  void drawForeground(QPainter* painter, const QRectF& rect) override;
+
+  static const int gridSpacing_;
 };
+
+template <typename T>
+T* NetworkEditor::getGraphicsItemAt(const QPointF pos) const {
+  QList<QGraphicsItem*> graphicsItems = items(pos);
+  for (int i = 0; i < graphicsItems.size(); i++) {
+    if (auto item = qgraphicsitem_cast<T*>(graphicsItems[i])) return item;
+  }
+  return nullptr;
+}
+
+#endif //PARAVIEWNETWORKEDITOR_PLUGIN_NETWORKEDITOR_H_

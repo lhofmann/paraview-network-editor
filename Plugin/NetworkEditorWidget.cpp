@@ -1,4 +1,7 @@
+#include "NetworkEditorWidget.h"
+
 #include "NetworkEditor.h"
+#include "NetworkEditorView.h"
 
 #include <pqApplicationCore.h>
 
@@ -7,9 +10,11 @@
 
 #include <iostream>
 
-void NetworkEditor::constructor()
+void NetworkEditorWidget::constructor()
 {
-  QWidget* t_widget = new QWidget(this);
+  networkEditor_ = std::make_unique<NetworkEditor>();
+  networkEditorView_ = new NetworkEditorView(networkEditor_.get(), this);
+  // NetworkEditorObserver::addObservation(networkEditor_.get());
 
   bool grab_center_widget = QProcessEnvironment::systemEnvironment().value("NETWORK_EDITOR_DOCK", "0") == "0";
   if (grab_center_widget) {
@@ -19,12 +24,12 @@ void NetworkEditor::constructor()
     } else {
       this->setWindowTitle("Render View");
       auto render_view = main_window->takeCentralWidget();
-      main_window->setCentralWidget(t_widget);
+      main_window->setCentralWidget(networkEditorView_);
       this->setWidget(render_view);
     }
   }
   if (!grab_center_widget) {
     this->setWindowTitle("Network Editor");
-    this->setWidget(t_widget);
+    this->setWidget(networkEditorView_);
   }
 }
