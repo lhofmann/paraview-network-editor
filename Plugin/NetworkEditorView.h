@@ -6,12 +6,16 @@
 class NetworkEditor;
 
 class NetworkEditorView : public QGraphicsView {
-public:
+ public:
   NetworkEditorView(NetworkEditor* networkEditor, QWidget* parent = nullptr);
   ~NetworkEditorView();
 
-private:
+ protected:
+  void wheelEvent(QWheelEvent* e) override;
+
+ private:
   NetworkEditor* editor_;
+  void zoom(double dz);
 };
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_NETWORKEDITORVIEW_H_
