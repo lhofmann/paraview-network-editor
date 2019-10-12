@@ -1,0 +1,6 @@
+NAME
+  LoadStylesheet
+DESCRIPTION
+  Loads a Qt stylesheet based on Inviwo
+REQUIRES_MODULES
+  ParaView::pqComponents

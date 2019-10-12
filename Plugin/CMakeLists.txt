@@ -1,7 +1,7 @@
 find_package(Qt5 REQUIRED COMPONENTS Widgets)
 
 set(interfaces)
-set(resources resources.qrc)
+set(resources)
 set(sources
     NetworkEditorWidget.cpp
     NetworkEditorWidget.h
