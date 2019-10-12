@@ -1,0 +1,6 @@
+NAME
+  NetworkEditor
+DESCRIPTION
+  Network editor
+REQUIRES_MODULES
+  ParaView::pqComponents

@@ -1,0 +1,4 @@
+#!/bin/sh
+
+export PV_PLUGIN_CONFIG_FILE="@_paraview_plugin_config_file@"
+"@_paraview_bin_path@/paraview" $@
