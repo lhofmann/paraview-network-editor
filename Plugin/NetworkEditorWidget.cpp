@@ -87,6 +87,7 @@ void NetworkEditorWidget::constructor()
 void NetworkEditorWidget::swapWithCentralWidget() {
   auto main_window = dynamic_cast<QMainWindow *>(this->parent());
 
+  QSize size = main_window->centralWidget()->size();
   if (!isCentralWidget_) {
     renderView_ = main_window->takeCentralWidget();
     main_window->setCentralWidget(networkEditorWidget_);
@@ -98,6 +99,7 @@ void NetworkEditorWidget::swapWithCentralWidget() {
     this->setWidget(networkEditorWidget_);
     this->setWindowTitle("Network Editor");
   }
+  main_window->centralWidget()->resize(size);
 
   isCentralWidget_ = !isCentralWidget_;
 }
