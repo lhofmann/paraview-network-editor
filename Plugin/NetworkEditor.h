@@ -3,12 +3,18 @@
 
 #include <QGraphicsScene>
 #include <QGraphicsItem>
+#include <map>
+
+class SourceGraphicsItem;
+class pqPipelineSource;
 
 class NetworkEditor : public QGraphicsScene {
   Q_OBJECT
  public:
   NetworkEditor();
   ~NetworkEditor() override;
+
+  void addSourceRepresentation(pqPipelineSource* source);
 
  private:
   // Get QGraphicsItems
@@ -17,6 +23,8 @@ class NetworkEditor : public QGraphicsScene {
 
   void drawBackground(QPainter* painter, const QRectF& rect) override;
   void drawForeground(QPainter* painter, const QRectF& rect) override;
+
+  std::map<pqPipelineSource*, SourceGraphicsItem*> sourceGraphicsItems_;
 
   static const int gridSpacing_;
 };

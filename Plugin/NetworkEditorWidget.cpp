@@ -3,8 +3,14 @@
 #include "NetworkEditor.h"
 #include "NetworkEditorView.h"
 
-#include <QAction>
 #include <pqApplicationCore.h>
+#include <pqPipelineSource.h>
+#include <pqOutputPort.h>
+#include <pqServerManagerModel.h>
+
+#include <vtkSMSourceProxy.h>
+
+#include <QAction>
 #include <QApplication>
 #include <QFile>
 #include <QMainWindow>
@@ -21,11 +27,13 @@ void NetworkEditorWidget::constructor()
   networkEditor_ = std::make_unique<NetworkEditor>();
   networkEditorView_ = new NetworkEditorView(networkEditor_.get(), this);
 
+  // setup layout
   networkEditorWidget_ = new QWidget(this);
   auto vLayout = new QVBoxLayout(networkEditorWidget_);
   vLayout->setSpacing(1);
   vLayout->setContentsMargins(0, 0, 0, 0);
 
+  // setup tool buttons
   auto titleBar = new QWidget(networkEditorWidget_);
   auto hLayout = new QHBoxLayout(titleBar);
   hLayout->setSpacing(1);
@@ -45,6 +53,7 @@ void NetworkEditorWidget::constructor()
   vLayout->addWidget(networkEditorView_);
   networkEditorWidget_->setLayout(vLayout);
 
+  // set widget
   bool grab_center_widget = QProcessEnvironment::systemEnvironment().value("NETWORK_EDITOR_DOCK", "0") == "0";
   if (grab_center_widget) {
     this->swapWithCentralWidget();
@@ -52,6 +61,15 @@ void NetworkEditorWidget::constructor()
     this->setWidget(networkEditorWidget_);
     this->setWindowTitle("Network Editor");
   }
+
+  // observe ParaView's pipeline
+  auto smModel = pqApplicationCore::instance()->getServerManagerModel();
+
+  connect(smModel, &pqServerManagerModel::sourceAdded, this,
+  [this](pqPipelineSource* source) {
+    std::cout << "added source " << source->getSMName().toStdString() << std::endl;
+    networkEditor_->addSourceRepresentation(source);
+  });
 }
 
 void NetworkEditorWidget::swapWithCentralWidget() {

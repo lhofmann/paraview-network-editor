@@ -22,7 +22,6 @@ public:
   }
 
   void swapWithCentralWidget();
-
 private:
   bool isCentralWidget_;
   std::unique_ptr<NetworkEditor> networkEditor_;

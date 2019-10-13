@@ -1,5 +1,7 @@
 #include "NetworkEditor.h"
+#include "SourceGraphicsItem.h"
 #include <QPainter>
+#include <pqPipelineSource.h>
 
 const int NetworkEditor::gridSpacing_ = 25;
 
@@ -35,13 +37,20 @@ void NetworkEditor::drawBackground(QPainter* painter, const QRectF& rect) {
 
 void NetworkEditor::drawForeground(QPainter* painter, const QRectF& rect) {
   // For testing purposes only. Draw bounding rects around all graphics items
-
-  QList<QGraphicsItem*> items = QGraphicsScene::items(Qt::DescendingOrder);
-  painter->setPen(Qt::magenta);
-  for (QList<QGraphicsItem*>::iterator it = items.begin(); it != items.end(); ++it) {
+  if (false) {
+    QList<QGraphicsItem *> items = QGraphicsScene::items(Qt::DescendingOrder);
+    painter->setPen(Qt::magenta);
+    for (QList<QGraphicsItem *>::iterator it = items.begin(); it != items.end(); ++it) {
       QRectF br = (*it)->sceneBoundingRect();
       painter->drawRect(br);
+    }
+    painter->setPen(Qt::red);
+    painter->drawRect(QGraphicsScene::itemsBoundingRect());
   }
-  painter->setPen(Qt::red);
-  painter->drawRect(QGraphicsScene::itemsBoundingRect());
+}
+
+void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
+  auto sourceGraphicsItem = new SourceGraphicsItem(source);
+  sourceGraphicsItems_[source] = sourceGraphicsItem;
+  this->addItem(sourceGraphicsItem);
 }

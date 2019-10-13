@@ -9,6 +9,8 @@ set(sources
     NetworkEditor.h
     NetworkEditorView.cpp
     NetworkEditorView.h
+    EditorGraphicsItem.cpp
+    SourceGraphicsItem.cpp
     utilqt.cpp)
 
 paraview_plugin_add_dock_window(
