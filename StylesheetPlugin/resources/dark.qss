@@ -8,6 +8,10 @@ QWidget {
 Workarounds for Python Shell and Output Messages (hard-coded colors)
 ************************/
 
+QTextEdit {
+    color: #000;
+    background-color: #ddd;
+}
 pqOutputWidget QTreeView,
 pqOutputWidget QTextEdit,
 pqConsoleWidget QTextEdit {
