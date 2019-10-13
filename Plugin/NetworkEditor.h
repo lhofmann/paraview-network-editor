@@ -24,6 +24,8 @@ class NetworkEditor : public QGraphicsScene {
 
   void mouseReleaseEvent(QGraphicsSceneMouseEvent*) override;
 
+  void helpEvent(QGraphicsSceneHelpEvent* helpEvent) override;
+
  private:
   // Get QGraphicsItems
   template <typename T>

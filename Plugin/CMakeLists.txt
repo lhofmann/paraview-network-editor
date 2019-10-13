@@ -12,6 +12,7 @@ set(sources
     EditorGraphicsItem.cpp
     SourceGraphicsItem.cpp
     LabelGraphicsItem.cpp
+    PortGraphicsItem.cpp
     utilqt.cpp
     observer.cpp)
 

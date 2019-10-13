@@ -16,8 +16,8 @@ enum NetworkEditorGraphicsItemType {
   SourceProgressGraphicsType,
   SourceStatusGraphicsType,
   SourceLinkGraphicsType,
-  SourceInportGraphicsType,
-  SourceOutportGraphicsType
+  InputPortGraphicsType,
+  OutputPortGraphicsType
 };
 
 // Z value for various graphics items.

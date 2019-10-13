@@ -1,5 +1,6 @@
 #include "NetworkEditor.h"
 #include "SourceGraphicsItem.h"
+#include "PortGraphicsItem.h"
 
 #include <pqPipelineSource.h>
 #include <pqActiveObjects.h>
@@ -133,4 +134,22 @@ void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
     item->setPos(nx, ny);
   }
   QGraphicsScene::mouseReleaseEvent(e);
+}
+
+void NetworkEditor::helpEvent(QGraphicsSceneHelpEvent* e) {
+  QList<QGraphicsItem*> graphicsItems = items(e->scenePos());
+  for (auto item : graphicsItems) {
+    switch (item->type()) {
+      case SourceGraphicsItem::Type:
+        qgraphicsitem_cast<SourceGraphicsItem*>(item)->showToolTip(e);
+        return;
+      case InputPortGraphicsItem::Type:
+        qgraphicsitem_cast<InputPortGraphicsItem*>(item)->showToolTip(e);
+        return;
+      case OutputPortGraphicsItem::Type:
+        qgraphicsitem_cast<OutputPortGraphicsItem*>(item)->showToolTip(e);
+        return;
+    };
+  }
+  QGraphicsScene::helpEvent(e);
 }

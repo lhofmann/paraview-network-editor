@@ -1,4 +1,6 @@
 #include "SourceGraphicsItem.h"
+#include "PortGraphicsItem.h"
+
 #include <pqPipelineSource.h>
 #include <pqPipelineFilter.h>
 #include <pqOutputPort.h>
@@ -56,11 +58,12 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
   positionLablels();
 
   for (int i = 0; i < source->getNumberOfOutputPorts(); ++i) {
+    this->addOutport(source, i);
     auto op = source->getOutputPort(i);
     std::cout << "Output " << i << ": " << op->getPortName().toStdString() << " | " << op->getDataInformation()->GetDataSetTypeAsString() << std::endl;
   }
 
-  auto filter = qobject_cast<pqPipelineFilter*>(source);
+  pqPipelineFilter* filter = qobject_cast<pqPipelineFilter*>(source);
   if (filter) {
     std::vector<vtkSMInputProperty*> inputs(filter->getNumberOfInputPorts());
     vtkSMPropertyIterator* propIter = filter->getSourceProxy()->NewPropertyIterator();
@@ -73,10 +76,12 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
     }
 
     for (int i = 0; i < filter->getNumberOfInputPorts(); ++i) {
+      this->addInport(filter, i);
       if (!inputs[i]) {
         std::cout << "Error on input " << i << std::endl;
         continue;
       }
+
       QStringList types;
       auto domIter = inputs[i]->NewDomainIterator();
       for (domIter->Begin(); !domIter->IsAtEnd(); domIter->Next()) {
@@ -99,6 +104,34 @@ SourceGraphicsItem::~SourceGraphicsItem() = default;
 
 pqPipelineSource* SourceGraphicsItem::getSource() const {
   return source_;
+}
+
+QPointF SourceGraphicsItem::portOffset(PortType type, size_t index) {
+  const QPointF offset = {12.5f, (type == PortType::In ? 1.0f : -1.0f) * 4.5f};
+  const QPointF delta = {12.5f, 0.0f};
+  const QPointF rowDelta = {0.0f, (type == PortType::In ? -1.0f : 1.0f) * 12.5f};
+  const size_t portsPerRow = 10;
+
+  auto poffset = QPointF{-SourceGraphicsItem::size_.width() / 2,
+                         (type == PortType::In ? -SourceGraphicsItem::size_.height() / 2
+                                               : SourceGraphicsItem::size_.height() / 2)};
+
+  return poffset + offset + rowDelta * static_cast<qreal>(index / portsPerRow) +
+      delta * static_cast<qreal>(index % portsPerRow);
+}
+
+QPointF SourceGraphicsItem::portPosition(PortType type, size_t index) {
+  return rect().center() + portOffset(type, index);
+}
+
+void SourceGraphicsItem::addInport(pqPipelineFilter* filter, int port) {
+  auto pos = portPosition(PortType::In, inportItems_.size());
+  inportItems_.emplace_back(new InputPortGraphicsItem(this, pos, filter, port));
+}
+
+void SourceGraphicsItem::addOutport(pqPipelineSource* source, int port) {
+  auto pos = portPosition(PortType::Out, outportItems_.size());
+  outportItems_.emplace_back(new OutputPortGraphicsItem(this, pos, source, port));
 }
 
 void SourceGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *options, QWidget *widget) {

@@ -29,6 +29,7 @@ void NetworkEditorWidget::constructor()
 
   // setup layout
   networkEditorWidget_ = new QWidget(this);
+  networkEditorWidget_->setAttribute(Qt::WA_AlwaysShowToolTips, true);
   auto vLayout = new QVBoxLayout(networkEditorWidget_);
   vLayout->setSpacing(1);
   vLayout->setContentsMargins(0, 0, 0, 0);
