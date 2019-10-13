@@ -22,6 +22,8 @@ class NetworkEditor : public QGraphicsScene {
   virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent* e) override;
   void onSelectionChanged();
 
+  void mouseReleaseEvent(QGraphicsSceneMouseEvent*) override;
+
  private:
   // Get QGraphicsItems
   template <typename T>

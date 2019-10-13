@@ -118,3 +118,19 @@ void NetworkEditor::onSelectionChanged() {
     pqActiveObjects::instance().setSelection(selection, nullptr);
   }
 }
+
+void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
+  // snap selected sources to grid
+  for (auto item : this->selectedItems()) {
+    if (!qgraphicsitem_cast<SourceGraphicsItem*>(item))
+      continue;
+
+    auto pos = item->scenePos();
+    float ox = pos.x() > 0.0f ? 0.5f : -0.5f;
+    float oy = pos.y() > 0.0f ? 0.5f : -0.5f;
+    float nx = (int(pos.x() / gridSpacing_ + ox)) * gridSpacing_;
+    float ny = (int(pos.y() / gridSpacing_ + oy)) * gridSpacing_;
+    item->setPos(nx, ny);
+  }
+  QGraphicsScene::mouseReleaseEvent(e);
+}
