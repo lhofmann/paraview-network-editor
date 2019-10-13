@@ -11,7 +11,9 @@ set(sources
     NetworkEditorView.h
     EditorGraphicsItem.cpp
     SourceGraphicsItem.cpp
-    utilqt.cpp)
+    LabelGraphicsItem.cpp
+    utilqt.cpp
+    observer.cpp)
 
 paraview_plugin_add_dock_window(
   CLASS_NAME NetworkEditorWidget

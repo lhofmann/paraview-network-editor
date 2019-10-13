@@ -1,0 +1,329 @@
+#ifndef PARAVIEWNETWORKEDITOR_PLUGIN_OBSERVER_H_
+#define PARAVIEWNETWORKEDITOR_PLUGIN_OBSERVER_H_
+
+#include "stdextensions.h"
+#include <unordered_set>
+#include <functional>
+#include <algorithm>
+#include <vector>
+
+class ObservableInterface;
+
+/** \class Observer
+ * Class to support observer pattern. An example of usage is given in the Observable class.
+ * @see Observable
+ */
+class Observer {
+    friend class ObservableInterface;
+
+    public:
+    Observer() = default;
+    Observer(const Observer& other);
+    Observer(Observer&& other);
+    Observer& operator=(Observer&& other);
+    Observer& operator=(const Observer& other);
+
+    /**
+     * Removes the observer from all observable objects. Makes sure that it cannot
+     * be called when destroyed.
+     */
+    virtual ~Observer();
+
+    /**
+     * Stop observing object by removing it from observation list.
+     * @param observable (ObservableInterface *) The observable to stop observing.
+     */
+    void removeObservation(ObservableInterface* observable);
+
+    // Stops observing all objects by removing them from observation list.
+    void removeObservations();
+
+    protected:
+    /**
+     * Add an object to observe.
+     * @param observable The observable to add.
+     */
+    void addObservation(ObservableInterface* observable);
+
+    // Storing observables connected to this observer enables removal upon destruction.
+    using ObservableSet = std::unordered_set<ObservableInterface*>;
+    ObservableSet observables_;
+
+    private:
+    // The internal ones will not call observable->add/remove
+    // Should only be called by ObservableInterface.
+    void addObservationInternal(ObservableInterface* observable);
+    void removeObservationInternal(ObservableInterface* observable);
+};
+
+/** \class ObservableInterface
+ * Class to support observer pattern.
+ * This is an interface only, inherit from Observable<DerivedObserver> to define your
+ * own "notify()" method.
+ * An example of usage is given in the Observable class.
+ * @see Observable
+ * @see Observer
+ */
+class ObservableInterface {
+    friend class Observer;
+
+    public:
+    virtual ~ObservableInterface() = default;
+
+    virtual void startBlockingNotifications() = 0;
+    virtual void stopBlockingNotifications() = 0;
+
+    protected:
+    virtual void addObserver(Observer* observer) = 0;
+    virtual void removeObserver(Observer* observer) = 0;
+    virtual void removeObservers() = 0;
+
+    // Helper functions in base class since derived template
+    // classes aren't friends with Observer.
+    void addObservationHelper(Observer* observer);
+    void removeObservationHelper(Observer* observer);
+
+    private:
+    // The internal ones will not call observer->add/remove
+    // Should only be called by Observer.
+    virtual bool addObserverInternal(Observer* observer) = 0;
+    virtual bool removeObserverInternal(Observer* observer) = 0;
+};
+
+/** \class Observable
+ *
+ * Class to support observer pattern.
+ *
+ * Example of how to apply it to a simple button.
+ * @code
+ *     class ButtonObservable;
+ *
+ *     class IVW_XXX_API ButtonObserver: public Observer {
+ *     public:
+ *         friend ButtonObservable;
+ *         ButtonObserver() = default
+ *         // Override to be notified when the observed button is pressed.
+ *         virtual void onButtonPressed(){};
+ *     };
+ *
+ *     class IVW_XXX_API ButtonObservable: public Observable<ButtonObserver> {
+ *     protected:
+ *         ButtonObservable() = default;
+ *         void notifyObserversAboutButtonPressed() {
+ *             forEachObserver([](ButtonObserver* o) { o->onButtonPressed(); });
+ *         }
+ *     };
+ * @endcode
+ *
+ * Usage:
+ * @code
+ *     class Button : public ButtonObservable {
+ *         ...
+ *         void handleButtonPress() {
+ *             ...
+ *             notifyObserversAboutButtonPressed();
+ *             ...
+ *         }
+ *         ...
+ *     };
+ * @endcode
+ *
+ * @code
+ *     class MyClass : public ButtonObserver {
+ *     public:
+ *         MyClass(Button* button) {
+ *             button->addObserver(this);
+ *         }
+ *
+ *         ...
+ *     private:
+ *         virtual void onButtonPressed() override {
+ *             // Do stuff on button press
+ *         };
+ *         ...
+ *     };
+ * @endcode
+ *
+ * @see Observer
+ * @see VoidObserver
+ */
+template <typename T>
+class Observable : public ObservableInterface {
+ public:
+  Observable() = default;
+
+  /**
+   * This operation does nothing. We will not touch the observers of other.
+   */
+  Observable(const Observable<T>& other);
+
+  /**
+   * This operation will remove all observers from other and add them to this.
+   */
+  Observable(Observable<T>&& other);
+
+  /**
+   * This operation does nothing. We will not touch the observers of other.
+   */
+  Observable<T>& operator=(const Observable<T>& other);
+
+  /**
+   * This operation will remove all observers of this, and make all observers of other observe
+   * this instead.
+   */
+  Observable<T>& operator=(Observable<T>&& other);
+  virtual ~Observable();
+
+  void addObserver(T* observer);
+  void removeObserver(T* observer);
+
+  virtual void startBlockingNotifications() override final;
+  virtual void stopBlockingNotifications() override final;
+
+ protected:
+  template <typename C>
+  void forEachObserver(C callback);
+
+ private:
+  std::vector<T*> observers_;
+
+  // invocationCount counts how may time we have called forEachObserver
+  // Add we will only add and remove observers when that it is zero to avoid
+  // Invalidation the iterators. This is needed since a observer might remove it
+  // self in the on... callback.
+  size_t invocationCount_ = 0;
+  std::vector<T*> toAdd_;
+
+  size_t notificationsBlocked_ = 0;
+
+  virtual void addObserver(Observer* observer) override;
+  virtual void removeObserver(Observer* observer) override;
+  virtual void removeObservers() override;
+  virtual bool addObserverInternal(Observer* observer) override;
+  virtual bool removeObserverInternal(Observer* observer) override;
+};
+
+template <typename T>
+Observable<T>::Observable(const Observable<T>&) {}
+
+template <typename T>
+Observable<T>::Observable(Observable<T>&& rhs) {
+  for (auto& elem : rhs.observers_) addObserver(elem);
+  rhs.removeObservers();
+}
+
+template <typename T>
+Observable<T>& Observable<T>::operator=(const Observable<T>&) {
+  return *this;
+}
+
+template <typename T>
+Observable<T>& Observable<T>::operator=(Observable<T>&& that) {
+  if (this != &that) {
+    removeObservers();
+    for (auto& elem : that.observers_) addObserver(elem);
+    that.removeObservers();
+  }
+  return *this;
+}
+
+template <typename T>
+Observable<T>::~Observable() {
+  removeObservers();
+}
+
+template <typename T>
+void Observable<T>::removeObservers() {
+  for (auto o : observers_) removeObservationHelper(o);
+  observers_.clear();
+}
+
+template <typename T>
+void Observable<T>::addObserver(T* observer) {
+  if (addObserverInternal(observer)) {
+    addObservationHelper(observer);
+  }
+}
+
+template <typename T>
+void Observable<T>::removeObserver(T* observer) {
+  if (removeObserverInternal(observer)) {
+    removeObservationHelper(observer);
+  }
+}
+
+template <typename T>
+void Observable<T>::startBlockingNotifications() {
+  ++notificationsBlocked_;
+}
+template <typename T>
+void Observable<T>::stopBlockingNotifications() {
+  --notificationsBlocked_;
+}
+
+template <typename T>
+template <typename C>
+void Observable<T>::forEachObserver(C callback) {
+  if (notificationsBlocked_ > 0) return;
+  bool toRemove = false;
+  ++invocationCount_;
+  for (auto& o : observers_) {
+    if (o) {
+      callback(o);
+    } else {
+      toRemove = true;
+    }
+  }
+  --invocationCount_;
+
+  // Add and Remove any observers that was added/removed while we invoked the callbacks.
+  if (invocationCount_ == 0) {
+    if (toRemove) util::erase_remove(observers_, nullptr);
+    observers_.insert(observers_.end(), toAdd_.begin(), toAdd_.end());
+    toAdd_.clear();
+  }
+}
+
+template <typename T>
+void Observable<T>::addObserver(Observer* observer) {
+  addObserver(static_cast<T*>(observer));
+}
+
+template <typename T>
+void Observable<T>::removeObserver(Observer* observer) {
+  removeObserver(static_cast<T*>(observer));
+}
+
+template <typename T>
+bool Observable<T>::addObserverInternal(Observer* aObserver) {
+  auto observer = static_cast<T*>(aObserver);
+  if (!util::contains(observers_, observer)) {
+    if (invocationCount_ == 0) {
+      observers_.push_back(observer);
+    } else {
+      toAdd_.push_back(observer);
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
+template <typename T>
+bool Observable<T>::removeObserverInternal(Observer* aObserver) {
+  auto observer = static_cast<T*>(aObserver);
+  auto it = util::find(observers_, observer);
+  if (it != observers_.end()) {
+    if (invocationCount_ == 0) {
+      observers_.erase(it);
+    } else {
+      *it = nullptr;
+    }
+    return true;
+  } else {
+    return false;
+  }
+}
+
+
+#endif //PARAVIEWNETWORKEDITOR_PLUGIN_OBSERVER_H_
