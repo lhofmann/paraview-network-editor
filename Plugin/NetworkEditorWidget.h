@@ -21,9 +21,14 @@ public:
     this->constructor();
   }
 
+  void swapWithCentralWidget();
+
 private:
+  bool isCentralWidget_;
   std::unique_ptr<NetworkEditor> networkEditor_;
   NetworkEditorView* networkEditorView_;
+  QWidget* networkEditorWidget_;
+  QWidget* renderView_;
 
   void constructor();
 };
