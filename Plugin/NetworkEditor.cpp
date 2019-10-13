@@ -2,6 +2,7 @@
 #include "SourceGraphicsItem.h"
 
 #include <pqPipelineSource.h>
+#include <pqActiveObjects.h>
 
 #include <QPainter>
 #include <QGraphicsSceneContextMenuEvent>
@@ -13,6 +14,16 @@ NetworkEditor::NetworkEditor() {
   // The default BSP tends to crash...
   setItemIndexMethod(QGraphicsScene::NoIndex);
   setSceneRect(QRectF());
+
+  connect(this, &QGraphicsScene::selectionChanged, this, &NetworkEditor::onSelectionChanged);
+
+  connect(&pqActiveObjects::instance(), &pqActiveObjects::selectionChanged, this, [this](const pqProxySelection& selection) {
+    updateSelection_ = true;
+    for (auto const& item : sourceGraphicsItems_) {
+      item.second->setSelected(selection.contains(item.first));
+    }
+    updateSelection_ = false;
+  });
 }
 
 NetworkEditor::~NetworkEditor() = default;
@@ -75,5 +86,35 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
   if (!menu.isEmpty()) {
     menu.exec(QCursor::pos());
     e->accept();
+  }
+}
+
+void NetworkEditor::setAutoUpdateActiveObject(bool enabled) {
+  autoUpdateActiveObject_ = enabled;
+}
+
+void NetworkEditor::onSelectionChanged() {
+  if (updateSelection_)
+    return;
+
+  pqProxySelection selection;
+  pqPipelineSource* active_source = nullptr;
+  int num_selected = 0;
+  for (auto item : this->selectedItems()) {
+    auto source_item = qgraphicsitem_cast<SourceGraphicsItem*>(item);
+    if (!source_item)
+      continue;
+    auto source = source_item->getSource();
+    selection.push_back(source);
+    if (!active_source)
+      active_source = source;
+    ++num_selected;
+  }
+
+  if (autoUpdateActiveObject_) {
+    pqActiveObjects::instance().setActiveSource(active_source);
+    pqActiveObjects::instance().setSelection(selection, active_source);
+  } else {
+    pqActiveObjects::instance().setSelection(selection, nullptr);
   }
 }

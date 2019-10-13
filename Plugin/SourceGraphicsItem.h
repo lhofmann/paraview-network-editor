@@ -17,6 +17,8 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
 
   void editIdentifier();
 
+  pqPipelineSource* getSource() const;
+
  protected:
   void paint(QPainter* p, const QStyleOptionGraphicsItem* options, QWidget* widget) override;
 

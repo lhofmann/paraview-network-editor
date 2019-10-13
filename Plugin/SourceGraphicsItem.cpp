@@ -51,6 +51,10 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
 
 SourceGraphicsItem::~SourceGraphicsItem() = default;
 
+pqPipelineSource* SourceGraphicsItem::getSource() const {
+  return source_;
+}
+
 void SourceGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *options, QWidget *widget) {
   const float roundedCorners = 9.0f;
 

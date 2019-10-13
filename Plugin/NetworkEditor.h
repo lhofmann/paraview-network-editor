@@ -16,9 +16,11 @@ class NetworkEditor : public QGraphicsScene {
   ~NetworkEditor() override;
 
   void addSourceRepresentation(pqPipelineSource* source);
+  void setAutoUpdateActiveObject(bool);
 
  protected:
   virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent* e) override;
+  void onSelectionChanged();
 
  private:
   // Get QGraphicsItems
@@ -29,6 +31,9 @@ class NetworkEditor : public QGraphicsScene {
   void drawForeground(QPainter* painter, const QRectF& rect) override;
 
   std::map<pqPipelineSource*, SourceGraphicsItem*> sourceGraphicsItems_;
+
+  bool autoUpdateActiveObject_ = false;
+  bool updateSelection_ = false;
 
   static const int gridSpacing_;
 };
