@@ -67,7 +67,7 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
       connect(editName, &QAction::triggered, [this, source]() {
         clearSelection();
         source->setSelected(true);
-        source->editDisplayName();
+        source->editIdentifier();
       });
       break;
     }
