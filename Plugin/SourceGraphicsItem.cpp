@@ -1,6 +1,15 @@
 #include "SourceGraphicsItem.h"
 #include <pqPipelineSource.h>
+#include <pqPipelineFilter.h>
+#include <pqOutputPort.h>
 #include <pqServerManagerModelItem.h>
+#include <vtkSMPropertyIterator.h>
+#include <vtkSMInputProperty.h>
+#include <vtkSMDomain.h>
+#include <vtkSMDomainIterator.h>
+#include <vtkSMDataTypeDomain.h>
+#include <vtkPVDataInformation.h>
+
 #include <QPainter>
 #include <QTextCursor>
 #include <vtkSMSourceProxy.h>
@@ -45,6 +54,43 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
     LabelGraphicsItemObserver::addObservation(typeLabel_);
   }
   positionLablels();
+
+  for (int i = 0; i < source->getNumberOfOutputPorts(); ++i) {
+    auto op = source->getOutputPort(i);
+    std::cout << "Output " << i << ": " << op->getPortName().toStdString() << " | " << op->getDataInformation()->GetDataSetTypeAsString() << std::endl;
+  }
+
+  auto filter = qobject_cast<pqPipelineFilter*>(source);
+  if (filter) {
+    std::vector<vtkSMInputProperty*> inputs(filter->getNumberOfInputPorts());
+    vtkSMPropertyIterator* propIter = filter->getSourceProxy()->NewPropertyIterator();
+    for (propIter->Begin(); !propIter->IsAtEnd(); propIter->Next()) {
+      if (auto prop = vtkSMInputProperty::SafeDownCast(propIter->GetProperty())) {
+        if (prop->GetPortIndex() >= 0 && prop->GetPortIndex() < inputs.size()) {
+          inputs[prop->GetPortIndex()] = prop;
+        }
+      }
+    }
+
+    for (int i = 0; i < filter->getNumberOfInputPorts(); ++i) {
+      if (!inputs[i]) {
+        std::cout << "Error on input " << i << std::endl;
+        continue;
+      }
+      QStringList types;
+      auto domIter = inputs[i]->NewDomainIterator();
+      for (domIter->Begin(); !domIter->IsAtEnd(); domIter->Next()) {
+        auto domain = domIter->GetDomain();
+        if (domain->IsA("vtkSMDataTypeDomain")) {
+          auto dtd = static_cast<vtkSMDataTypeDomain*>(domain);
+          for (unsigned int cc = 0; cc < dtd->GetNumberOfDataTypes(); cc++) {
+            types << dtd->GetDataType(cc);
+          }
+        }
+      }
+      std::cout << "Input " << i << ": " << filter->getInputPortName(i).toStdString() << " | " << types.join(" or ").toStdString() << std::endl;
+    }
+  }
 
   connect(source_, &pqPipelineSource::nameChanged, this, &SourceGraphicsItem::onSourceNameChanged);
 }
