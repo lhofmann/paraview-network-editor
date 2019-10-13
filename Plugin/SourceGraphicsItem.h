@@ -12,6 +12,8 @@ class SourceGraphicsItem : public EditorGraphicsItem {
 
   static const QSizeF size_;
 
+  void editDisplayName();
+
  protected:
   void paint(QPainter* p, const QStyleOptionGraphicsItem* options, QWidget* widget) override;
 

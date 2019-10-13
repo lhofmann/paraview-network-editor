@@ -7,6 +7,7 @@
 
 class SourceGraphicsItem;
 class pqPipelineSource;
+class QGraphicsSceneContextMenuEvent;
 
 class NetworkEditor : public QGraphicsScene {
   Q_OBJECT
@@ -15,6 +16,9 @@ class NetworkEditor : public QGraphicsScene {
   ~NetworkEditor() override;
 
   void addSourceRepresentation(pqPipelineSource* source);
+
+ protected:
+  virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent* e) override;
 
  private:
   // Get QGraphicsItems

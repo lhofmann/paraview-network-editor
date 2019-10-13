@@ -1,7 +1,11 @@
 #include "NetworkEditor.h"
 #include "SourceGraphicsItem.h"
-#include <QPainter>
+
 #include <pqPipelineSource.h>
+
+#include <QPainter>
+#include <QGraphicsSceneContextMenuEvent>
+#include <QMenu>
 
 const int NetworkEditor::gridSpacing_ = 25;
 
@@ -53,4 +57,23 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
   auto sourceGraphicsItem = new SourceGraphicsItem(source);
   sourceGraphicsItems_[source] = sourceGraphicsItem;
   this->addItem(sourceGraphicsItem);
+}
+
+void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
+  QMenu menu;
+  for (auto& item : items(e->scenePos())) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+      auto editName = menu.addAction(tr("Edit Name"));
+      connect(editName, &QAction::triggered, [this, source]() {
+        clearSelection();
+        source->setSelected(true);
+        source->editDisplayName();
+      });
+      break;
+    }
+  }
+  if (!menu.isEmpty()) {
+    menu.exec(QCursor::pos());
+    e->accept();
+  }
 }

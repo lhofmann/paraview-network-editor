@@ -38,3 +38,7 @@ void SourceGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *opti
 
   p->restore();
 }
+
+void SourceGraphicsItem::editDisplayName() {
+
+}
