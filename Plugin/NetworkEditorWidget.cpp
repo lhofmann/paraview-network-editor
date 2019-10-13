@@ -42,8 +42,7 @@ void NetworkEditorWidget::constructor()
   titleBar->setLayout(hLayout);
 
   auto swap = new QAction("Swap", this);
-  connect(swap, &QAction::triggered, this,
-          [this]() { this->swapWithCentralWidget(); });
+  connect(swap, &QAction::triggered, this, &NetworkEditorWidget::swapWithCentralWidget);
   auto btnSwap = new QToolButton(titleBar);
   btnSwap->setDefaultAction(swap);
   hLayout->addWidget(btnSwap);
@@ -87,6 +86,13 @@ void NetworkEditorWidget::constructor()
 void NetworkEditorWidget::swapWithCentralWidget() {
   auto main_window = dynamic_cast<QMainWindow *>(this->parent());
 
+  auto dock_widgets = main_window->findChildren<QDockWidget*>();
+  QList<int> widths, heights;
+  for (auto widget : dock_widgets) {
+    widths.push_back(widget->width());
+    heights.push_back(widget->height());
+  }
+
   QSize size = main_window->centralWidget()->size();
   if (!isCentralWidget_) {
     renderView_ = main_window->takeCentralWidget();
@@ -99,7 +105,12 @@ void NetworkEditorWidget::swapWithCentralWidget() {
     this->setWidget(networkEditorWidget_);
     this->setWindowTitle("Network Editor");
   }
+
+  QApplication::instance()->processEvents();
+
   main_window->centralWidget()->resize(size);
+  main_window->resizeDocks(dock_widgets, heights, Qt::Vertical);
+  main_window->resizeDocks(dock_widgets, widths, Qt::Horizontal);
 
   isCentralWidget_ = !isCentralWidget_;
 }
