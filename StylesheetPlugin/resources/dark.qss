@@ -1,5 +1,5 @@
 QWidget {
-    font-family: "Segoe UI";
+    font-family: "Noto Sans";
     color: #9d9995;
     background-color: #323235;
 }
@@ -11,8 +11,8 @@ Workarounds for Python Shell and Output Messages (hard-coded colors)
 pqOutputWidget QTreeView,
 pqOutputWidget QTextEdit,
 pqConsoleWidget QTextEdit {
-    font-family: "Calibra";
-    background-color: #9d9995;
+    font-family: "Fira Sans";
+    background-color: #ddd;
 }
 QTreeWidget {
     alternate-background-color: #434343;
