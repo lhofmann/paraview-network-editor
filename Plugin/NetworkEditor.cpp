@@ -2,6 +2,8 @@
 #include "SourceGraphicsItem.h"
 #include "PortGraphicsItem.h"
 
+#include <vtkSMProxy.h>
+
 #include <pqPipelineSource.h>
 #include <pqActiveObjects.h>
 
@@ -67,6 +69,13 @@ void NetworkEditor::drawForeground(QPainter* painter, const QRectF& rect) {
 
 void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
   auto sourceGraphicsItem = new SourceGraphicsItem(source);
+
+  auto proxy = source->getProxy();
+  if (proxy->HasAnnotation("Node.x") && source->getProxy()->HasAnnotation("Node.y")) {
+    QPointF pos(std::stof(proxy->GetAnnotation("Node.x")), std::stof(proxy->GetAnnotation("Node.y")));
+    sourceGraphicsItem->setPos(pos);
+  }
+
   sourceGraphicsItems_[source] = sourceGraphicsItem;
   this->addItem(sourceGraphicsItem);
 }

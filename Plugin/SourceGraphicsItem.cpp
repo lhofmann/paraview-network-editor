@@ -194,3 +194,12 @@ void SourceGraphicsItem::onSourceNameChanged(pqServerManagerModelItem*) {
     identifierLabel_->setText(newName);
   }
 }
+
+QVariant SourceGraphicsItem::itemChange(GraphicsItemChange change, const QVariant &value) {
+  if (change == ItemPositionChange && scene()) {
+    QPointF pos = value.toPointF();
+    source_->getProxy()->SetAnnotation("Node.x", std::to_string(pos.x()).c_str());
+    source_->getProxy()->SetAnnotation("Node.y", std::to_string(pos.y()).c_str());
+  }
+  return QGraphicsItem::itemChange(change, value);
+}

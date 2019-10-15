@@ -29,6 +29,8 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
  protected:
   void paint(QPainter* p, const QStyleOptionGraphicsItem* options, QWidget* widget) override;
 
+  QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+
   // LabelGraphicsItem overrides
   void onLabelGraphicsItemChanged(LabelGraphicsItem* item) override;
   void onLabelGraphicsItemEdited(LabelGraphicsItem* item) override;
