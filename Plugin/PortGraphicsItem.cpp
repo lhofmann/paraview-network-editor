@@ -15,6 +15,8 @@
 
 #include <iostream>
 
+const QColor dummy_color(44, 123, 182);
+
 PortGraphicsItem::PortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, bool up, QColor color)
 : EditorGraphicsItem(parent), source_(parent), size_(9.0f), lineWidth_(1.0f)
 {
@@ -60,7 +62,7 @@ SourceGraphicsItem* PortGraphicsItem::getSource() { return source_; }
 PortGraphicsItem::~PortGraphicsItem() = default;
 
 InputPortGraphicsItem::InputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, pqPipelineFilter* source, int port_id)
-: PortGraphicsItem(parent, pos, true, QColor(25, 25, 255))
+: PortGraphicsItem(parent, pos, true, dummy_color)
 {}
 
 void InputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
@@ -92,7 +94,7 @@ void InputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, 
   QColor borderColor(40, 40, 40);
 
   // uvec3 color = inport_->getColorCode();
-  QColor color(255, 25, 25);
+  QColor color = dummy_color;
 
   QRectF portRect(QPointF(-size_, size_) / 2.0f, QPointF(size_, -size_) / 2.0f);
   p->setBrush(color);
@@ -124,7 +126,7 @@ void InputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, 
 }
 
 OutputPortGraphicsItem::OutputPortGraphicsItem(SourceGraphicsItem* parent,  const QPointF& pos, pqPipelineSource* source, int port_id)
-: PortGraphicsItem(parent, pos, false, QColor(25,255,25))
+: PortGraphicsItem(parent, pos, false, dummy_color)
 {}
 
 void OutputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
@@ -155,7 +157,7 @@ void OutputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*,
 
   QColor borderColor(40, 40, 40);
   // uvec3 color = outport_->getColorCode();
-  QColor color(25,25,255);
+  QColor color = dummy_color;
 
   QRectF portRect(QPointF(-size_, size_) / 2.0f, QPointF(size_, -size_) / 2.0f);
   p->setBrush(color);
