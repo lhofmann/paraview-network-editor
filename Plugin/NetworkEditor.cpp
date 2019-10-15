@@ -6,6 +6,8 @@
 
 #include <pqPipelineSource.h>
 #include <pqActiveObjects.h>
+#include <pqApplicationCore.h>
+#include <pqServerManagerModel.h>
 
 #include <QPainter>
 #include <QGraphicsSceneContextMenuEvent>
@@ -20,12 +22,19 @@ NetworkEditor::NetworkEditor() {
 
   connect(this, &QGraphicsScene::selectionChanged, this, &NetworkEditor::onSelectionChanged);
 
+  // observe ParaView's pipeline
   connect(&pqActiveObjects::instance(), &pqActiveObjects::selectionChanged, this, [this](const pqProxySelection& selection) {
     updateSelection_ = true;
     for (auto const& item : sourceGraphicsItems_) {
       item.second->setSelected(selection.contains(item.first));
     }
     updateSelection_ = false;
+  });
+
+  auto smModel = pqApplicationCore::instance()->getServerManagerModel();
+  connect(smModel, &pqServerManagerModel::sourceAdded, this, [this](pqPipelineSource* source) {
+    std::cout << "added source " << source->getSMName().toStdString() << std::endl;
+    addSourceRepresentation(source);
   });
 }
 

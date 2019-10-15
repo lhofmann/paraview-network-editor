@@ -74,14 +74,6 @@ void NetworkEditorWidget::constructor()
     this->setWindowTitle("Network Editor");
   }
 
-  // observe ParaView's pipeline
-  auto smModel = pqApplicationCore::instance()->getServerManagerModel();
-
-  connect(smModel, &pqServerManagerModel::sourceAdded, this,
-  [this](pqPipelineSource* source) {
-    std::cout << "added source " << source->getSMName().toStdString() << std::endl;
-    networkEditor_->addSourceRepresentation(source);
-  });
 }
 
 void NetworkEditorWidget::swapWithCentralWidget() {
