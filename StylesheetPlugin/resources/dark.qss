@@ -4,27 +4,11 @@ QWidget {
     background-color: #323235;
 }
 
-/************************
-Workarounds for Python Shell and Output Messages (hard-coded colors)
-************************/
-
-QTextEdit {
-    color: #000;
-    background-color: #ddd;
-}
 pqOutputWidget QTreeView,
 pqOutputWidget QTextEdit,
 pqConsoleWidget QTextEdit {
     font-family: "Fira Sans";
-    background-color: #ddd;
 }
-QTreeWidget {
-    alternate-background-color: #434343;
-}
-pqOutputWidget QTreeView {
-    alternate-background-color: #999999;
-}
-
 
 /************************
 QMenu
