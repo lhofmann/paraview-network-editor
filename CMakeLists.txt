@@ -12,12 +12,13 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 
+set("_paraview_plugin_default_NetworkEditor" ON)
 paraview_plugin_scan(
   PLUGIN_FILES      "${CMAKE_CURRENT_SOURCE_DIR}/Plugin/paraview.plugin"
                     "${CMAKE_CURRENT_SOURCE_DIR}/StylesheetPlugin/paraview.plugin"
   PROVIDES_PLUGINS  plugins
   REQUIRES_MODULES  required_modules
-  ENABLE_BY_DEFAULT ON)
+  ENABLE_BY_DEFAULT OFF)
 
 foreach (module IN LISTS required_modules)
   if (NOT TARGET "${module}")

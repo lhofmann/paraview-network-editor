@@ -55,7 +55,8 @@ void NetworkEditorWidget::constructor()
   });
   btnToggleActiveObject->setDefaultAction(toggleActiveObject);
   btnToggleActiveObject->setCheckable(true);
-  btnToggleActiveObject->setChecked(false);
+  btnToggleActiveObject->setChecked(true);
+  networkEditor_->setAutoUpdateActiveObject(btnToggleActiveObject->isChecked());
   hLayout->addWidget(btnToggleActiveObject);
 
   hLayout->addStretch();
