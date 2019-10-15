@@ -70,11 +70,16 @@ void NetworkEditor::drawForeground(QPainter* painter, const QRectF& rect) {
 void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
   auto sourceGraphicsItem = new SourceGraphicsItem(source);
 
+  QPointF pos;
   auto proxy = source->getProxy();
   if (proxy->HasAnnotation("Node.x") && source->getProxy()->HasAnnotation("Node.y")) {
-    QPointF pos(std::stof(proxy->GetAnnotation("Node.x")), std::stof(proxy->GetAnnotation("Node.y")));
-    sourceGraphicsItem->setPos(pos);
+    pos.setX(std::stof(proxy->GetAnnotation("Node.x")));
+    pos.setY(std::stof(proxy->GetAnnotation("Node.y")));
+  } else {
+    pos.setX(this->itemsBoundingRect().left() + SourceGraphicsItem::size_.width() / 2.);
+    pos.setY(this->itemsBoundingRect().bottom() + SourceGraphicsItem::size_.height() / 2. + gridSpacing_);
   }
+  sourceGraphicsItem->setPos(snapToGrid(pos));
 
   sourceGraphicsItems_[source] = sourceGraphicsItem;
   this->addItem(sourceGraphicsItem);
@@ -129,18 +134,21 @@ void NetworkEditor::onSelectionChanged() {
   }
 }
 
+QPointF NetworkEditor::snapToGrid(const QPointF& pos) {
+  float ox = pos.x() > 0.0f ? 0.5f : -0.5f;
+  float oy = pos.y() > 0.0f ? 0.5f : -0.5f;
+  float nx = (int(pos.x() / gridSpacing_ + ox)) * gridSpacing_;
+  float ny = (int(pos.y() / gridSpacing_ + oy)) * gridSpacing_;
+  return {nx, ny};
+}
+
 void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
   // snap selected sources to grid
   for (auto item : this->selectedItems()) {
     if (!qgraphicsitem_cast<SourceGraphicsItem*>(item))
       continue;
 
-    auto pos = item->scenePos();
-    float ox = pos.x() > 0.0f ? 0.5f : -0.5f;
-    float oy = pos.y() > 0.0f ? 0.5f : -0.5f;
-    float nx = (int(pos.x() / gridSpacing_ + ox)) * gridSpacing_;
-    float ny = (int(pos.y() / gridSpacing_ + oy)) * gridSpacing_;
-    item->setPos(nx, ny);
+    item->setPos(snapToGrid(item->scenePos()));
   }
   QGraphicsScene::mouseReleaseEvent(e);
 }

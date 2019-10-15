@@ -40,6 +40,7 @@ class NetworkEditor : public QGraphicsScene {
   bool updateSelection_ = false;
 
   static const int gridSpacing_;
+  QPointF snapToGrid(const QPointF& pos);
 };
 
 template <typename T>
