@@ -203,3 +203,15 @@ QVariant SourceGraphicsItem::itemChange(GraphicsItemChange change, const QVarian
   }
   return QGraphicsItem::itemChange(change, value);
 }
+
+InputPortGraphicsItem* SourceGraphicsItem::getInputPortGraphicsItem(int port) const {
+  if ((port < 0) || (port >= inportItems_.size()))
+    return nullptr;
+  return this->inportItems_[port];
+}
+
+OutputPortGraphicsItem* SourceGraphicsItem::getOutputPortGraphicsItem(int port) const {
+  if ((port < 0) || (port >= outportItems_.size()))
+    return nullptr;
+  return this->outportItems_[port];
+}

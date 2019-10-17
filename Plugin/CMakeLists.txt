@@ -13,6 +13,7 @@ set(sources
     SourceGraphicsItem.cpp
     LabelGraphicsItem.cpp
     PortGraphicsItem.cpp
+    ConnectionGraphicsItem.cpp
     utilqt.cpp
     observer.cpp)
 

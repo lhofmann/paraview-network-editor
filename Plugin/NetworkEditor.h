@@ -4,8 +4,10 @@
 #include <QGraphicsScene>
 #include <QGraphicsItem>
 #include <map>
+#include <tuple>
 
 class SourceGraphicsItem;
+class ConnectionGraphicsItem;
 class pqPipelineSource;
 class QGraphicsSceneContextMenuEvent;
 
@@ -17,6 +19,7 @@ class NetworkEditor : public QGraphicsScene {
 
   void addSourceRepresentation(pqPipelineSource* source);
   void removeSourceRepresentation(pqPipelineSource* source);
+  void updateConnectionRepresentations(pqPipelineSource* source, pqPipelineSource* dest);
   void setAutoUpdateActiveObject(bool);
 
  protected:
@@ -36,6 +39,8 @@ class NetworkEditor : public QGraphicsScene {
   void drawForeground(QPainter* painter, const QRectF& rect) override;
 
   std::map<pqPipelineSource*, SourceGraphicsItem*> sourceGraphicsItems_;
+
+  std::map<std::tuple<pqPipelineSource*, int, pqPipelineSource*, int>, ConnectionGraphicsItem*> connectionGraphicsItems_;
 
   bool autoUpdateActiveObject_ = false;
   bool updateSelection_ = false;

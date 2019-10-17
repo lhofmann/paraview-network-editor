@@ -1,8 +1,13 @@
 #include "NetworkEditor.h"
 #include "SourceGraphicsItem.h"
 #include "PortGraphicsItem.h"
+#include "ConnectionGraphicsItem.h"
 
 #include <vtkSMProxy.h>
+#include <vtkSMSourceProxy.h>
+#include <vtkSMPropertyIterator.h>
+#include <vtkSMInputProperty.h>
+#include <vtkSMPropertyHelper.h>
 
 #include <pqPipelineSource.h>
 #include <pqActiveObjects.h>
@@ -40,6 +45,12 @@ NetworkEditor::NetworkEditor() {
   connect(smModel, &pqServerManagerModel::sourceRemoved, this, [this](pqPipelineSource* source) {
     std::cout << "removed source " << source->getSMName().toStdString() << std::endl;
     removeSourceRepresentation(source);
+  });
+
+  connect(smModel, &pqServerManagerModel::connectionAdded, this, [this](pqPipelineSource* source, pqPipelineSource* dest, int sourcePort) {
+    std::cout << "added connection "
+              << source->getSMName().toStdString() << " (" << sourcePort << ") -> " << dest->getSMName().toStdString()  << std::endl;
+    updateConnectionRepresentations(source, dest);
   });
 }
 
@@ -106,6 +117,41 @@ void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
   this->removeItem(it->second);
   delete it->second;
   sourceGraphicsItems_.erase(it);
+}
+
+// adds connection representations (TODO: remove connection representations)
+void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pqPipelineSource* dest) {
+  auto smModel = pqApplicationCore::instance()->getServerManagerModel();
+  vtkSMPropertyIterator* propIter = dest->getSourceProxy()->NewPropertyIterator();
+
+  for (propIter->Begin(); !propIter->IsAtEnd(); propIter->Next()) {
+    if (auto prop = vtkSMInputProperty::SafeDownCast(propIter->GetProperty())) {
+      int input_id = prop->GetPortIndex();
+
+      vtkSMPropertyHelper helper(prop);
+      unsigned int num_proxies = helper.GetNumberOfElements();
+      for (unsigned int i = 0; i < num_proxies; ++i) {
+        auto proxy_source = smModel->findItem<pqPipelineSource*>(helper.GetAsProxy(i));
+        if (!proxy_source || proxy_source != source)
+          continue;
+        int output_id = helper.GetOutputPort(i);
+
+        auto key = std::make_tuple(source, output_id, dest, input_id);
+        if (connectionGraphicsItems_.count(key) > 0)
+          continue;
+
+        auto inport_graphics = this->sourceGraphicsItems_[dest]->getInputPortGraphicsItem(input_id);
+        auto outport_graphics = this->sourceGraphicsItems_[source]->getOutputPortGraphicsItem(output_id);
+
+        if (!inport_graphics || !outport_graphics)
+          continue;
+
+        auto connection = new ConnectionGraphicsItem(outport_graphics, inport_graphics);
+        this->addItem(connection);
+        connectionGraphicsItems_[key] = connection;
+      }
+    }
+  }
 }
 
 void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {

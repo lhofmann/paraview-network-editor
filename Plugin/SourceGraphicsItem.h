@@ -26,6 +26,9 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
   static QPointF portOffset(PortType type, size_t index);
   QPointF portPosition(PortType type, size_t index);
 
+  InputPortGraphicsItem* getInputPortGraphicsItem(int) const;
+  OutputPortGraphicsItem* getOutputPortGraphicsItem(int) const;
+
  protected:
   void paint(QPainter* p, const QStyleOptionGraphicsItem* options, QWidget* widget) override;
 

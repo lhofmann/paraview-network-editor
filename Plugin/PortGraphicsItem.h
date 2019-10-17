@@ -10,7 +10,7 @@
 class pqPipelineFilter;
 class pqPipelineSource;
 
-// class ConnectionGraphicsItem;
+class ConnectionGraphicsItem;
 class SourceGraphicsItem;
 class PortGraphicsItem;
 
@@ -33,9 +33,9 @@ public:
     PortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, bool up, QColor color);
     virtual ~PortGraphicsItem();
 
-    /* void addConnection(ConnectionGraphicsItem* connection);
+    void addConnection(ConnectionGraphicsItem* connection);
     void removeConnection(ConnectionGraphicsItem* connection);
-    std::vector<ConnectionGraphicsItem*>& getConnections(); */
+    std::vector<ConnectionGraphicsItem*>& getConnections();
     SourceGraphicsItem* getSource();
     virtual void showToolTip(QGraphicsSceneHelpEvent* e) override = 0;
 
@@ -43,7 +43,7 @@ protected:
     virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
     virtual void updateConnectionPositions() = 0;
 
-    // std::vector<ConnectionGraphicsItem*> connections_;
+    std::vector<ConnectionGraphicsItem*> connections_;
     SourceGraphicsItem* source_;
     PortConnectionIndicator* connectionIndicator_;
     float size_;

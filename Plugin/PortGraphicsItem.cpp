@@ -1,6 +1,7 @@
 #include "PortGraphicsItem.h"
 
 #include "SourceGraphicsItem.h"
+#include "ConnectionGraphicsItem.h"
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -13,6 +14,7 @@
 #include <QGraphicsView>
 #include <QToolTip>
 
+#include <functional>
 #include <iostream>
 
 const QColor dummy_color(44, 123, 182);
@@ -29,7 +31,6 @@ PortGraphicsItem::PortGraphicsItem(SourceGraphicsItem* parent, const QPointF& po
   connectionIndicator_->setVisible(false);
 }
 
-/*
 void PortGraphicsItem::addConnection(ConnectionGraphicsItem* connection) {
   connections_.push_back(connection);
   connectionIndicator_->setVisible(true);
@@ -42,7 +43,6 @@ void PortGraphicsItem::removeConnection(ConnectionGraphicsItem* connection) {
   connectionIndicator_->setVisible(!connections_.empty());
   update();  // we need to repaint the connection
 }
- */
 
 QVariant PortGraphicsItem::itemChange(GraphicsItemChange change, const QVariant& value) {
   if (change == QGraphicsItem::ItemScenePositionHasChanged) {
@@ -51,11 +51,9 @@ QVariant PortGraphicsItem::itemChange(GraphicsItemChange change, const QVariant&
   return EditorGraphicsItem::itemChange(change, value);
 }
 
-/*
 std::vector<ConnectionGraphicsItem*>& PortGraphicsItem::getConnections() {
   return connections_;
 }
-*/
 
 SourceGraphicsItem* PortGraphicsItem::getSource() { return source_; }
 
@@ -75,11 +73,9 @@ void InputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
 }
 
 void InputPortGraphicsItem::updateConnectionPositions() {
-  /*
   for (auto& elem : connections_) {
     elem->updateShape();
   }
-   */
 }
 
 void InputPortGraphicsItem::showToolTip(QGraphicsSceneHelpEvent* e) {
@@ -139,11 +135,9 @@ void OutputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
 }
 
 void OutputPortGraphicsItem::updateConnectionPositions() {
-  /*
   for (auto& elem : connections_) {
     elem->updateShape();
   }
-   */
 }
 
 void OutputPortGraphicsItem::showToolTip(QGraphicsSceneHelpEvent* e) {
@@ -177,11 +171,9 @@ void PortConnectionIndicator::paint(QPainter* p, const QStyleOptionGraphicsItem*
   p->save();
   p->setRenderHint(QPainter::Antialiasing, true);
 
-  /*
-  const bool selected = util::any_of(portConnectionItem_->getConnections(),
-                                     [](auto& connection) { return connection->isSelected(); });
-                                     */
-  const bool selected = true;
+  auto connections = portConnectionItem_->getConnections();
+  const bool selected = std::accumulate(connections.begin(), connections.end(), false,
+                                        [](bool acc, auto& connection) { return acc || connection->isSelected(); });
 
   const float width{selected ? (4.0f - 1.0f) / 2.0f : (3.0f - 0.5f) / 2.0f};
   const float length = 7.0f;
