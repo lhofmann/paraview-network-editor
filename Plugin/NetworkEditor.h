@@ -16,6 +16,7 @@ class NetworkEditor : public QGraphicsScene {
   ~NetworkEditor() override;
 
   void addSourceRepresentation(pqPipelineSource* source);
+  void removeSourceRepresentation(pqPipelineSource* source);
   void setAutoUpdateActiveObject(bool);
 
  protected:

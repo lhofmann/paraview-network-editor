@@ -36,6 +36,11 @@ NetworkEditor::NetworkEditor() {
     std::cout << "added source " << source->getSMName().toStdString() << std::endl;
     addSourceRepresentation(source);
   });
+
+  connect(smModel, &pqServerManagerModel::sourceRemoved, this, [this](pqPipelineSource* source) {
+    std::cout << "removed source " << source->getSMName().toStdString() << std::endl;
+    removeSourceRepresentation(source);
+  });
 }
 
 NetworkEditor::~NetworkEditor() = default;
@@ -92,6 +97,15 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
 
   sourceGraphicsItems_[source] = sourceGraphicsItem;
   this->addItem(sourceGraphicsItem);
+}
+
+void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
+  auto it = sourceGraphicsItems_.find(source);
+  if (it == sourceGraphicsItems_.end())
+    return;
+  this->removeItem(it->second);
+  delete it->second;
+  sourceGraphicsItems_.erase(it);
 }
 
 void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
