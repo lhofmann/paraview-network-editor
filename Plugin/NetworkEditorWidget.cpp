@@ -3,6 +3,8 @@
 #include "NetworkEditor.h"
 #include "NetworkEditorView.h"
 
+#include "vtkPVNetworkEditorSettings.h"
+
 #include <pqApplicationCore.h>
 #include <pqPipelineSource.h>
 #include <pqOutputPort.h>
@@ -55,7 +57,7 @@ void NetworkEditorWidget::constructor()
   });
   btnToggleActiveObject->setDefaultAction(toggleActiveObject);
   btnToggleActiveObject->setCheckable(true);
-  btnToggleActiveObject->setChecked(true);
+  btnToggleActiveObject->setChecked(vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject());
   networkEditor_->setAutoUpdateActiveObject(btnToggleActiveObject->isChecked());
   hLayout->addWidget(btnToggleActiveObject);
 
@@ -65,9 +67,7 @@ void NetworkEditorWidget::constructor()
   vLayout->addWidget(networkEditorView_);
   networkEditorWidget_->setLayout(vLayout);
 
-  // set widget
-  bool grab_center_widget = QProcessEnvironment::systemEnvironment().value("NETWORK_EDITOR_DOCK", "0") == "0";
-  if (grab_center_widget) {
+  if (vtkPVNetworkEditorSettings::GetInstance()->GetSwapOnStartup()) {
     this->swapWithCentralWidget();
   } else {
     this->setWidget(networkEditorWidget_);

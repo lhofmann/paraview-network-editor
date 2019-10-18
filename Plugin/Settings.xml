@@ -1,0 +1,40 @@
+<ServerManagerConfiguration>
+    <ProxyGroup name="settings">
+        <SettingsProxy name="NetworkEditorSettings" label="Network Editor"
+                       processes="client|dataserver|renderserver"
+                       class="vtkPVNetworkEditorSettings">
+            <Documentation>
+                Settings for Network Editor plugin.
+            </Documentation>
+
+            <IntVectorProperty name="SwapOnStartup"
+                               command="SetSwapOnStartup"
+                               number_of_elements="1"
+                               default_values="1">
+                <Documentation>
+                    Swap places with render view when starting ParaView.
+                </Documentation>
+                <BooleanDomain name="bool" />
+            </IntVectorProperty>
+
+            <IntVectorProperty name="UpdateActiveObject"
+                               command="SetUpdateActiveObject"
+                               number_of_elements="1"
+                               default_values="1">
+                <Documentation>
+                    Set object as active when selecting objects in the network editor.
+                </Documentation>
+                <BooleanDomain name="bool" />
+                <!--
+                <Hints>
+                    <SaveInQSettings />
+                </Hints>
+                -->
+            </IntVectorProperty>
+
+            <Hints>
+                <UseDocumentationForLabels />
+            </Hints>
+        </SettingsProxy>
+    </ProxyGroup>
+</ServerManagerConfiguration>

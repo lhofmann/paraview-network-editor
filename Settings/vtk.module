@@ -1,0 +1,4 @@
+NAME
+  NetworkEditorSettings
+DEPENDS
+  VTK::CommonCore

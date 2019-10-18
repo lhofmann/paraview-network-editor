@@ -2,6 +2,7 @@
 #include "SourceGraphicsItem.h"
 #include "PortGraphicsItem.h"
 #include "ConnectionGraphicsItem.h"
+#include "vtkPVNetworkEditorSettings.h"
 
 #include <vtkSMProxy.h>
 #include <vtkSMSourceProxy.h>
@@ -195,7 +196,7 @@ void NetworkEditor::onSelectionChanged() {
     ++num_selected;
   }
 
-  if (autoUpdateActiveObject_) {
+  if (vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject() /*autoUpdateActiveObject_*/) {
     pqActiveObjects::instance().setActiveSource(active_source);
     pqActiveObjects::instance().setSelection(selection, active_source);
   } else {

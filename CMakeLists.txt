@@ -12,6 +12,16 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 
+vtk_module_scan(
+    MODULE_FILES         "${CMAKE_CURRENT_SOURCE_DIR}/Settings/vtk.module"
+    PROVIDES_MODULES     modules
+    REQUIRES_MODULES     required_modules
+    UNRECOGNIZED_MODULES unrecognized_modules
+    WANT_BY_DEFAULT      ON)
+vtk_module_build(
+    MODULES             ${modules}
+    INSTALL_HEADERS     OFF)
+
 set("_paraview_plugin_default_NetworkEditor" ON)
 paraview_plugin_scan(
   PLUGIN_FILES      "${CMAKE_CURRENT_SOURCE_DIR}/Plugin/paraview.plugin"

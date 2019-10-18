@@ -31,7 +31,10 @@ paraview_add_plugin(NetworkEditor
   VERSION "1.0"
   UI_INTERFACES ${interfaces}
   UI_RESOURCES ${resources}
-  SOURCES ${sources})
+  SOURCES ${sources}
+  SERVER_MANAGER_XML Settings.xml
+  XML_DOCUMENTATION OFF
+  MODULES NetworkEditorSettings)
 
 target_link_libraries(NetworkEditor
   PRIVATE
