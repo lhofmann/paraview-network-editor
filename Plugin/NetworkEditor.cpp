@@ -21,6 +21,8 @@
 #include <pqApplicationCore.h>
 #include <pqServerManagerModel.h>
 #include <pqRepresentation.h>
+#include <pqDataRepresentation.h>
+#include <pqScalarBarVisibilityReaction.h>
 
 #include <QGraphicsView>
 #include <QPainter>
@@ -61,8 +63,10 @@ NetworkEditor::NetworkEditor() {
   connect(&pqActiveObjects::instance(), &pqActiveObjects::portChanged, this, [this](pqOutputPort*) {
     this->update();
   });
-
   connect(&pqActiveObjects::instance(), &pqActiveObjects::viewChanged, this, [this](pqView*) {
+    this->update();
+  });
+  connect(&pqActiveObjects::instance(), static_cast<void (pqActiveObjects::*)(pqDataRepresentation*)>(&pqActiveObjects::representationChanged), this, [this](pqDataRepresentation*) {
     this->update();
   });
 
@@ -106,6 +110,11 @@ NetworkEditor::NetworkEditor() {
       it->second->update();
     }
   });
+
+  QAction* showSBAction = new QAction(this);
+  connect(showSBAction, &QAction::toggled, this, [this](bool) { this->update(); });
+  connect(showSBAction, &QAction::changed, this, [this]() { this->update(); });
+  new pqScalarBarVisibilityReaction(showSBAction);
 }
 
 NetworkEditor::~NetworkEditor() = default;
