@@ -137,11 +137,16 @@ void SourceGraphicsItem::addOutport(pqPipelineSource* source, int port) {
 void SourceGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *options, QWidget *widget) {
   const float roundedCorners = 9.0f;
 
+  bool modified = source_->modifiedState() != pqProxy::UNMODIFIED;
+
   p->save();
   p->setRenderHint(QPainter::Antialiasing, true);
   QColor selectionColor("#7a191b");
   QColor backgroundColor("#3b3d3d");
   QColor borderColor("#282828");
+  if (modified) {
+    borderColor = QColor("#FBBC05");
+  }
 
   if (isSelected()) {
     p->setBrush(selectionColor);

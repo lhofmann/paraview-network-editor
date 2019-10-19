@@ -71,6 +71,16 @@ NetworkEditor::NetworkEditor() {
   connect(smModel, &pqServerManagerModel::representationRemoved, this, [this](pqRepresentation* rep) {
     std::cout << "removed representation " << rep->getSMName().toStdString() << std::endl;
   });
+
+  connect(smModel, &pqServerManagerModel::modifiedStateChanged, this, [this](pqServerManagerModelItem* item) {
+    auto source = qobject_cast<pqPipelineSource*>(item);
+    if (!source)
+      return;
+    auto it = sourceGraphicsItems_.find(source);
+    if (it != sourceGraphicsItems_.end()) {
+      it->second->update();
+    }
+  });
 }
 
 NetworkEditor::~NetworkEditor() = default;
