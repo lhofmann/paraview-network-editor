@@ -379,15 +379,6 @@ void NetworkEditor::copy() {
                  << vtkSMProxyManager::GetVersionPatch();
   rootElement->AddAttribute("version", version_string.str().c_str());
 
-  float x_min(std::numeric_limits<float>::max()), y_min(std::numeric_limits<float>::max());
-  for (auto item : this->selectedItems()) {
-    auto source_item = qgraphicsitem_cast<SourceGraphicsItem *>(item);
-    if (!source_item)
-      continue;
-    x_min = std::min(float(item->x()), x_min);
-    y_min = std::min(float(item->y()), y_min);
-  }
-
   // add sources
   std::vector<std::tuple<std::string, vtkSMProxy*>> source_proxies;
   for (auto item : this->selectedItems()) {
@@ -398,15 +389,7 @@ void NetworkEditor::copy() {
     auto source = source_item->getSource();
     vtkSMProxy* proxy = source->getProxy();
     source_proxies.emplace_back(std::make_tuple(source->getSMName().toStdString(), proxy));
-    std::string node_x = proxy->GetAnnotation("Node.x");
-    std::string node_y = proxy->GetAnnotation("Node.y");
-
-    proxy->SetAnnotation("Node.x", std::to_string(item->x() - x_min).c_str());
-    proxy->SetAnnotation("Node.y", std::to_string(item->y() - y_min).c_str());
     proxy->SaveXMLState(rootElement);
-
-    proxy->SetAnnotation("Node.x", node_x.c_str());
-    proxy->SetAnnotation("Node.y", node_y.c_str());
   }
 
   // add proxycollection for sources
@@ -456,16 +439,29 @@ void NetworkEditor::paste(float x, float y) {
   auto annotations = vtkSmartPointer<vtkCollection>::New();
   parser->GetRootElement()->GetElementsByName("Annotation", annotations);
 
+  float x_min(std::numeric_limits<float>::max()), y_min(std::numeric_limits<float>::max());
   for (int i = 0; i < annotations->GetNumberOfItems(); ++i) {
     auto annotation = vtkPVXMLElement::SafeDownCast(annotations->GetItemAsObject(i));
     if (!annotation)
       continue;
     if (std::string(annotation->GetAttribute("key")) == "Node.x") {
-      float node_x = x + std::atof(annotation->GetAttribute("value")) + SourceGraphicsItem::size_.width() / 2.;
+      x_min = std::min(x_min, (float)std::atof(annotation->GetAttribute("value")));
+    }
+    if (std::string(annotation->GetAttribute("key")) == "Node.y") {
+      y_min = std::min(y_min, (float)std::atof(annotation->GetAttribute("value")));
+    }
+  }
+
+  for (int i = 0; i < annotations->GetNumberOfItems(); ++i) {
+    auto annotation = vtkPVXMLElement::SafeDownCast(annotations->GetItemAsObject(i));
+    if (!annotation)
+      continue;
+    if (std::string(annotation->GetAttribute("key")) == "Node.x") {
+      float node_x = x - x_min + std::atof(annotation->GetAttribute("value")) + SourceGraphicsItem::size_.width() / 2.;
       annotation->SetAttribute("value", std::to_string(node_x).c_str());
     }
     if (std::string(annotation->GetAttribute("key")) == "Node.y") {
-      float node_y = y + std::atof(annotation->GetAttribute("value")) + SourceGraphicsItem::size_.height() / 2.;
+      float node_y = y - y_min + std::atof(annotation->GetAttribute("value")) + SourceGraphicsItem::size_.height() / 2.;
       annotation->SetAttribute("value", std::to_string(node_y).c_str()) ;
     }
   }
