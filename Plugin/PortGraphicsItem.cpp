@@ -5,6 +5,9 @@
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
+#include <pqActiveObjects.h>
+#include <pqOutputPort.h>
+#include <pqPropertiesPanel.h>
 
 #include <QPen>
 #include <QPainter>
@@ -13,6 +16,8 @@
 #include <QGraphicsDropShadowEffect>
 #include <QGraphicsView>
 #include <QToolTip>
+#include <QMainWindow>
+#include <QApplication>
 
 #include <functional>
 #include <iostream>
@@ -123,9 +128,9 @@ void InputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, 
   p->restore();
 }
 
-OutputPortGraphicsItem::OutputPortGraphicsItem(SourceGraphicsItem* parent,  const QPointF& pos, pqPipelineSource* source, int port_id)
-: PortGraphicsItem(parent, pos, false, dummy_color)
-{}
+OutputPortGraphicsItem::OutputPortGraphicsItem(SourceGraphicsItem* parent,  const QPointF& pos, pqPipelineSource* source, int port_id_)
+: PortGraphicsItem(parent, pos, false, dummy_color), port_id(port_id_)
+{ }
 
 void OutputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
   /*
@@ -134,6 +139,9 @@ void OutputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
   }
   e->accept();
    */
+  pqPipelineSource* source = this->source_->getSource();
+  pqOutputPort* port = source->getOutputPort(port_id);
+  pqActiveObjects::instance().setActivePort(port);
 }
 
 void OutputPortGraphicsItem::updateConnectionPositions() {
@@ -152,12 +160,22 @@ void OutputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*,
   p->setRenderHint(QPainter::SmoothPixmapTransform, true);
 
   QColor borderColor(40, 40, 40);
+  float borderWidth = lineWidth_;
+
+  pqPipelineSource* source = this->source_->getSource();
+  pqOutputPort* source_port = source->getOutputPort(port_id);
+  pqOutputPort* active_port = pqActiveObjects::instance().activePort();
+  if (active_port == source_port) {
+    borderColor = Qt::white;
+    borderWidth *= 2.;
+  }
+
   // uvec3 color = outport_->getColorCode();
   QColor color = dummy_color;
 
   QRectF portRect(QPointF(-size_, size_) / 2.0f, QPointF(size_, -size_) / 2.0f);
   p->setBrush(color);
-  p->setPen(QPen(borderColor, lineWidth_));
+  p->setPen(QPen(borderColor, borderWidth));
   p->drawRect(portRect);
   p->restore();
 }

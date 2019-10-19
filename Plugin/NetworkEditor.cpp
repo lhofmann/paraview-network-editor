@@ -45,9 +45,20 @@ NetworkEditor::NetworkEditor() {
   connect(&pqActiveObjects::instance(), &pqActiveObjects::selectionChanged, this, [this](const pqProxySelection& selection) {
     updateSelection_ = true;
     for (auto const& item : sourceGraphicsItems_) {
-      item.second->setSelected(selection.contains(item.first));
+      bool selected = selection.contains(item.first);
+      for (pqServerManagerModelItem* proxy : selection) {
+        auto port = qobject_cast<pqOutputPort*>(proxy);
+        if (!port)
+          continue;
+        selected = selected || (item.first == port->getSource());
+      }
+      item.second->setSelected(selected);
     }
     updateSelection_ = false;
+  });
+
+  connect(&pqActiveObjects::instance(), &pqActiveObjects::portChanged, this, [this](pqOutputPort*) {
+    this->update();
   });
 
   connect(&pqActiveObjects::instance(), &pqActiveObjects::viewChanged, this, [this](pqView*) {

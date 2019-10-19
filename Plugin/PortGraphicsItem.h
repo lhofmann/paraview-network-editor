@@ -80,6 +80,8 @@ public:
     virtual void showToolTip(QGraphicsSceneHelpEvent* e) override;
 
 protected:
+    int port_id;
+
     virtual void paint(QPainter* p, const QStyleOptionGraphicsItem* options,
                        QWidget* widget) override;
     virtual void mousePressEvent(QGraphicsSceneMouseEvent* e) override;
