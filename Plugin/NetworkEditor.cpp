@@ -22,6 +22,7 @@
 #include <pqServerManagerModel.h>
 #include <pqRepresentation.h>
 
+#include <QGraphicsView>
 #include <QPainter>
 #include <QGraphicsSceneContextMenuEvent>
 #include <QMenu>
@@ -161,6 +162,7 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
 
   sourceGraphicsItems_[source] = sourceGraphicsItem;
   this->addItem(sourceGraphicsItem);
+  updateSceneSize();
 }
 
 void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
@@ -202,6 +204,7 @@ void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
   this->removeItem(it->second);
   delete it->second;
   sourceGraphicsItems_.erase(it);
+  updateSceneSize();
 }
 
 void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pqPipelineSource* dest) {
@@ -347,6 +350,11 @@ QPointF NetworkEditor::snapToGrid(const QPointF& pos) {
   return {nx, ny};
 }
 
+void NetworkEditor::mousePressEvent(QGraphicsSceneMouseEvent* e) {
+  activeSourceItem_ = getGraphicsItemAt<SourceGraphicsItem>(e->scenePos());
+  QGraphicsScene::mousePressEvent(e);
+}
+
 void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
   // snap selected sources to grid
   for (auto item : this->selectedItems()) {
@@ -355,7 +363,18 @@ void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
 
     item->setPos(snapToGrid(item->scenePos()));
   }
+  if (activeSourceItem_) {
+    updateSceneSize();
+    activeSourceItem_ = nullptr;
+  }
   QGraphicsScene::mouseReleaseEvent(e);
+}
+
+void NetworkEditor::mouseMoveEvent(QGraphicsSceneMouseEvent* e) {
+  if ((e->buttons() & Qt::LeftButton) && activeSourceItem_) {
+    updateSceneSize();
+  }
+  QGraphicsScene::mouseMoveEvent(e);
 }
 
 void NetworkEditor::helpEvent(QGraphicsSceneHelpEvent* e) {
@@ -481,3 +500,31 @@ void NetworkEditor::paste(float x, float y) {
   auto server = app->getActiveServer();
   server->proxyManager()->LoadXMLState(parser->GetRootElement(), nullptr, false);
 }
+
+
+void NetworkEditor::updateSceneSize() {
+  QRectF sr = this->sceneRect();
+  QRectF bounding = getSourcesBoundingRect().adjusted(-50, -50, 50, 50);
+  QRectF extended = bounding.united(sr);
+  // hack for allowing small scenes to be moved freely within the window
+  if (extended.width() <= views().front()->width() + 50 && extended.height() <= views().front()->height() + 50)
+    setSceneRect(extended);
+  else
+    setSceneRect(bounding);
+}
+
+
+bool NetworkEditor::empty() const {
+  return sourceGraphicsItems_.empty();
+}
+
+QRectF NetworkEditor::getSourcesBoundingRect() const {
+  QRectF rect;
+  for (const auto& item : sourceGraphicsItems_) {
+    if (item.second->isVisible()) {
+      rect = rect.united(item.second->sceneBoundingRect());
+    }
+  }
+  return rect;
+}
+

@@ -24,11 +24,17 @@ class NetworkEditor : public QGraphicsScene {
   void copy();
   void paste(float x, float y);
 
+  void updateSceneSize();
+  bool empty() const;
+  QRectF getSourcesBoundingRect() const;
+
  protected:
   virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent* e) override;
   void onSelectionChanged();
 
+  void mousePressEvent(QGraphicsSceneMouseEvent*) override;
   void mouseReleaseEvent(QGraphicsSceneMouseEvent*) override;
+  void mouseMoveEvent(QGraphicsSceneMouseEvent*) override;
 
   void helpEvent(QGraphicsSceneHelpEvent* helpEvent) override;
 
@@ -46,9 +52,10 @@ class NetworkEditor : public QGraphicsScene {
   std::map<std::tuple<pqPipelineSource*, pqPipelineSource*>, std::map<std::tuple<int, int>, ConnectionGraphicsItem*>> connectionGraphicsItems_;
 
   bool updateSelection_ = false;
-
   static const int gridSpacing_;
   QPointF snapToGrid(const QPointF& pos);
+
+  SourceGraphicsItem* activeSourceItem_ {nullptr};
 };
 
 template <typename T>

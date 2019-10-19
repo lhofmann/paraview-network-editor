@@ -10,8 +10,15 @@ class NetworkEditorView : public QGraphicsView {
   NetworkEditorView(NetworkEditor* networkEditor, QWidget* parent = nullptr);
   ~NetworkEditorView();
 
+  void fitNetwork();
+
  protected:
   void wheelEvent(QWheelEvent* e) override;
+
+  virtual void keyPressEvent(QKeyEvent* keyEvent) override;
+  virtual void keyReleaseEvent(QKeyEvent* keyEvent) override;
+  virtual void focusOutEvent(QFocusEvent*) override;
+  virtual void mouseDoubleClickEvent(QMouseEvent* e) override;
 
  private:
   NetworkEditor* editor_;
