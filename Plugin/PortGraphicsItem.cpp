@@ -3,11 +3,15 @@
 #include "SourceGraphicsItem.h"
 #include "ConnectionGraphicsItem.h"
 
+#include <vtkSMParaViewPipelineControllerWithRendering.h>
+#include <vtkSMViewProxy.h>
+
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
 #include <pqActiveObjects.h>
 #include <pqOutputPort.h>
 #include <pqPropertiesPanel.h>
+#include <pqView.h>
 
 #include <QPen>
 #include <QPainter>
@@ -144,6 +148,19 @@ void OutputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
   pqActiveObjects::instance().setActivePort(port);
 }
 
+void OutputPortGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) {
+  auto controller = vtkSmartPointer<vtkSMParaViewPipelineControllerWithRendering>::New();
+  pqView* activeView = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
+  if (!viewProxy)
+    return;
+  pqPipelineSource* source = this->source_->getSource();
+  pqOutputPort* port = source->getOutputPort(port_id);
+  bool visible = controller->GetVisibility(port->getSourceProxy(), port->getPortNumber(), viewProxy);
+  controller->SetVisibility(port->getSourceProxy(), port->getPortNumber(), viewProxy, !visible);
+  activeView->render();
+}
+
 void OutputPortGraphicsItem::updateConnectionPositions() {
   for (auto& elem : connections_) {
     elem->updateShape();
@@ -167,7 +184,7 @@ void OutputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*,
   pqOutputPort* active_port = pqActiveObjects::instance().activePort();
   if (active_port == source_port) {
     borderColor = Qt::white;
-    borderWidth *= 2.;
+    borderWidth *= 1.5;
   }
 
   // uvec3 color = outport_->getColorCode();

@@ -1,5 +1,6 @@
 #include "SourceGraphicsItem.h"
 #include "PortGraphicsItem.h"
+#include "OutputPortStatusGraphicsItem.h"
 
 #include <pqPipelineSource.h>
 #include <pqPipelineFilter.h>
@@ -108,7 +109,7 @@ pqPipelineSource* SourceGraphicsItem::getSource() const {
 
 QPointF SourceGraphicsItem::portOffset(PortType type, size_t index) {
   const QPointF offset = {12.5f, (type == PortType::In ? 1.0f : -1.0f) * 4.5f};
-  const QPointF delta = {12.5f, 0.0f};
+  const QPointF delta = {22.5f, 0.0f};
   const QPointF rowDelta = {0.0f, (type == PortType::In ? -1.0f : 1.0f) * 12.5f};
   const size_t portsPerRow = 10;
 
@@ -132,6 +133,10 @@ void SourceGraphicsItem::addInport(pqPipelineFilter* filter, int port) {
 void SourceGraphicsItem::addOutport(pqPipelineSource* source, int port) {
   auto pos = portPosition(PortType::Out, outportItems_.size());
   outportItems_.emplace_back(new OutputPortGraphicsItem(this, pos, source, port));
+
+  pos += QPointF(10.f, 0.f);
+  auto status = new OutputPortStatusGraphicsItem(this, source->getOutputPort(port));
+  status->setPos(pos);
 }
 
 #include <pqDataRepresentation.h>

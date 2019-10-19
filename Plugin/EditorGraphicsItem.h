@@ -14,7 +14,7 @@ enum NetworkEditorGraphicsItemType {
   LinkConnectionDragGraphicsType,
   LinkConnectionGraphicsType,
   SourceProgressGraphicsType,
-  SourceStatusGraphicsType,
+  OutputPortStatusGraphicsType,
   SourceLinkGraphicsType,
   InputPortGraphicsType,
   OutputPortGraphicsType

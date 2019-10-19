@@ -14,6 +14,7 @@ set(sources
     LabelGraphicsItem.cpp
     PortGraphicsItem.cpp
     ConnectionGraphicsItem.cpp
+    OutputPortStatusGraphicsItem.cpp
     utilqt.cpp
     observer.cpp)
 

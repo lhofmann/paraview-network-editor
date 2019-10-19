@@ -85,7 +85,7 @@ protected:
     virtual void paint(QPainter* p, const QStyleOptionGraphicsItem* options,
                        QWidget* widget) override;
     virtual void mousePressEvent(QGraphicsSceneMouseEvent* e) override;
-
+    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) override;
     virtual void updateConnectionPositions() override;
 };
 
