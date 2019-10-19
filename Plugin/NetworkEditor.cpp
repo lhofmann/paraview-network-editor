@@ -9,6 +9,11 @@
 #include <vtkSMPropertyIterator.h>
 #include <vtkSMInputProperty.h>
 #include <vtkSMPropertyHelper.h>
+#include <vtkSMSessionProxyManager.h>
+#include <vtkPVXMLElement.h>
+#include <vtkPVXMLParser.h>
+#include <vtkSMProxyManager.h>
+#include <vtkCollection.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -20,6 +25,9 @@
 #include <QPainter>
 #include <QGraphicsSceneContextMenuEvent>
 #include <QMenu>
+#include <QMimeData>
+#include <QApplication>
+#include <QClipboard>
 
 #include <algorithm>
 #include <set>
@@ -278,6 +286,16 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
       break;
     }
   }
+  menu.addSeparator();
+  auto copy = menu.addAction(tr("Copy"));
+  connect(copy, &QAction::triggered, this, &NetworkEditor::copy);
+
+  auto paste = menu.addAction(tr("Paste"));
+  connect(paste, &QAction::triggered, [this, e]() {
+    QPointF pos = e->scenePos();
+    this->paste(pos.x(), pos.y());
+  });
+
   if (!menu.isEmpty()) {
     menu.exec(QCursor::pos());
     e->accept();
@@ -345,4 +363,114 @@ void NetworkEditor::helpEvent(QGraphicsSceneHelpEvent* e) {
     };
   }
   QGraphicsScene::helpEvent(e);
+}
+
+void NetworkEditor::copy() {
+  auto app = pqApplicationCore::instance();
+  // vtkPVXMLElement* state = app->saveState();
+  vtkPVXMLElement* state = vtkPVXMLElement::New();
+  state->SetName("ParaView");
+
+  vtkPVXMLElement* rootElement = vtkPVXMLElement::New();
+  rootElement->SetName("ServerManagerState");
+  std::ostringstream version_string;
+  version_string << vtkSMProxyManager::GetVersionMajor() << "."
+                 << vtkSMProxyManager::GetVersionMinor() << "."
+                 << vtkSMProxyManager::GetVersionPatch();
+  rootElement->AddAttribute("version", version_string.str().c_str());
+
+  float x_min(std::numeric_limits<float>::max()), y_min(std::numeric_limits<float>::max());
+  for (auto item : this->selectedItems()) {
+    auto source_item = qgraphicsitem_cast<SourceGraphicsItem *>(item);
+    if (!source_item)
+      continue;
+    x_min = std::min(float(item->x()), x_min);
+    y_min = std::min(float(item->y()), y_min);
+  }
+
+  // add sources
+  std::vector<std::tuple<std::string, vtkSMProxy*>> source_proxies;
+  for (auto item : this->selectedItems()) {
+    auto source_item = qgraphicsitem_cast<SourceGraphicsItem *>(item);
+    if (!source_item)
+      continue;
+
+    auto source = source_item->getSource();
+    vtkSMProxy* proxy = source->getProxy();
+    source_proxies.emplace_back(std::make_tuple(source->getSMName().toStdString(), proxy));
+    std::string node_x = proxy->GetAnnotation("Node.x");
+    std::string node_y = proxy->GetAnnotation("Node.y");
+
+    proxy->SetAnnotation("Node.x", std::to_string(item->x() - x_min).c_str());
+    proxy->SetAnnotation("Node.y", std::to_string(item->y() - y_min).c_str());
+    proxy->SaveXMLState(rootElement);
+
+    proxy->SetAnnotation("Node.x", node_x.c_str());
+    proxy->SetAnnotation("Node.y", node_y.c_str());
+  }
+
+  // add proxycollection for sources
+  vtkPVXMLElement* collectionElement = vtkPVXMLElement::New();
+  collectionElement->SetName("ProxyCollection");
+  collectionElement->AddAttribute("name", "sources");
+  for (const auto& kv : source_proxies) {
+    vtkPVXMLElement* itemElement = vtkPVXMLElement::New();
+    itemElement->SetName("Item");
+    itemElement->AddAttribute("id", std::get<1>(kv)->GetGlobalID());
+    itemElement->AddAttribute("name", std::get<0>(kv).c_str());
+    if (std::get<1>(kv)->GetLogName() != nullptr)
+    {
+      itemElement->AddAttribute("logname", std::get<1>(kv)->GetLogName());
+    }
+    collectionElement->AddNestedElement(itemElement);
+    itemElement->Delete();
+  }
+  rootElement->AddNestedElement(collectionElement);
+  collectionElement->Delete();
+
+  state->AddNestedElement(rootElement);
+  rootElement->FastDelete();
+
+  std::stringstream ss;
+  state->PrintXML(ss, vtkIndent());
+  std::string str = ss.str();
+  // std::cout << str << std::endl;
+  QByteArray data(str.c_str(), str.length());
+  auto mimedata = std::make_unique<QMimeData>();
+  mimedata->setData(QString("text/plain"), data);
+  QApplication::clipboard()->setMimeData(mimedata.release());
+}
+
+void NetworkEditor::paste(float x, float y) {
+  auto clipboard = QApplication::clipboard();
+  auto mimeData = clipboard->mimeData();
+  if (!mimeData->formats().contains("text/plain"))
+    return;
+  QByteArray data = mimeData->data(QString("text/plain"));
+  std::string str(data.constData(), data.length());
+
+  auto parser = vtkSmartPointer<vtkPVXMLParser>::New();
+  if (!parser->Parse(data.constData()))
+    return;
+
+  auto annotations = vtkSmartPointer<vtkCollection>::New();
+  parser->GetRootElement()->GetElementsByName("Annotation", annotations);
+
+  for (int i = 0; i < annotations->GetNumberOfItems(); ++i) {
+    auto annotation = vtkPVXMLElement::SafeDownCast(annotations->GetItemAsObject(i));
+    if (!annotation)
+      continue;
+    if (std::string(annotation->GetAttribute("key")) == "Node.x") {
+      float node_x = x + std::atof(annotation->GetAttribute("value")) + SourceGraphicsItem::size_.width() / 2.;
+      annotation->SetAttribute("value", std::to_string(node_x).c_str());
+    }
+    if (std::string(annotation->GetAttribute("key")) == "Node.y") {
+      float node_y = y + std::atof(annotation->GetAttribute("value")) + SourceGraphicsItem::size_.height() / 2.;
+      annotation->SetAttribute("value", std::to_string(node_y).c_str()) ;
+    }
+  }
+
+  auto app = pqApplicationCore::instance();
+  auto server = app->getActiveServer();
+  server->proxyManager()->LoadXMLState(parser->GetRootElement(), nullptr, false);
 }

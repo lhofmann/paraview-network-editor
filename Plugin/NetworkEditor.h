@@ -21,6 +21,9 @@ class NetworkEditor : public QGraphicsScene {
   void removeSourceRepresentation(pqPipelineSource* source);
   void updateConnectionRepresentations(pqPipelineSource* source, pqPipelineSource* dest);
 
+  void copy();
+  void paste(float x, float y);
+
  protected:
   virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent* e) override;
   void onSelectionChanged();
