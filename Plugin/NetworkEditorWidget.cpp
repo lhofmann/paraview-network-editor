@@ -20,14 +20,33 @@
 #include <QHBoxLayout>
 #include <QProcessEnvironment>
 #include <QToolButton>
+#include <QProxyStyle>
 
 #include <iostream>
+
+class MyProxyStyle : public QProxyStyle
+{
+ public:
+  using QProxyStyle::QProxyStyle;
+
+  int styleHint(StyleHint hint, const QStyleOption* option = nullptr, const QWidget* widget = nullptr, QStyleHintReturn* returnData = nullptr) const override
+  {
+    if (hint == QStyle::SH_ToolTip_WakeUpDelay) {
+      return vtkPVNetworkEditorSettings::GetInstance()->GetTooltipWakeupDelay();
+    }
+
+    return QProxyStyle::styleHint(hint, option, widget, returnData);
+  }
+};
+
 
 void NetworkEditorWidget::constructor()
 {
   isCentralWidget_ = false;
   networkEditor_ = std::make_unique<NetworkEditor>();
   networkEditorView_ = new NetworkEditorView(networkEditor_.get(), this);
+
+  networkEditorView_->setStyle(new MyProxyStyle(networkEditorView_->style()));
 
   // setup layout
   networkEditorWidget_ = new QWidget(this);

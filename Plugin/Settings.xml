@@ -32,6 +32,16 @@
                 -->
             </IntVectorProperty>
 
+            <IntVectorProperty name="TooltipWakeupDelay"
+                               command="SetTooltipWakeupDelay"
+                               number_of_elements="1"
+                               default_values="700">
+                <Documentation>
+                    Specify the delay before a tooltip is shown.
+                </Documentation>
+                <IntRangeDomain name="range" min="0" max="2000" />
+            </IntVectorProperty>
+
             <Hints>
                 <UseDocumentationForLabels />
             </Hints>
