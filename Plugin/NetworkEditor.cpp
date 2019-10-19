@@ -371,9 +371,9 @@ void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
 }
 
 void NetworkEditor::mouseMoveEvent(QGraphicsSceneMouseEvent* e) {
-  if ((e->buttons() & Qt::LeftButton) && activeSourceItem_) {
+  /* if ((e->buttons() & Qt::LeftButton) && activeSourceItem_) {
     updateSceneSize();
-  }
+  } */
   QGraphicsScene::mouseMoveEvent(e);
 }
 
