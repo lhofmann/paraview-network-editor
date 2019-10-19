@@ -10,6 +10,7 @@
 #include <vtkSMInputProperty.h>
 #include <vtkSMPropertyHelper.h>
 
+#include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
 #include <pqActiveObjects.h>
 #include <pqApplicationCore.h>
@@ -168,22 +169,23 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pq
 
   // collect connections from ParaView pipeline
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
-  vtkSMPropertyIterator* propIter = dest->getSourceProxy()->NewPropertyIterator();
-  for (propIter->Begin(); !propIter->IsAtEnd(); propIter->Next()) {
-    if (auto prop = vtkSMInputProperty::SafeDownCast(propIter->GetProperty())) {
-      int input_id = prop->GetPortIndex();
+  pqPipelineFilter* filter = qobject_cast<pqPipelineFilter*>(dest);
+  assert(filter);
+  for (int input_id = 0; input_id < filter->getNumberOfInputPorts(); ++input_id) {
+    const char* input_name = filter->getInputPortName(input_id).toLocal8Bit().constData();
+    auto prop = vtkSMInputProperty::SafeDownCast(filter->getProxy()->GetProperty(input_name));
+    assert(prop);
 
-      vtkSMPropertyHelper helper(prop);
-      unsigned int num_proxies = helper.GetNumberOfElements();
-      for (unsigned int i = 0; i < num_proxies; ++i) {
-        auto proxy_source = smModel->findItem<pqPipelineSource*>(helper.GetAsProxy(i));
-        if (!proxy_source || proxy_source != source)
-          continue;
-        if (!proxy_source->getAllConsumers().contains(dest))
-          continue;
-        int output_id = helper.GetOutputPort(i);
-        sm_connections.insert(std::make_tuple(output_id, input_id));
-      }
+    vtkSMPropertyHelper helper(prop);
+    unsigned int num_proxies = helper.GetNumberOfElements();
+    for (unsigned int i = 0; i < num_proxies; ++i) {
+      auto proxy_source = smModel->findItem<pqPipelineSource*>(helper.GetAsProxy(i));
+      if (!proxy_source || proxy_source != source)
+        continue;
+      if (!proxy_source->getAllConsumers().contains(dest))
+        continue;
+      int output_id = helper.GetOutputPort(i);
+      sm_connections.insert(std::make_tuple(output_id, input_id));
     }
   }
 

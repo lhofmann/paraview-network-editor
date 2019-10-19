@@ -66,13 +66,9 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
   pqPipelineFilter* filter = qobject_cast<pqPipelineFilter*>(source);
   if (filter) {
     std::vector<vtkSMInputProperty*> inputs(filter->getNumberOfInputPorts());
-    vtkSMPropertyIterator* propIter = filter->getSourceProxy()->NewPropertyIterator();
-    for (propIter->Begin(); !propIter->IsAtEnd(); propIter->Next()) {
-      if (auto prop = vtkSMInputProperty::SafeDownCast(propIter->GetProperty())) {
-        if (prop->GetPortIndex() >= 0 && prop->GetPortIndex() < inputs.size()) {
-          inputs[prop->GetPortIndex()] = prop;
-        }
-      }
+    for (int i = 0; i < filter->getNumberOfOutputPorts(); ++i) {
+      auto prop = vtkSMInputProperty::SafeDownCast(filter->getProxy()->GetProperty(filter->getInputPortName(i).toLocal8Bit().constData()));
+      inputs[i] = prop;
     }
 
     for (int i = 0; i < filter->getNumberOfInputPorts(); ++i) {
