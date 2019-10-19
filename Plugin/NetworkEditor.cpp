@@ -284,10 +284,6 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
   }
 }
 
-void NetworkEditor::setAutoUpdateActiveObject(bool enabled) {
-  autoUpdateActiveObject_ = enabled;
-}
-
 void NetworkEditor::onSelectionChanged() {
   if (updateSelection_)
     return;
@@ -306,7 +302,7 @@ void NetworkEditor::onSelectionChanged() {
     ++num_selected;
   }
 
-  if (vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject() /*autoUpdateActiveObject_*/) {
+  if (vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject()) {
     pqActiveObjects::instance().setActiveSource(active_source);
     pqActiveObjects::instance().setSelection(selection, active_source);
   } else {

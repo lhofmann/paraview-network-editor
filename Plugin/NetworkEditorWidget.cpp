@@ -49,18 +49,6 @@ void NetworkEditorWidget::constructor()
   btnSwap->setDefaultAction(swap);
   hLayout->addWidget(btnSwap);
 
-  auto toggleActiveObject = new QAction("Update Active Object", this);
-  auto btnToggleActiveObject = new QToolButton(titleBar);
-  connect(btnToggleActiveObject, &QToolButton::clicked, this, [this, btnToggleActiveObject] (bool) {
-    btnToggleActiveObject->toggle();
-    networkEditor_->setAutoUpdateActiveObject(btnToggleActiveObject->isChecked());
-  });
-  btnToggleActiveObject->setDefaultAction(toggleActiveObject);
-  btnToggleActiveObject->setCheckable(true);
-  btnToggleActiveObject->setChecked(vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject());
-  networkEditor_->setAutoUpdateActiveObject(btnToggleActiveObject->isChecked());
-  hLayout->addWidget(btnToggleActiveObject);
-
   hLayout->addStretch();
 
   vLayout->addWidget(titleBar);

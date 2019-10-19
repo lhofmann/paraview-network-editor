@@ -20,7 +20,6 @@ class NetworkEditor : public QGraphicsScene {
   void addSourceRepresentation(pqPipelineSource* source);
   void removeSourceRepresentation(pqPipelineSource* source);
   void updateConnectionRepresentations(pqPipelineSource* source, pqPipelineSource* dest);
-  void setAutoUpdateActiveObject(bool);
 
  protected:
   virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent* e) override;
@@ -43,7 +42,6 @@ class NetworkEditor : public QGraphicsScene {
   // connectionGraphicsItems_[source, dest][output_id, input_id]
   std::map<std::tuple<pqPipelineSource*, pqPipelineSource*>, std::map<std::tuple<int, int>, ConnectionGraphicsItem*>> connectionGraphicsItems_;
 
-  bool autoUpdateActiveObject_ = false;
   bool updateSelection_ = false;
 
   static const int gridSpacing_;
