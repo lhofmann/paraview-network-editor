@@ -145,6 +145,38 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
 }
 
 void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
+  // remove connections that belong to source
+  std::vector<pqPipelineSource*> dests, sources;
+  for (const auto& kv : connectionGraphicsItems_) {
+    if (std::get<0>(kv.first) == source) {
+      dests.push_back(std::get<1>(kv.first));
+    }
+    if (std::get<1>(kv.first) == source) {
+      sources.push_back(std::get<0>(kv.first));
+    }
+  }
+  for (auto dest : dests) {
+    std::vector<ConnectionGraphicsItem*> connections;
+    for (const auto& kv : connectionGraphicsItems_[std::make_tuple(source, dest)]) {
+      connections.push_back(kv.second);
+    }
+    for (auto connection : connections) {
+      delete connection;
+    }
+    connectionGraphicsItems_.erase(std::make_tuple(source, dest));
+  }
+  for (auto src : sources) {
+    std::vector<ConnectionGraphicsItem*> connections;
+    for (const auto& kv : connectionGraphicsItems_[std::make_tuple(src, source)]) {
+      connections.push_back(kv.second);
+    }
+    for (auto connection : connections) {
+      delete connection;
+    }
+    connectionGraphicsItems_.erase(std::make_tuple(src, source));
+  }
+
+
   auto it = sourceGraphicsItems_.find(source);
   if (it == sourceGraphicsItems_.end())
     return;
