@@ -41,6 +41,10 @@ NetworkEditor::NetworkEditor() {
     updateSelection_ = false;
   });
 
+  connect(&pqActiveObjects::instance(), &pqActiveObjects::viewChanged, this, [this](pqView*) {
+    this->update();
+  });
+
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
   connect(smModel, &pqServerManagerModel::sourceAdded, this, [this](pqPipelineSource* source) {
     std::cout << "added source " << source->getSMName().toStdString() << std::endl;

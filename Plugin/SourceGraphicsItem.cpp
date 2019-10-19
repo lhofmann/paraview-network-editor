@@ -98,6 +98,10 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
   }
 
   connect(source_, &pqPipelineSource::nameChanged, this, &SourceGraphicsItem::onSourceNameChanged);
+
+  connect(source_, &pqPipelineSource::visibilityChanged, this, [this] () {
+    this->update();
+  });
 }
 
 SourceGraphicsItem::~SourceGraphicsItem() = default;
@@ -134,11 +138,24 @@ void SourceGraphicsItem::addOutport(pqPipelineSource* source, int port) {
   outportItems_.emplace_back(new OutputPortGraphicsItem(this, pos, source, port));
 }
 
+#include <pqDataRepresentation.h>
+#include <vtkSMParaViewPipelineControllerWithRendering.h>
+#include <pqActiveObjects.h>
+
 void SourceGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *options, QWidget *widget) {
-  const float roundedCorners = 9.0f;
+  auto controller = vtkSmartPointer<vtkSMParaViewPipelineControllerWithRendering>::New();
+  pqView* activeView = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
+  bool visible = false;
+  if (viewProxy) {
+    for (int i = 0; i < source_->getNumberOfOutputPorts(); ++i) {
+      visible = visible || controller->GetVisibility(source_->getSourceProxy(), i, viewProxy);
+    }
+  }
 
   bool modified = source_->modifiedState() != pqProxy::UNMODIFIED;
 
+  const float roundedCorners = 9.0f;
   p->save();
   p->setRenderHint(QPainter::Antialiasing, true);
   QColor selectionColor("#7a191b");
@@ -146,6 +163,10 @@ void SourceGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *opti
   QColor borderColor("#282828");
   if (modified) {
     borderColor = QColor("#FBBC05");
+  }
+  if (!visible) {
+    backgroundColor.setAlpha(128);
+    selectionColor.setAlpha(128);
   }
 
   if (isSelected()) {
