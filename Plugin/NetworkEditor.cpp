@@ -14,10 +14,14 @@
 #include <pqActiveObjects.h>
 #include <pqApplicationCore.h>
 #include <pqServerManagerModel.h>
+#include <pqRepresentation.h>
 
 #include <QPainter>
 #include <QGraphicsSceneContextMenuEvent>
 #include <QMenu>
+
+#include <algorithm>
+#include <set>
 
 const int NetworkEditor::gridSpacing_ = 25;
 
@@ -52,6 +56,20 @@ NetworkEditor::NetworkEditor() {
     std::cout << "added connection "
               << source->getSMName().toStdString() << " (" << sourcePort << ") -> " << dest->getSMName().toStdString()  << std::endl;
     updateConnectionRepresentations(source, dest);
+  });
+
+  connect(smModel, &pqServerManagerModel::connectionRemoved, this, [this](pqPipelineSource* source, pqPipelineSource* dest, int sourcePort) {
+    std::cout << "removed connection "
+              << source->getSMName().toStdString() << " (" << sourcePort << ") -> " << dest->getSMName().toStdString()  << std::endl;
+    updateConnectionRepresentations(source, dest);
+  });
+
+  connect(smModel, &pqServerManagerModel::representationAdded, this, [this](pqRepresentation* rep) {
+    std::cout << "added representation " << rep->getSMName().toStdString() << std::endl;
+  });
+
+  connect(smModel, &pqServerManagerModel::representationRemoved, this, [this](pqRepresentation* rep) {
+    std::cout << "removed representation " << rep->getSMName().toStdString() << std::endl;
   });
 }
 
@@ -120,11 +138,23 @@ void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
   sourceGraphicsItems_.erase(it);
 }
 
-// adds connection representations (TODO: remove connection representations)
 void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pqPipelineSource* dest) {
+  std::tuple<pqPipelineSource*, pqPipelineSource*> key(source, dest);
+  std::set<std::tuple<int, int>> sm_connections, connections;
+
+  // collect currently known connections
+  auto it = connectionGraphicsItems_.find(key);
+  if (it == connectionGraphicsItems_.end()) {
+    connectionGraphicsItems_[key] = std::map<std::tuple<int, int>, ConnectionGraphicsItem*>();
+  } else {
+    for (auto const& kv : connectionGraphicsItems_[key]) {
+      connections.insert(kv.first);
+    }
+  }
+
+  // collect connections from ParaView pipeline
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
   vtkSMPropertyIterator* propIter = dest->getSourceProxy()->NewPropertyIterator();
-
   for (propIter->Begin(); !propIter->IsAtEnd(); propIter->Next()) {
     if (auto prop = vtkSMInputProperty::SafeDownCast(propIter->GetProperty())) {
       int input_id = prop->GetPortIndex();
@@ -135,23 +165,55 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pq
         auto proxy_source = smModel->findItem<pqPipelineSource*>(helper.GetAsProxy(i));
         if (!proxy_source || proxy_source != source)
           continue;
+        if (!proxy_source->getAllConsumers().contains(dest))
+          continue;
         int output_id = helper.GetOutputPort(i);
-
-        auto key = std::make_tuple(source, output_id, dest, input_id);
-        if (connectionGraphicsItems_.count(key) > 0)
-          continue;
-
-        auto inport_graphics = this->sourceGraphicsItems_[dest]->getInputPortGraphicsItem(input_id);
-        auto outport_graphics = this->sourceGraphicsItems_[source]->getOutputPortGraphicsItem(output_id);
-
-        if (!inport_graphics || !outport_graphics)
-          continue;
-
-        auto connection = new ConnectionGraphicsItem(outport_graphics, inport_graphics);
-        this->addItem(connection);
-        connectionGraphicsItems_[key] = connection;
+        sm_connections.insert(std::make_tuple(output_id, input_id));
       }
     }
+  }
+
+  // debug output
+  std::cout << "Known: ";
+  for (const auto& conn : connections) {
+    std::cout << std::get<0>(conn) << "->" << std::get<1>(conn) << "; ";
+  }
+  std::cout << std::endl;
+  std::cout << "SM: ";
+  for (const auto& conn : sm_connections) {
+    std::cout << std::get<0>(conn) << "->" << std::get<1>(conn) << "; ";
+  }
+  std::cout << std::endl;
+
+  std::set<std::tuple<int, int>> added, removed;
+  std::set_difference(
+      sm_connections.begin(), sm_connections.end(),
+      connections.begin(), connections.end(),
+      std::inserter(added, added.begin()));
+  std::set_difference(
+      connections.begin(), connections.end(),
+      sm_connections.begin(), sm_connections.end(),
+      std::inserter(removed, removed.begin()));
+
+  for (const auto& conn : removed) {
+    if (connectionGraphicsItems_[key].count(conn) < 1) {
+      continue;
+    }
+    auto graphics_item = connectionGraphicsItems_[key][conn];
+    connectionGraphicsItems_[key].erase(conn);
+    delete graphics_item;
+  }
+
+  for (const auto& conn : added) {
+    auto outport_graphics = this->sourceGraphicsItems_[source]->getOutputPortGraphicsItem(std::get<0>(conn));
+    auto inport_graphics = this->sourceGraphicsItems_[dest]->getInputPortGraphicsItem(std::get<1>(conn));
+
+    if (!inport_graphics || !outport_graphics)
+      continue;
+
+    auto connection = new ConnectionGraphicsItem(outport_graphics, inport_graphics);
+    this->addItem(connection);
+    connectionGraphicsItems_[key][conn] = connection;
   }
 }
 

@@ -39,9 +39,11 @@ void PortGraphicsItem::addConnection(ConnectionGraphicsItem* connection) {
 }
 
 void PortGraphicsItem::removeConnection(ConnectionGraphicsItem* connection) {
-  connections_.erase(std::find(connections_.begin(), connections_.end(), connection));
+  auto it = std::find(connections_.begin(), connections_.end(), connection);
+  if (it != connections_.end())
+    connections_.erase(it);
   connectionIndicator_->setVisible(!connections_.empty());
-  update();  // we need to repaint the connection
+  // update();  // don't repaint in case source was removed before connection
 }
 
 QVariant PortGraphicsItem::itemChange(GraphicsItemChange change, const QVariant& value) {

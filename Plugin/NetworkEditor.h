@@ -40,7 +40,8 @@ class NetworkEditor : public QGraphicsScene {
 
   std::map<pqPipelineSource*, SourceGraphicsItem*> sourceGraphicsItems_;
 
-  std::map<std::tuple<pqPipelineSource*, int, pqPipelineSource*, int>, ConnectionGraphicsItem*> connectionGraphicsItems_;
+  // connectionGraphicsItems_[source, dest][output_id, input_id]
+  std::map<std::tuple<pqPipelineSource*, pqPipelineSource*>, std::map<std::tuple<int, int>, ConnectionGraphicsItem*>> connectionGraphicsItems_;
 
   bool autoUpdateActiveObject_ = false;
   bool updateSelection_ = false;
