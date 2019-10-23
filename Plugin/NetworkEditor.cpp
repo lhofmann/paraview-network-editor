@@ -2,6 +2,7 @@
 #include "SourceGraphicsItem.h"
 #include "PortGraphicsItem.h"
 #include "ConnectionGraphicsItem.h"
+#include "ConnectionDragHelper.h"
 #include "vtkPVNetworkEditorSettings.h"
 
 #include <vtkSMProxy.h>
@@ -37,10 +38,14 @@
 
 const int NetworkEditor::gridSpacing_ = 25;
 
-NetworkEditor::NetworkEditor() {
+NetworkEditor::NetworkEditor()
+: connectionDragHelper_{new ConnectionDragHelper(*this)}
+{
   // The default BSP tends to crash...
   setItemIndexMethod(QGraphicsScene::NoIndex);
   setSceneRect(QRectF());
+
+  installEventFilter(connectionDragHelper_);
 
   connect(this, &QGraphicsScene::selectionChanged, this, &NetworkEditor::onSelectionChanged);
 
@@ -537,3 +542,26 @@ QRectF NetworkEditor::getSourcesBoundingRect() const {
   return rect;
 }
 
+void NetworkEditor::initiateConnection(OutputPortGraphicsItem* item) {
+  const auto pos = item->mapToScene(item->rect().center());
+  // const auto color = item->getPort()->getColorCode();
+  const QColor color(44, 123, 182);
+  connectionDragHelper_->start(item, pos, color);
+}
+
+void NetworkEditor::releaseConnection(InputPortGraphicsItem* item) {
+  if (item->getConnections().empty())
+    return;
+  // remove the old connection and add a new connection curve to be connected.
+  auto oldConnection = item->getConnections()[0];
+  auto port = oldConnection->getOutportGraphicsItem();
+  const auto pos = oldConnection->getEndPoint();
+  // const auto color = oldConnection->getOutport()->getColorCode();
+  const QColor color(44, 123, 182);
+  removeConnection(oldConnection);
+  connectionDragHelper_->start(port, pos, color);
+}
+
+InputPortGraphicsItem* NetworkEditor::getInputPortGraphicsItemAt(const QPointF pos) const {
+  return getGraphicsItemAt<InputPortGraphicsItem>(pos);
+}

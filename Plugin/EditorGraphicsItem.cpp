@@ -1,4 +1,5 @@
 #include "EditorGraphicsItem.h"
+#include "NetworkEditor.h"
 
 #include <QGraphicsScene>
 #include <QGraphicsView>
@@ -33,4 +34,8 @@ void EditorGraphicsItem::showToolTipHelper(QGraphicsSceneHelpEvent* e, QString s
   QRect viewRect = v->mapFromScene(rect).boundingRect();
   e->accept();
   QToolTip::showText(e->screenPos(), string, v, viewRect);
+}
+
+NetworkEditor* EditorGraphicsItem::getNetworkEditor() const {
+  return qobject_cast<NetworkEditor*>(scene());
 }

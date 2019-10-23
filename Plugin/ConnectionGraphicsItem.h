@@ -53,6 +53,30 @@ class CurveGraphicsItem : public EditorGraphicsItem {
   QRectF rect_;
 };
 
+class ConnectionDragGraphicsItem : public CurveGraphicsItem {
+ public:
+  ConnectionDragGraphicsItem(OutputPortGraphicsItem *outport, QPointF endPoint,
+                             QColor color = QColor(38, 38, 38));
+  virtual ~ConnectionDragGraphicsItem();
+
+// Override
+  virtual QPointF getStartPoint() const override;
+  virtual QPointF getEndPoint() const override;
+  void setEndPoint(QPointF endPoint);
+
+  OutputPortGraphicsItem* getOutportGraphicsItem() const;
+
+  void reactToPortHover(InputPortGraphicsItem *inport);
+
+// override for qgraphicsitem_cast (refer qt documentation)
+  enum { Type = UserType + ConnectionDragGraphicsType };
+  virtual int type() const override { return Type; }
+
+ protected:
+  QPointF endPoint_;
+  OutputPortGraphicsItem *outport_;
+};
+
 class ConnectionGraphicsItem : public CurveGraphicsItem {
  public:
   ConnectionGraphicsItem(OutputPortGraphicsItem *outport,
@@ -67,6 +91,9 @@ class ConnectionGraphicsItem : public CurveGraphicsItem {
   // Override
   virtual QPointF getStartPoint() const override;
   virtual QPointF getEndPoint() const override;
+
+  InputPortGraphicsItem* getInportGraphicsItem() const;
+  OutputPortGraphicsItem* getOutportGraphicsItem() const;
 
   virtual void showToolTip(QGraphicsSceneHelpEvent *e) override;
 

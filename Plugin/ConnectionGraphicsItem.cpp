@@ -92,6 +92,42 @@ void CurveGraphicsItem::setSelectedBorderColor(QColor selectedBorderColor) {
 QColor CurveGraphicsItem::getColor() const { return color_; }
 
 
+ConnectionDragGraphicsItem::ConnectionDragGraphicsItem(OutputPortGraphicsItem* outport,
+                                                       QPointF endPoint, QColor color)
+    : CurveGraphicsItem(color), endPoint_{endPoint}, outport_(outport) {}
+
+ConnectionDragGraphicsItem::~ConnectionDragGraphicsItem() = default;
+
+OutputPortGraphicsItem* ConnectionDragGraphicsItem::getOutportGraphicsItem() const {
+  return outport_;
+}
+
+QPointF ConnectionDragGraphicsItem::getStartPoint() const {
+  return outport_->mapToScene(outport_->rect().center());
+}
+
+QPointF ConnectionDragGraphicsItem::getEndPoint() const { return endPoint_; }
+
+void ConnectionDragGraphicsItem::setEndPoint(QPointF endPoint) {
+  endPoint_ = endPoint;
+  updateShape();
+}
+
+void ConnectionDragGraphicsItem::reactToPortHover(InputPortGraphicsItem* inport) {
+  if (inport != nullptr) {
+    setBorderColor(Qt::green);
+    /*
+    if (inport->getPort()->canConnectTo(outport_->getPort())) {
+      setBorderColor(Qt::green);
+    } else {
+      setBorderColor(Qt::red);
+    } */
+  } else {
+    resetBorderColors();
+  }
+}
+
+
 ConnectionGraphicsItem::ConnectionGraphicsItem(OutputPortGraphicsItem* outport,
                                                InputPortGraphicsItem* inport)
     : CurveGraphicsItem(dummy_color) // (utilqt::toQColor(connection.getInport()->getColorCode()))
@@ -131,4 +167,12 @@ QVariant ConnectionGraphicsItem::itemChange(GraphicsItemChange change, const QVa
       break;
   }
   return QGraphicsItem::itemChange(change, value);
+}
+
+InputPortGraphicsItem* ConnectionGraphicsItem::getInportGraphicsItem() const {
+  return inport_;
+}
+
+OutputPortGraphicsItem* ConnectionGraphicsItem::getOutportGraphicsItem() const {
+  return outport_;
 }

@@ -28,6 +28,7 @@ static const qreal CONNECTIONGRAPHICSITEM_DEPTH = 1.0f;
 static const qreal LINKGRAPHICSITEM_DEPTH = 0.0f;
 
 class Port;
+class NetworkEditor;
 
 class EditorGraphicsItem : public QGraphicsRectItem {
  public:
@@ -39,6 +40,7 @@ class EditorGraphicsItem : public QGraphicsRectItem {
   virtual void showToolTip(QGraphicsSceneHelpEvent* event);
  protected:
   void showToolTipHelper(QGraphicsSceneHelpEvent* event, QString string) const;
+  NetworkEditor* getNetworkEditor() const;
 };
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_EDITORGRAPHICSITEM_H_

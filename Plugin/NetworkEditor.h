@@ -10,6 +10,9 @@ class SourceGraphicsItem;
 class ConnectionGraphicsItem;
 class pqPipelineSource;
 class QGraphicsSceneContextMenuEvent;
+class ConnectionDragHelper;
+class OutputPortGraphicsItem;
+class InputPortGraphicsItem;
 
 class NetworkEditor : public QGraphicsScene {
   Q_OBJECT
@@ -27,6 +30,12 @@ class NetworkEditor : public QGraphicsScene {
   void updateSceneSize();
   bool empty() const;
   QRectF getSourcesBoundingRect() const;
+
+  // Called from ProcessorPortGraphicsItems mouse events.
+  void initiateConnection(OutputPortGraphicsItem* item);
+  void releaseConnection(InputPortGraphicsItem* item);
+
+  InputPortGraphicsItem* getInputPortGraphicsItemAt(const QPointF pos) const;
 
  protected:
   virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent* e) override;
@@ -56,6 +65,8 @@ class NetworkEditor : public QGraphicsScene {
   QPointF snapToGrid(const QPointF& pos);
 
   SourceGraphicsItem* activeSourceItem_ {nullptr};
+
+  ConnectionDragHelper* connectionDragHelper_;
 };
 
 template <typename T>

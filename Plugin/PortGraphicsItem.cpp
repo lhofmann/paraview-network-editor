@@ -1,5 +1,5 @@
 #include "PortGraphicsItem.h"
-
+#include "NetworkEditor.h"
 #include "SourceGraphicsItem.h"
 #include "ConnectionGraphicsItem.h"
 
@@ -75,12 +75,10 @@ InputPortGraphicsItem::InputPortGraphicsItem(SourceGraphicsItem* parent, const Q
 {}
 
 void InputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
-  /*
-  if (e->buttons() == Qt::LeftButton && inport_->isConnected()) {
+  if (e->buttons() == Qt::LeftButton /*&& inport_->isConnected()*/) {
     getNetworkEditor()->releaseConnection(this);
   }
   e->accept();
-   */
 }
 
 void InputPortGraphicsItem::updateConnectionPositions() {
@@ -137,12 +135,11 @@ OutputPortGraphicsItem::OutputPortGraphicsItem(SourceGraphicsItem* parent,  cons
 { }
 
 void OutputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
-  /*
   if (e->buttons() == Qt::LeftButton) {
     getNetworkEditor()->initiateConnection(this);
   }
   e->accept();
-   */
+
   pqPipelineSource* source = this->source_->getSource();
   pqOutputPort* port = source->getOutputPort(port_id);
   pqActiveObjects::instance().setActivePort(port);
