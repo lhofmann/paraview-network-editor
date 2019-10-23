@@ -37,6 +37,12 @@ paraview_add_plugin(NetworkEditor
   XML_DOCUMENTATION OFF
   MODULES NetworkEditorSettings)
 
+set_target_properties(NetworkEditor PROPERTIES LINK_FLAGS "-Wl,--no-undefined")
+
 target_link_libraries(NetworkEditor
   PRIVATE
-    Qt5::Widgets)
+    Qt5::Widgets
+    ParaView::pqComponents
+    ParaView::pqApplicationComponents
+    ParaView::ServerManagerRendering
+)

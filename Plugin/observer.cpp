@@ -51,3 +51,12 @@ void Observer::addObservationInternal(ObservableInterface* observed) {
 void Observer::removeObservationInternal(ObservableInterface* observable) {
   observables_.erase(observable);
 }
+
+void ObservableInterface::addObservationHelper(Observer* observer) {
+  observer->addObservationInternal(this);
+}
+
+void ObservableInterface::removeObservationHelper(Observer* observer) {
+  observer->removeObservationInternal(this);
+}
+

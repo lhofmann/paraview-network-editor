@@ -4,4 +4,6 @@ DESCRIPTION
   Network editor
 REQUIRES_MODULES
   ParaView::pqComponents
+  ParaView::pqApplicationComponents
+  ParaView::ServerManagerRendering
   NetworkEditorSettings
