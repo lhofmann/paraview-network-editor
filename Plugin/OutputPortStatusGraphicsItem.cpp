@@ -19,7 +19,7 @@ OutputPortStatusGraphicsItem::OutputPortStatusGraphicsItem(QGraphicsRectItem* pa
     , lineWidth_(1.0f)
     , port_(port)
 {
-  setRect(-0.5f * size_ - lineWidth_, -0.5f * size_ - lineWidth_, size_ + 2.0 * lineWidth_,
+  setRect(-0.5f * size_ - lineWidth_, -0.5f * size_ - lineWidth_, 1.5 * size_ + 2.0 * lineWidth_,
           size_ + 2.0 * lineWidth_);
 }
 
@@ -57,19 +57,20 @@ void OutputPortStatusGraphicsItem::paint(QPainter* p, const QStyleOptionGraphics
   p->drawEllipse(QPointF(0.0f, 0.0f), ledRadius, ledRadius);
 
   if (scalar_bar) {
-    p->setPen(Qt::NoPen);
-    qreal radius = ledRadius + lineWidth_;
-    QRectF rect(radius / 3., -radius, 2. * radius / 3., 2. * radius);
+    p->setPen(QPen(borderColor, 1.0));
+    qreal radius = ledRadius; // + lineWidth_;
+    QRectF rect(radius, -radius, radius, 2. * radius);
 
     QLinearGradient lgrad(rect.topLeft(), rect.bottomLeft());
-    /* lgrad.setColorAt(0., "#4747db");
+    lgrad.setColorAt(0., "#4747db");
     lgrad.setColorAt(1. / 7., "#00005c");
     lgrad.setColorAt(2. / 7., "#00ffff");
     lgrad.setColorAt(3. / 7., "#008000");
     lgrad.setColorAt(4. / 7., "#ffff00");
     lgrad.setColorAt(5. / 7., "#ff6100");
     lgrad.setColorAt(6. / 7., "#6b0000");
-    lgrad.setColorAt(1., "#e04d4d"); */
+    lgrad.setColorAt(1., "#e04d4d");
+    /*
     lgrad.setColorAt(0., "#0c366a");
     lgrad.setColorAt(1. / 16., "#114170");
     lgrad.setColorAt(2. / 16., "#184c76");
@@ -87,6 +88,7 @@ void OutputPortStatusGraphicsItem::paint(QPainter* p, const QStyleOptionGraphics
     lgrad.setColorAt(14. / 16., "#f3bc93");
     lgrad.setColorAt(15. / 16., "#f9ca9a");
     lgrad.setColorAt(1., "#fdd7a2");
+     */
     p->setBrush(lgrad);
     p->drawRect(rect);
 
