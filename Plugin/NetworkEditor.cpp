@@ -589,5 +589,5 @@ InputPortGraphicsItem* NetworkEditor::getInputPortGraphicsItemAt(const QPointF p
 void NetworkEditor::removeConnection(ConnectionGraphicsItem* connection) {
   auto inport = connection->getInportGraphicsItem()->getPort();
   auto outport = connection->getOutportGraphicsItem()->getPort();
-  utilpq::remove_connection(std::get<0>(outport), std::get<1>(outport), std::get<0>(inport), std::get<1>(inport));
+  utilpq::remove_connection(outport.first, outport.second, inport.first, inport.second);
 }

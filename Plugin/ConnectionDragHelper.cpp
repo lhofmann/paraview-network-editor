@@ -6,6 +6,7 @@
 
 #include <QGraphicsItem>
 #include <QGraphicsSceneMouseEvent>
+#include <QApplication>
 
 ConnectionDragHelper::ConnectionDragHelper(NetworkEditor &editor)
     : QObject(&editor), editor_{editor} {}
@@ -27,11 +28,12 @@ bool ConnectionDragHelper::eventFilter(QObject *, QEvent *event) {
 
     if (endItem) {
       auto inport = endItem->getPort();
-      if (utilpq::can_connect(std::get<0>(outport), std::get<1>(outport), std::get<0>(inport), std::get<1>(inport))) {
-        if (!utilpq::multiple_inputs(std::get<0>(inport), std::get<1>(inport))) {
-          utilpq::clear_connections(std::get<0>(inport), std::get<1>(inport));
+      bool force_accept = QApplication::keyboardModifiers() & Qt::ShiftModifier;
+      if (force_accept || utilpq::can_connect(outport.first, outport.second, inport.first, inport.second)) {
+        if (!utilpq::multiple_inputs(inport.first, inport.second)) {
+          utilpq::clear_connections(inport.first, inport.second);
         }
-        utilpq::add_connection(std::get<0>(outport), std::get<1>(outport), std::get<0>(inport), std::get<1>(inport));
+        utilpq::add_connection(outport.first, outport.second, inport.first, inport.second);
       }
     }
     e->accept();

@@ -20,7 +20,16 @@ bool multiple_inputs(pqPipelineFilter* filter, int port) {
 }
 
 bool can_connect(pqPipelineSource* source, int out_port, pqPipelineFilter* dest, int in_port) {
-  return true;
+  QString input_name = dest->getInputPortName(in_port);
+  vtkSMInputProperty* input = vtkSMInputProperty::SafeDownCast(
+      dest->getProxy()->GetProperty(input_name.toLocal8Bit().data()));
+
+  input->RemoveAllUncheckedProxies();
+  input->AddUncheckedInputConnection(source->getProxy(), out_port);
+  int result = input->IsInDomains();
+  input->RemoveAllUncheckedProxies();
+
+  return result;
 }
 
 void add_connection(pqPipelineSource* source, int out_port, pqPipelineFilter* dest, int in_port) {

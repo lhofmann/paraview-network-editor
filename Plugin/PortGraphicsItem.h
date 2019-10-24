@@ -61,7 +61,7 @@ public:
 
     virtual void showToolTip(QGraphicsSceneHelpEvent* e) override;
 
-    std::tuple<pqPipelineFilter*, int> getPort() const;
+    std::pair<pqPipelineFilter*, int> getPort() const;
 
 protected:
     pqPipelineFilter* pipeline_filter_;
@@ -84,7 +84,7 @@ public:
 
     virtual void showToolTip(QGraphicsSceneHelpEvent* e) override;
 
-  std::tuple<pqPipelineSource*, int> getPort() const;
+    std::pair<pqPipelineSource*, int> getPort() const;
 
 protected:
     pqPipelineSource* pipeline_source_;

@@ -1,9 +1,11 @@
 #include "ConnectionGraphicsItem.h"
+#include "utilpq.h"
 
 #include <QGraphicsDropShadowEffect>
 #include <QGraphicsSceneHoverEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QApplication>
 
 #include <cmath>
 
@@ -115,13 +117,15 @@ void ConnectionDragGraphicsItem::setEndPoint(QPointF endPoint) {
 
 void ConnectionDragGraphicsItem::reactToPortHover(InputPortGraphicsItem* inport) {
   if (inport != nullptr) {
-    setBorderColor(Qt::green);
-    /*
-    if (inport->getPort()->canConnectTo(outport_->getPort())) {
+    auto ip = inport->getPort();
+    auto op = outport_->getPort();
+
+    bool force_accept = QApplication::keyboardModifiers() & Qt::ShiftModifier;
+    if (force_accept || utilpq::can_connect(op.first, op.second, ip.first, ip.second)) {
       setBorderColor(Qt::green);
     } else {
       setBorderColor(Qt::red);
-    } */
+    }
   } else {
     resetBorderColors();
   }

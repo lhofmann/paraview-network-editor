@@ -76,7 +76,7 @@ InputPortGraphicsItem::InputPortGraphicsItem(SourceGraphicsItem* parent, const Q
   PortGraphicsItem(parent, pos, true, dummy_color)
 {}
 
-std::tuple<pqPipelineFilter*, int> InputPortGraphicsItem::getPort() const {
+std::pair<pqPipelineFilter*, int> InputPortGraphicsItem::getPort() const {
   return {pipeline_filter_, port_id};
 }
 
@@ -140,7 +140,7 @@ OutputPortGraphicsItem::OutputPortGraphicsItem(SourceGraphicsItem* parent,  cons
 : PortGraphicsItem(parent, pos, false, dummy_color), port_id(port_id_), pipeline_source_(source)
 { }
 
-std::tuple<pqPipelineSource*, int> OutputPortGraphicsItem::getPort() const {
+std::pair<pqPipelineSource*, int> OutputPortGraphicsItem::getPort() const {
   return {pipeline_source_, port_id};
 }
 
