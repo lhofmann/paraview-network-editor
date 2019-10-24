@@ -13,6 +13,7 @@ class QGraphicsSceneContextMenuEvent;
 class ConnectionDragHelper;
 class OutputPortGraphicsItem;
 class InputPortGraphicsItem;
+class pqDeleteReaction;
 
 class NetworkEditor : public QGraphicsScene {
   Q_OBJECT
@@ -26,6 +27,7 @@ class NetworkEditor : public QGraphicsScene {
 
   void removeConnection(ConnectionGraphicsItem*);
 
+  void deleteSelected();
   void copy();
   void paste(float x, float y);
 
@@ -69,6 +71,7 @@ class NetworkEditor : public QGraphicsScene {
   SourceGraphicsItem* activeSourceItem_ {nullptr};
 
   ConnectionDragHelper* connectionDragHelper_;
+  pqDeleteReaction* deleteReaction_;
 };
 
 template <typename T>

@@ -25,6 +25,7 @@
 #include <pqRepresentation.h>
 #include <pqDataRepresentation.h>
 #include <pqScalarBarVisibilityReaction.h>
+#include <pqDeleteReaction.h>
 
 #include <QGraphicsView>
 #include <QPainter>
@@ -121,6 +122,9 @@ NetworkEditor::NetworkEditor()
   connect(showSBAction, &QAction::toggled, this, [this](bool) { this->update(); });
   connect(showSBAction, &QAction::changed, this, [this]() { this->update(); });
   new pqScalarBarVisibilityReaction(showSBAction);
+
+  QAction *tempDeleteAction = new QAction(this);
+  deleteReaction_ = new pqDeleteReaction(tempDeleteAction);
 }
 
 NetworkEditor::~NetworkEditor() = default;
@@ -316,6 +320,11 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
       break;
     }
   }
+
+  menu.addSeparator();
+  auto delete_action = menu.addAction(tr("Delete"));
+  connect(delete_action, &QAction::triggered, this, &NetworkEditor::deleteSelected);
+
   menu.addSeparator();
   auto copy = menu.addAction(tr("Copy"));
   connect(copy, &QAction::triggered, this, &NetworkEditor::copy);
@@ -591,4 +600,19 @@ void NetworkEditor::removeConnection(ConnectionGraphicsItem* connection) {
   auto inport = connection->getInportGraphicsItem()->getPort();
   auto outport = connection->getOutportGraphicsItem()->getPort();
   utilpq::remove_connection(outport.first, outport.second, inport.first, inport.second);
+}
+
+void NetworkEditor::deleteSelected() {
+  auto items = this->selectedItems();
+  QSet<pqPipelineSource*> delete_sources;
+  for (QGraphicsItem* item : items) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+      delete_sources.insert(source->getSource());
+    } else if (auto connection = qgraphicsitem_cast<ConnectionGraphicsItem*>(item)) {
+      removeConnection(connection);
+    }
+  }
+  if (!delete_sources.empty()) {
+    deleteReaction_->deleteSources(delete_sources);
+  }
 }

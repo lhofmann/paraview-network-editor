@@ -92,6 +92,12 @@ void NetworkEditorWidget::constructor()
   // hLayout->addWidget(btnSearch);
   networkEditorView_->addAction(search);
 
+  auto delete_action = new QAction("Delete", this);
+  delete_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
+  delete_action->setShortcut(QKeySequence::Delete);
+  connect(delete_action, &QAction::triggered, networkEditor_.get(), &NetworkEditor::deleteSelected);
+  networkEditorView_->addAction(delete_action);
+
   vLayout->addWidget(titleBar);
   vLayout->addWidget(networkEditorView_);
   networkEditorWidget_->setLayout(vLayout);
