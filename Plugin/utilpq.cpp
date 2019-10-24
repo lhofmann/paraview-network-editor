@@ -4,6 +4,7 @@
 #include <vtkSMProperty.h>
 #include <vtkSMInputProperty.h>
 #include <vtkSMPropertyHelper.h>
+#include <vtkPVXMLElement.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -17,6 +18,14 @@ bool multiple_inputs(pqPipelineFilter* filter, int port) {
   vtkSMInputProperty* ip = vtkSMInputProperty::SafeDownCast(
       filter->getProxy()->GetProperty(input_name.toLocal8Bit().data()));
   return ip->GetMultipleInput();
+}
+
+bool optional_input(pqPipelineFilter* filter, int port) {
+  QString input_name = filter->getInputPortName(port);
+  vtkSMInputProperty* ip = vtkSMInputProperty::SafeDownCast(
+      filter->getProxy()->GetProperty(input_name.toLocal8Bit().data()));
+  vtkPVXMLElement* hints = ip->GetHints();
+  return hints && hints->FindNestedElementByName("Optional");
 }
 
 bool filter_reachable(pqPipelineFilter* dest, pqPipelineSource* source) {

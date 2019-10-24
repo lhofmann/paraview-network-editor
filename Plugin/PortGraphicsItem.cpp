@@ -2,6 +2,7 @@
 #include "NetworkEditor.h"
 #include "SourceGraphicsItem.h"
 #include "ConnectionGraphicsItem.h"
+#include "utilpq.h"
 
 #include <vtkSMParaViewPipelineControllerWithRendering.h>
 #include <vtkSMViewProxy.h>
@@ -111,7 +112,7 @@ void InputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, 
   p->setBrush(color);
   p->setPen(QPen(borderColor, lineWidth_));
 
-  if (true /*inport_->isOptional()*/) {
+  if (utilpq::optional_input(pipeline_filter_, port_id)) {
     // Use a different shape for optional ports (rounded at the bottom)
     QPainterPath path;
     auto start = (portRect.topRight() + portRect.bottomRight()) * 0.5;
