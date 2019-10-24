@@ -31,3 +31,13 @@ private:
 
   void constructor();
 };
+
+class MainWindowEventFilter : public QObject {
+ Q_OBJECT
+
+ public:
+  MainWindowEventFilter(QWidget* parent) : parent_(parent) {}
+  virtual bool eventFilter(QObject *obj, QEvent *event) override;
+ private:
+  QWidget* parent_;
+};

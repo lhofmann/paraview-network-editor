@@ -5,10 +5,12 @@
 
 #include "vtkPVNetworkEditorSettings.h"
 
+#include <pqPVApplicationCore.h>
 #include <pqApplicationCore.h>
 #include <pqPipelineSource.h>
 #include <pqOutputPort.h>
 #include <pqServerManagerModel.h>
+#include <pqCoreUtilities.h>
 
 #include <vtkSMSourceProxy.h>
 
@@ -21,6 +23,9 @@
 #include <QProcessEnvironment>
 #include <QToolButton>
 #include <QProxyStyle>
+#include <QToolTip>
+#include <QMenuBar>
+#include <QKeyEvent>
 
 #include <iostream>
 
@@ -70,6 +75,23 @@ void NetworkEditorWidget::constructor()
 
   hLayout->addStretch();
 
+  auto help = new QAction("Help", this);
+  auto btnHelp = new QToolButton(titleBar);
+  connect(help, &QAction::triggered, this, [this]() {
+    // TODO
+  });
+  btnHelp->setDefaultAction(help);
+  hLayout->addWidget(btnHelp);
+
+  auto search = new QAction("Search", this);
+  search->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
+  search->setShortcut(QKeySequence(Qt::ControlModifier + Qt::Key_Space));
+  // auto btnSearch = new QToolButton(titleBar);
+  // btnSearch->setDefaultAction(search);
+  // btnSearch->setVisible(false);
+  // hLayout->addWidget(btnSearch);
+  networkEditorView_->addAction(search);
+
   vLayout->addWidget(titleBar);
   vLayout->addWidget(networkEditorView_);
   networkEditorWidget_->setLayout(vLayout);
@@ -81,10 +103,16 @@ void NetworkEditorWidget::constructor()
     this->setWindowTitle("Network Editor");
   }
 
+  connect(search, &QAction::triggered, this, [this]() {
+    pqPVApplicationCore::instance()->quickLaunch();
+  });
+
+  auto main_window = qobject_cast<QMainWindow*>(pqCoreUtilities::mainWidget());
+  main_window->installEventFilter(new MainWindowEventFilter(networkEditorView_));
 }
 
 void NetworkEditorWidget::swapWithCentralWidget() {
-  auto main_window = dynamic_cast<QMainWindow *>(this->parent());
+  auto main_window = qobject_cast<QMainWindow*>(pqCoreUtilities::mainWidget());
 
   auto dock_widgets = main_window->findChildren<QDockWidget*>();
   QList<int> widths, heights;
@@ -113,4 +141,22 @@ void NetworkEditorWidget::swapWithCentralWidget() {
   main_window->resizeDocks(dock_widgets, widths, Qt::Horizontal);
 
   isCentralWidget_ = !isCentralWidget_;
+}
+
+bool MainWindowEventFilter::eventFilter(QObject *obj, QEvent *event) {
+  if (event->type() == QEvent::ShortcutOverride) {
+    QKeyEvent* key_event = static_cast<QKeyEvent*>(event);
+    QKeySequence key_sequence(key_event->key() | key_event->modifiers());
+    if (parent_->hasFocus()) {
+      auto actions = parent_->actions();
+      for (QAction* action : actions) {
+        if (action->shortcut() == key_sequence) {
+          event->accept();
+          action->trigger();
+          break;
+        }
+      }
+    }
+  }
+  return false;
 }
