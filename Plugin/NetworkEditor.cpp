@@ -334,25 +334,44 @@ void NetworkEditor::onSelectionChanged() {
   if (updateSelection_)
     return;
 
-  pqProxySelection selection;
-  pqPipelineSource* active_source = nullptr;
-  int num_selected = 0;
-  for (auto item : this->selectedItems()) {
-    auto source_item = qgraphicsitem_cast<SourceGraphicsItem*>(item);
-    if (!source_item)
-      continue;
-    auto source = source_item->getSource();
-    selection.push_back(source);
-    if (!active_source)
-      active_source = source;
-    ++num_selected;
-  }
+  {
+    pqProxySelection selection;
+    pqPipelineSource *active_source = nullptr;
+    int num_selected = 0;
+    for (auto item : this->selectedItems()) {
+      auto source_item = qgraphicsitem_cast<SourceGraphicsItem *>(item);
+      if (!source_item)
+        continue;
+      auto source = source_item->getSource();
+      selection.push_back(source);
+      if (!active_source)
+        active_source = source;
+      ++num_selected;
+    }
 
-  if (vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject()) {
-    pqActiveObjects::instance().setActiveSource(active_source);
-    pqActiveObjects::instance().setSelection(selection, active_source);
-  } else {
-    pqActiveObjects::instance().setSelection(selection, nullptr);
+    if (vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject()) {
+      pqActiveObjects::instance().setActiveSource(active_source);
+      pqActiveObjects::instance().setSelection(selection, active_source);
+    } else {
+      pqActiveObjects::instance().setSelection(selection, nullptr);
+    }
+  }
+  {
+    auto selection = selectedItems();
+    bool contains_source = false;
+    for (auto item : selection) {
+      if (qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+        contains_source = true;
+        break;
+      }
+    }
+    if (contains_source) {
+      for (auto item : selection) {
+        if (!qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+          item->setSelected(false);
+        }
+      }
+    }
   }
 }
 
