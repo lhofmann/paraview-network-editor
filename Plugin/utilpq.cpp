@@ -19,6 +19,18 @@ bool multiple_inputs(pqPipelineFilter* filter, int port) {
   return ip->GetMultipleInput();
 }
 
+bool filter_reachable(pqPipelineFilter* dest, pqPipelineSource* source) {
+  if (qobject_cast<pqPipelineSource*>(dest) == source)
+    return true;
+  QList<pqPipelineSource*> consumers = source->getAllConsumers();
+  for (pqPipelineSource* consumer : consumers) {
+    if (filter_reachable(dest, consumer)) {
+      return true;
+    }
+  }
+  return false;
+}
+
 bool can_connect(pqPipelineSource* source, int out_port, pqPipelineFilter* dest, int in_port) {
   QString input_name = dest->getInputPortName(in_port);
   vtkSMInputProperty* input = vtkSMInputProperty::SafeDownCast(
@@ -26,8 +38,12 @@ bool can_connect(pqPipelineSource* source, int out_port, pqPipelineFilter* dest,
 
   input->RemoveAllUncheckedProxies();
   input->AddUncheckedInputConnection(source->getProxy(), out_port);
-  int result = input->IsInDomains();
+  bool result = input->IsInDomains() > 0;
   input->RemoveAllUncheckedProxies();
+
+  if (auto filter = qobject_cast<pqPipelineFilter*>(source)) {
+    result = result && !filter_reachable(filter, qobject_cast<pqPipelineSource*>(dest));
+  }
 
   return result;
 }
