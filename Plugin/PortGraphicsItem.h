@@ -61,7 +61,12 @@ public:
 
     virtual void showToolTip(QGraphicsSceneHelpEvent* e) override;
 
+    std::tuple<pqPipelineFilter*, int> getPort() const;
+
 protected:
+    pqPipelineFilter* pipeline_filter_;
+    int port_id;
+
     virtual void paint(QPainter* p, const QStyleOptionGraphicsItem* options,
                        QWidget* widget) override;
     virtual void mousePressEvent(QGraphicsSceneMouseEvent* e) override;
@@ -79,7 +84,10 @@ public:
 
     virtual void showToolTip(QGraphicsSceneHelpEvent* e) override;
 
+  std::tuple<pqPipelineSource*, int> getPort() const;
+
 protected:
+    pqPipelineSource* pipeline_source_;
     int port_id;
 
     virtual void paint(QPainter* p, const QStyleOptionGraphicsItem* options,

@@ -24,6 +24,8 @@ class NetworkEditor : public QGraphicsScene {
   void removeSourceRepresentation(pqPipelineSource* source);
   void updateConnectionRepresentations(pqPipelineSource* source, pqPipelineSource* dest);
 
+  void removeConnection(ConnectionGraphicsItem*);
+
   void copy();
   void paste(float x, float y);
 

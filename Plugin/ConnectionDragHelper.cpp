@@ -2,6 +2,7 @@
 #include "NetworkEditor.h"
 #include "PortGraphicsItem.h"
 #include "ConnectionGraphicsItem.h"
+#include "utilpq.h"
 
 #include <QGraphicsItem>
 #include <QGraphicsSceneMouseEvent>
@@ -20,20 +21,19 @@ bool ConnectionDragHelper::eventFilter(QObject *, QEvent *event) {
   } else if (connection_ && event->type() == QEvent::GraphicsSceneMouseRelease) {
     auto e = static_cast<QGraphicsSceneMouseEvent *>(event);
 
-    // auto startPort = connection_->getOutportGraphicsItem()->getPort();
+    auto endItem = editor_.getInputPortGraphicsItemAt(e->scenePos());
+    auto outport = connection_->getOutportGraphicsItem()->getPort();
     reset();
 
-    auto endItem = editor_.getInputPortGraphicsItemAt(e->scenePos());
-    /*
-    if (endItem && endItem->getPort()->canConnectTo(startPort)) {
-      Inport *endPort = endItem->getPort();
-
-      if (endPort->getNumberOfConnections() >= endPort->getMaxNumberOfConnections()) {
-        editor_.getNetwork()->removeConnection(endPort->getConnectedOutport(), endPort);
+    if (endItem) {
+      auto inport = endItem->getPort();
+      if (utilpq::can_connect(std::get<0>(outport), std::get<1>(outport), std::get<0>(inport), std::get<1>(inport))) {
+        if (!utilpq::multiple_inputs(std::get<0>(inport), std::get<1>(inport))) {
+          utilpq::clear_connections(std::get<0>(inport), std::get<1>(inport));
+        }
+        utilpq::add_connection(std::get<0>(outport), std::get<1>(outport), std::get<0>(inport), std::get<1>(inport));
       }
-      editor_.getNetwork()->addConnection(startPort, endPort);
     }
-    */
     e->accept();
   }
   return false;

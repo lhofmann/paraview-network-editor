@@ -70,9 +70,15 @@ SourceGraphicsItem* PortGraphicsItem::getSource() { return source_; }
 
 PortGraphicsItem::~PortGraphicsItem() = default;
 
-InputPortGraphicsItem::InputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, pqPipelineFilter* source, int port_id)
-: PortGraphicsItem(parent, pos, true, dummy_color)
+InputPortGraphicsItem::InputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, pqPipelineFilter* source, int port_id_)
+: port_id(port_id_),
+  pipeline_filter_(source),
+  PortGraphicsItem(parent, pos, true, dummy_color)
 {}
+
+std::tuple<pqPipelineFilter*, int> InputPortGraphicsItem::getPort() const {
+  return {pipeline_filter_, port_id};
+}
 
 void InputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
   if (e->buttons() == Qt::LeftButton /*&& inport_->isConnected()*/) {
@@ -131,8 +137,12 @@ void InputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, 
 }
 
 OutputPortGraphicsItem::OutputPortGraphicsItem(SourceGraphicsItem* parent,  const QPointF& pos, pqPipelineSource* source, int port_id_)
-: PortGraphicsItem(parent, pos, false, dummy_color), port_id(port_id_)
+: PortGraphicsItem(parent, pos, false, dummy_color), port_id(port_id_), pipeline_source_(source)
 { }
+
+std::tuple<pqPipelineSource*, int> OutputPortGraphicsItem::getPort() const {
+  return {pipeline_source_, port_id};
+}
 
 void OutputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
   if (e->buttons() == Qt::LeftButton) {

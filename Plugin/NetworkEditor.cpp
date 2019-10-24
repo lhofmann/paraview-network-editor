@@ -4,6 +4,7 @@
 #include "ConnectionGraphicsItem.h"
 #include "ConnectionDragHelper.h"
 #include "vtkPVNetworkEditorSettings.h"
+#include "utilpq.h"
 
 #include <vtkSMProxy.h>
 #include <vtkSMSourceProxy.h>
@@ -583,4 +584,10 @@ void NetworkEditor::releaseConnection(InputPortGraphicsItem* item) {
 
 InputPortGraphicsItem* NetworkEditor::getInputPortGraphicsItemAt(const QPointF pos) const {
   return getGraphicsItemAt<InputPortGraphicsItem>(pos);
+}
+
+void NetworkEditor::removeConnection(ConnectionGraphicsItem* connection) {
+  auto inport = connection->getInportGraphicsItem()->getPort();
+  auto outport = connection->getOutportGraphicsItem()->getPort();
+  utilpq::remove_connection(std::get<0>(outport), std::get<1>(outport), std::get<0>(inport), std::get<1>(inport));
 }

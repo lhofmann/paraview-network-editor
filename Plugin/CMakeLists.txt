@@ -17,6 +17,7 @@ set(sources
     ConnectionDragHelper.cpp
     OutputPortStatusGraphicsItem.cpp
     utilqt.cpp
+    utilpq.cpp
     observer.cpp)
 
 paraview_plugin_add_dock_window(
