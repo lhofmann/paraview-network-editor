@@ -39,6 +39,8 @@ class NetworkEditor : public QGraphicsScene {
   void paste();
   void quickLaunch();
 
+  void computeGraphLayout();
+
   void updateSourcePositions();
   void updateSceneSize();
   bool empty() const;

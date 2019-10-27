@@ -6,6 +6,10 @@
 #include "vtkPVNetworkEditorSettings.h"
 #include "utilpq.h"
 
+#ifdef ENABLE_GRAPHVIZ
+# include "graph_layout.h"
+#endif
+
 #include <vtkSMProxy.h>
 #include <vtkSMSourceProxy.h>
 #include <vtkSMPropertyIterator.h>
@@ -768,4 +772,41 @@ void NetworkEditor::updateSourcePositions() {
   for (const auto& kv : sourceGraphicsItems_) {
     kv.second->loadPosition();
   }
+}
+
+void NetworkEditor::computeGraphLayout() {
+#ifdef ENABLE_GRAPHVIZ
+  std::vector<size_t> nodes;
+  std::vector<std::pair<size_t, size_t>> edges;
+  std::map<size_t, SourceGraphicsItem*> id_map;
+
+  for (const auto& kv : sourceGraphicsItems_) {
+    size_t id = kv.first->getProxy()->GetGlobalID();
+    id_map[id] = kv.second;
+    nodes.push_back(id);
+
+    for (int i = 0; i < kv.first->getNumberOfOutputPorts(); ++i) {
+      auto output = kv.second->getOutputPortGraphicsItem(i);
+      if (!output)
+        continue;
+      for (ConnectionGraphicsItem* connection : output->getConnections()) {
+        size_t dest_id = connection->getInportGraphicsItem()->getSource()->getSource()->getProxy()->GetGlobalID();
+        edges.emplace_back(std::make_pair(dest_id, id));
+      }
+    }
+  }
+
+  std::map<size_t, std::pair<float, float>> layout = compute_graph_layout(nodes, edges);
+
+  BEGIN_UNDO_SET("Graph Layout");
+  for (const auto& kv : id_map) {
+    if (layout.count(kv.first) < 1)
+      continue;
+    QPointF pos(layout[kv.first].first, layout[kv.first].second);
+    kv.second->setPos(snapToGrid(pos));
+    kv.second->storePosition();
+  }
+  END_UNDO_SET();
+
+#endif
 }

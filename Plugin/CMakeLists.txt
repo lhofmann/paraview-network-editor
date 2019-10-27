@@ -48,3 +48,13 @@ target_link_libraries(NetworkEditor
     ParaView::pqApplicationComponents
     ParaView::ServerManagerRendering
 )
+
+if (ENABLE_GRAPHVIZ)
+    target_sources(NetworkEditor PRIVATE graph_layout.cpp)
+    target_compile_definitions(NetworkEditor PRIVATE ENABLE_GRAPHVIZ)
+    target_include_directories(NetworkEditor PRIVATE ${GRAPHVIZ_INCLUDE_DIR})
+    target_link_libraries(NetworkEditor PRIVATE ${GRAPHVIZ_CDT_LIBRARY})
+    target_link_libraries(NetworkEditor PRIVATE ${GRAPHVIZ_GVC_LIBRARY})
+    target_link_libraries(NetworkEditor PRIVATE ${GRAPHVIZ_CGRAPH_LIBRARY})
+    target_link_libraries(NetworkEditor PRIVATE ${GRAPHVIZ_PATHPLAN_LIBRARY})
+endif ()

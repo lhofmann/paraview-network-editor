@@ -73,6 +73,14 @@ void NetworkEditorWidget::constructor()
   btnSwap->setDefaultAction(swap);
   hLayout->addWidget(btnSwap);
 
+#ifdef ENABLE_GRAPHVIZ
+  auto graphLayout = new QAction("Graph Layout", this);
+  connect(graphLayout, &QAction::triggered, networkEditor_.get(), &NetworkEditor::computeGraphLayout);
+  auto btnGraphLayout = new QToolButton(titleBar);
+  btnGraphLayout->setDefaultAction(graphLayout);
+  hLayout->addWidget(btnGraphLayout);
+#endif
+
   hLayout->addStretch();
 
   auto help = new QAction("Help", this);
