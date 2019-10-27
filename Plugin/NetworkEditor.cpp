@@ -740,6 +740,7 @@ void NetworkEditor::showSelectedScalarBars() {
     }
   }
   pqActiveObjects::instance().activeView()->render();
+  this->update();
 }
 
 void NetworkEditor::hideSelectedScalarBars() {
@@ -750,6 +751,7 @@ void NetworkEditor::hideSelectedScalarBars() {
     }
   }
   pqActiveObjects::instance().activeView()->render();
+  this->update();
 }
 
 void NetworkEditor::selectAll() {
@@ -807,6 +809,5 @@ void NetworkEditor::computeGraphLayout() {
     kv.second->storePosition();
   }
   END_UNDO_SET();
-
 #endif
 }
