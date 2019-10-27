@@ -27,6 +27,11 @@ class NetworkEditor : public QGraphicsScene {
 
   void removeConnection(ConnectionGraphicsItem*);
 
+  void showSelected();
+  void hideSelected();
+  void showSelectedScalarBars();
+  void hideSelectedScalarBars();
+
   void deleteSelected();
   void copy();
   void paste(float x, float y);

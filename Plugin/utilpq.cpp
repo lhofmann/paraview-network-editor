@@ -187,6 +187,31 @@ void toggle_source_visibility(pqPipelineSource* source) {
   }
 }
 
+
+void set_source_visiblity(pqPipelineSource* source, bool visible) {
+  pqView* activeView = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
+  if (!viewProxy)
+    return;
+  auto source_proxy = source->getSourceProxy();
+  for (int i = 0; i < source->getNumberOfOutputPorts(); ++i) {
+    controller->SetVisibility(source_proxy, i, viewProxy, visible);
+  }
+}
+
+void set_source_scalar_bar_visiblity(pqPipelineSource* source, bool visible) {
+  pqView* activeView = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
+  if (!viewProxy)
+    return;
+  for (int i = 0; i < source->getNumberOfOutputPorts(); ++i) {
+    pqDataRepresentation* repr = source->getOutputPort(i)->getRepresentation(activeView);
+    if (repr) {
+      vtkSMPVRepresentationProxy::SetScalarBarVisibility(repr->getProxy(), viewProxy, visible);
+    }
+  }
+}
+
 std::vector<std::string> input_datatypes(pqPipelineFilter* filter, int in_port) {
   QString input_name = filter->getInputPortName(in_port);
   vtkSMInputProperty* ip = vtkSMInputProperty::SafeDownCast(

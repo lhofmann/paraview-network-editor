@@ -337,6 +337,19 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
   }
 
   menu.addSeparator();
+
+  auto show_action = menu.addAction(tr("Show"));
+  connect(show_action, &QAction::triggered, this, &NetworkEditor::showSelected);
+
+  auto hide_action = menu.addAction(tr("Hide"));
+  connect(hide_action, &QAction::triggered, this, &NetworkEditor::hideSelected);
+
+  auto show_scalar_bar_action = menu.addAction(tr("Show Color Legend"));
+  connect(show_scalar_bar_action, &QAction::triggered, this, &NetworkEditor::showSelectedScalarBars);
+
+  auto hide_scalar_bar_action = menu.addAction(tr("Hide Color Legend"));
+  connect(hide_scalar_bar_action, &QAction::triggered, this, &NetworkEditor::hideSelectedScalarBars);
+
   auto delete_action = menu.addAction(tr("Delete"));
   connect(delete_action, &QAction::triggered, this, &NetworkEditor::deleteSelected);
 
@@ -637,3 +650,45 @@ void NetworkEditor::deleteSelected() {
     deleteReaction_->deleteSources(delete_sources);
   }
 }
+
+
+void NetworkEditor::showSelected() {
+  auto items = this->selectedItems();
+  for (QGraphicsItem* item : items) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
+      utilpq::set_source_visiblity(source->getSource(), true);
+    }
+  }
+  pqActiveObjects::instance().activeView()->render();
+}
+
+void NetworkEditor::hideSelected() {
+  auto items = this->selectedItems();
+  for (QGraphicsItem* item : items) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
+      utilpq::set_source_visiblity(source->getSource(), false);
+    }
+  }
+  pqActiveObjects::instance().activeView()->render();
+}
+
+void NetworkEditor::showSelectedScalarBars() {
+  auto items = this->selectedItems();
+  for (QGraphicsItem* item : items) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
+      utilpq::set_source_scalar_bar_visiblity(source->getSource(), true);
+    }
+  }
+  pqActiveObjects::instance().activeView()->render();
+}
+
+void NetworkEditor::hideSelectedScalarBars() {
+  auto items = this->selectedItems();
+  for (QGraphicsItem* item : items) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
+      utilpq::set_source_scalar_bar_visiblity(source->getSource(), false);
+    }
+  }
+  pqActiveObjects::instance().activeView()->render();
+}
+

@@ -30,6 +30,10 @@ void toggle_output_visibility(pqPipelineSource* source, int out_port);
 
 void toggle_source_visibility(pqPipelineSource* source);
 
+void set_source_visiblity(pqPipelineSource* source, bool visible);
+
+void set_source_scalar_bar_visiblity(pqPipelineSource* source, bool visible);
+
 std::vector<std::string> input_datatypes(pqPipelineFilter* filter, int in_port);
 
 }
