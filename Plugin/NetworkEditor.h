@@ -39,6 +39,7 @@ class NetworkEditor : public QGraphicsScene {
   void paste();
   void quickLaunch();
 
+  void updateSourcePositions();
   void updateSceneSize();
   bool empty() const;
   QRectF getSourcesBoundingRect() const;

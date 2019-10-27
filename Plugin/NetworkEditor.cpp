@@ -137,6 +137,11 @@ NetworkEditor::NetworkEditor()
     }
   });
 
+  // undo/redo may change node positions
+  pqUndoStack* undo_stack = pqApplicationCore::instance()->getUndoStack();
+  connect(undo_stack, &pqUndoStack::undone, this, &NetworkEditor::updateSourcePositions);
+  connect(undo_stack, &pqUndoStack::redone, this, &NetworkEditor::updateSourcePositions);
+
   QAction* showSBAction = new QAction(this);
   connect(showSBAction, &QAction::toggled, this, [this](bool) { this->update(); });
   connect(showSBAction, &QAction::changed, this, [this]() { this->update(); });
@@ -462,14 +467,18 @@ void NetworkEditor::mousePressEvent(QGraphicsSceneMouseEvent* e) {
 }
 
 void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
-  lastMousePos_ = e->scenePos();
-  // snap selected sources to grid
-  for (auto item : this->selectedItems()) {
-    if (!qgraphicsitem_cast<SourceGraphicsItem*>(item))
-      continue;
 
-    item->setPos(snapToGrid(item->scenePos()));
+  lastMousePos_ = e->scenePos();
+
+  // snap selected sources to grid and store position in proxies
+  BEGIN_UNDO_SET("Move Nodes");
+  for (auto item : this->selectedItems()) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+      source->setPos(snapToGrid(item->scenePos()));
+      source->storePosition();
+    }
   }
+  END_UNDO_SET();
   if (activeSourceItem_) {
     updateSceneSize();
     activeSourceItem_ = nullptr;
@@ -753,4 +762,10 @@ void NetworkEditor::quickLaunch() {
   addSourceAtMousePos_ = true;
   pqPVApplicationCore::instance()->quickLaunch();
   addSourceAtMousePos_ = false;
+}
+
+void NetworkEditor::updateSourcePositions() {
+  for (const auto& kv : sourceGraphicsItems_) {
+    kv.second->loadPosition();
+  }
 }

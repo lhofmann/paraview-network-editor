@@ -191,11 +191,28 @@ void SourceGraphicsItem::onSourceNameChanged(pqServerManagerModelItem*) {
 
 QVariant SourceGraphicsItem::itemChange(GraphicsItemChange change, const QVariant &value) {
   if (change == ItemPositionChange && scene()) {
-    QPointF pos = value.toPointF();
-    source_->getProxy()->SetAnnotation("Node.x", std::to_string(pos.x()).c_str());
-    source_->getProxy()->SetAnnotation("Node.y", std::to_string(pos.y()).c_str());
+    positionModified_ = true;
   }
   return QGraphicsItem::itemChange(change, value);
+}
+
+void SourceGraphicsItem::storePosition() {
+  if (positionModified_) {
+    QPointF pos = this->scenePos();
+    source_->getProxy()->SetAnnotation("Node.x", std::to_string(pos.x()).c_str());
+    source_->getProxy()->SetAnnotation("Node.y", std::to_string(pos.y()).c_str());
+    positionModified_ = false;
+  }
+}
+
+void SourceGraphicsItem::loadPosition() {
+  auto proxy = source_->getProxy();
+  if (proxy->HasAnnotation("Node.x") && proxy->HasAnnotation("Node.y")) {
+    QPointF pos;
+    pos.setX(std::stof(proxy->GetAnnotation("Node.x")));
+    pos.setY(std::stof(proxy->GetAnnotation("Node.y")));
+    this->setPos(pos);
+  }
 }
 
 InputPortGraphicsItem* SourceGraphicsItem::getInputPortGraphicsItem(int port) const {

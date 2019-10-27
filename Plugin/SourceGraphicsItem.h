@@ -29,6 +29,9 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
   InputPortGraphicsItem* getInputPortGraphicsItem(int) const;
   OutputPortGraphicsItem* getOutputPortGraphicsItem(int) const;
 
+  void storePosition();
+  void loadPosition();
+
  protected:
   void paint(QPainter* p, const QStyleOptionGraphicsItem* options, QWidget* widget) override;
 
@@ -54,6 +57,8 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
 
   std::vector<InputPortGraphicsItem*> inportItems_;
   std::vector<OutputPortGraphicsItem*> outportItems_;
+
+  bool positionModified_ = false;
 
 };
 
