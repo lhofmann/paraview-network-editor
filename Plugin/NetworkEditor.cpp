@@ -27,6 +27,10 @@
 #include <pqScalarBarVisibilityReaction.h>
 #include <pqDeleteReaction.h>
 #include <pqPVApplicationCore.h>
+#include <pqParaViewMenuBuilders.h>
+#include <pqProxyGroupMenuManager.h>
+#include <pqSourcesMenuReaction.h>
+#include <pqCoreUtilities.h>
 
 #include <QGraphicsView>
 #include <QPainter>
@@ -35,6 +39,8 @@
 #include <QMimeData>
 #include <QApplication>
 #include <QClipboard>
+#include <QMenuBar>
+#include <QMainWindow>
 
 #include <algorithm>
 #include <set>
@@ -352,6 +358,13 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
 
   auto select_all_action = menu.addAction(tr("Select All"));
   connect(select_all_action, &QAction::triggered, this, &NetworkEditor::selectAll);
+
+  QMainWindow* main_window = qobject_cast<QMainWindow*>(pqCoreUtilities::mainWidget());
+  QList<QAction*> actions = main_window->menuBar()->actions();
+  if (actions.size() > 4) {
+    menu.addMenu(actions[3]->menu());
+    menu.addMenu(actions[4]->menu());
+  }
 
   menu.addSeparator();
 
