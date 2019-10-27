@@ -89,8 +89,8 @@ void remove_connection(pqPipelineSource* source, int out_port, pqPipelineFilter*
   vtkSMPropertyHelper helper(dest->getProxy(), input_name.toLocal8Bit().data());
   unsigned int numProxies = helper.GetNumberOfElements();
   for (unsigned int cc = 0; cc < numProxies; cc++) {
-    vtkSMProxy* proxy = helper.GetAsProxy();
-    unsigned int port = helper.GetOutputPort();
+    vtkSMProxy* proxy = helper.GetAsProxy(cc);
+    unsigned int port = helper.GetOutputPort(cc);
     if (proxy == source->getProxy() && port == out_port) {
       continue;
     }
