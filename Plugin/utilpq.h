@@ -1,10 +1,12 @@
 #ifndef PARAVIEWNETWORKEDITOR_PLUGIN_UTILPQ_H_
 #define PARAVIEWNETWORKEDITOR_PLUGIN_UTILPQ_H_
 
+#include <string>
 #include <vector>
 
 class pqPipelineSource;
 class pqPipelineFilter;
+class vtkSMParaViewPipelineControllerWithRendering;
 
 namespace utilpq {
 
@@ -21,6 +23,14 @@ void remove_connection(pqPipelineSource* source, int out_port, pqPipelineFilter*
 void clear_connections(pqPipelineFilter* filter, int port);
 
 std::vector<pqPipelineSource*> get_sources();
+
+std::pair<bool, bool> output_visibiility(pqPipelineSource* source, int out_port);
+
+void toggle_output_visibility(pqPipelineSource* source, int out_port);
+
+void toggle_source_visibility(pqPipelineSource* source);
+
+std::vector<std::string> input_datatypes(pqPipelineFilter* filter, int in_port);
 
 }
 

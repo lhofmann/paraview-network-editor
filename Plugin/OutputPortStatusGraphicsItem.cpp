@@ -1,4 +1,5 @@
 #include "OutputPortStatusGraphicsItem.h"
+#include "utilpq.h"
 
 #include <vtkSMParaViewPipelineControllerWithRendering.h>
 #include <vtkSMPVRepresentationProxy.h>
@@ -32,17 +33,7 @@ void OutputPortStatusGraphicsItem::paint(QPainter* p, const QStyleOptionGraphics
 
   bool visible = false;
   bool scalar_bar = false;
-
-  auto controller = vtkSmartPointer<vtkSMParaViewPipelineControllerWithRendering>::New();
-  pqView* activeView = pqActiveObjects::instance().activeView();
-  vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
-  if (viewProxy) {
-    visible = controller->GetVisibility(port_->getSourceProxy(), port_->getPortNumber(), viewProxy);
-    pqDataRepresentation* representation = port_->getRepresentation(activeView);
-    if (representation) {
-      scalar_bar = vtkSMPVRepresentationProxy::IsScalarBarVisible(representation->getProxy(), viewProxy);
-    }
-  }
+  std::tie(visible, scalar_bar) = utilpq::output_visibiility(port_->getSource(), port_->getPortNumber());
 
   if (visible) {
     ledColor = baseColor;
@@ -105,12 +96,7 @@ void OutputPortStatusGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) 
 }
 
 void OutputPortStatusGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) {
-  auto controller = vtkSmartPointer<vtkSMParaViewPipelineControllerWithRendering>::New();
+  utilpq::toggle_output_visibility(port_->getSource(), port_->getPortNumber());
   pqView* activeView = pqActiveObjects::instance().activeView();
-  vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
-  if (!viewProxy)
-    return;
-  bool visible = controller->GetVisibility(port_->getSourceProxy(), port_->getPortNumber(), viewProxy);
-  controller->SetVisibility(port_->getSourceProxy(), port_->getPortNumber(), viewProxy, !visible);
   activeView->render();
 }

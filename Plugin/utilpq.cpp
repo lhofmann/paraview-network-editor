@@ -8,14 +8,21 @@
 #include <vtkSMProxyManager.h>
 #include <vtkSMProxyIterator.h>
 #include <vtkSMSourceProxy.h>
+#include <vtkSMParaViewPipelineControllerWithRendering.h>
+#include <vtkSMPVRepresentationProxy.h>
+#include <vtkSMViewProxy.h>
+#include <vtkSMDataTypeDomain.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
 #include <pqOutputPort.h>
 #include <pqApplicationCore.h>
 #include <pqServerManagerModel.h>
+#include <pqActiveObjects.h>
 
 namespace utilpq {
+
+static vtkSMParaViewPipelineControllerWithRendering* controller = vtkSMParaViewPipelineControllerWithRendering::New();
 
 bool multiple_inputs(pqPipelineFilter* filter, int port) {
   QString input_name = filter->getInputPortName(port);
@@ -134,6 +141,68 @@ std::vector<pqPipelineSource*> get_sources() {
   std::sort(result.begin(), result.end(), [](pqPipelineSource* a, pqPipelineSource* b) -> bool {
     return a->getProxy()->GetGlobalID() < b->getProxy()->GetGlobalID();
   });
+  return result;
+}
+
+std::pair<bool, bool> output_visibiility(pqPipelineSource* source, int out_port) {
+  bool visible = false;
+  bool scalar_bar = false;
+
+  pqOutputPort* output = source->getOutputPort(out_port);
+
+  pqView* activeView = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
+  if (viewProxy) {
+    visible = controller->GetVisibility(output->getSourceProxy(), out_port, viewProxy);
+    pqDataRepresentation* representation = output->getRepresentation(activeView);
+    if (representation) {
+      scalar_bar = vtkSMPVRepresentationProxy::IsScalarBarVisible(representation->getProxy(), viewProxy);
+    }
+  }
+
+  return {visible, scalar_bar};
+}
+
+void toggle_output_visibility(pqPipelineSource* source, int out_port) {
+  pqView* activeView = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
+  if (!viewProxy)
+    return;
+  bool visible = controller->GetVisibility(source->getSourceProxy(), out_port, viewProxy);
+  controller->SetVisibility(source->getSourceProxy(), out_port, viewProxy, !visible);
+}
+
+void toggle_source_visibility(pqPipelineSource* source) {
+  pqView* activeView = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
+  if (!viewProxy)
+    return;
+  auto source_proxy = source->getSourceProxy();
+  bool visible = false;
+  for (int i = 0; i < source->getNumberOfOutputPorts(); ++i) {
+    visible = visible || controller->GetVisibility(source_proxy, i, viewProxy);
+  }
+  for (int i = 0; i < source->getNumberOfOutputPorts(); ++i) {
+    controller->SetVisibility(source_proxy, i, viewProxy, !visible);
+  }
+}
+
+std::vector<std::string> input_datatypes(pqPipelineFilter* filter, int in_port) {
+  QString input_name = filter->getInputPortName(in_port);
+  vtkSMInputProperty* ip = vtkSMInputProperty::SafeDownCast(
+      filter->getProxy()->GetProperty(input_name.toLocal8Bit().data()));
+
+  std::vector<std::string> result;
+  auto domIter = ip->NewDomainIterator();
+  for (domIter->Begin(); !domIter->IsAtEnd(); domIter->Next()) {
+    auto domain = domIter->GetDomain();
+    if (domain->IsA("vtkSMDataTypeDomain")) {
+      auto dtd = static_cast<vtkSMDataTypeDomain*>(domain);
+      for (unsigned int cc = 0; cc < dtd->GetNumberOfDataTypes(); cc++) {
+        result.push_back(dtd->GetDataType(cc));
+      }
+    }
+  }
   return result;
 }
 

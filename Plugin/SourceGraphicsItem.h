@@ -32,6 +32,7 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
  protected:
   void paint(QPainter* p, const QStyleOptionGraphicsItem* options, QWidget* widget) override;
 
+  void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) override;
   QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
 
   // LabelGraphicsItem overrides
