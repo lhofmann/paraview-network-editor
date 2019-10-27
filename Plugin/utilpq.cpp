@@ -5,11 +5,15 @@
 #include <vtkSMInputProperty.h>
 #include <vtkSMPropertyHelper.h>
 #include <vtkPVXMLElement.h>
+#include <vtkSMProxyManager.h>
+#include <vtkSMProxyIterator.h>
+#include <vtkSMSourceProxy.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
 #include <pqOutputPort.h>
 #include <pqApplicationCore.h>
+#include <pqServerManagerModel.h>
 
 namespace utilpq {
 
@@ -107,6 +111,30 @@ void clear_connections(pqPipelineFilter* filter, int port) {
   vtkSMInputProperty* ip = vtkSMInputProperty::SafeDownCast(
       filter->getProxy()->GetProperty(input_name.toLocal8Bit().data()));
   ip->RemoveAllProxies();
+}
+
+std::vector<pqPipelineSource*> get_sources() {
+  auto session = vtkSMProxyManager::GetProxyManager()->GetActiveSession();
+  if (!session)
+    return {};
+  auto iter = vtkSmartPointer<vtkSMProxyIterator>::New();
+  iter->SetSession(session);
+  iter->SetModeToOneGroup();
+  std::vector<pqPipelineSource*> result;
+  auto smModel = pqApplicationCore::instance()->getServerManagerModel();
+  for (iter->Begin("sources"); !iter->IsAtEnd(); iter->Next()) {
+    auto proxy = iter->GetProxy();
+    auto source_proxy = vtkSMSourceProxy::SafeDownCast(proxy);
+    if (!source_proxy)
+      continue;
+    auto pipeline_source = smModel->findItem<pqPipelineSource*>(source_proxy);
+    if (pipeline_source)
+      result.emplace_back(pipeline_source);
+  }
+  std::sort(result.begin(), result.end(), [](pqPipelineSource* a, pqPipelineSource* b) -> bool {
+    return a->getProxy()->GetGlobalID() < b->getProxy()->GetGlobalID();
+  });
+  return result;
 }
 
 }

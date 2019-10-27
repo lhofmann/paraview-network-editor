@@ -47,6 +47,17 @@ NetworkEditor::NetworkEditor()
   setItemIndexMethod(QGraphicsScene::NoIndex);
   setSceneRect(QRectF());
 
+  // add current sources
+  auto sources = utilpq::get_sources();
+  for (pqPipelineSource* source: sources) {
+    addSourceRepresentation(source);
+  }
+  for (pqPipelineSource* sourceA: sources) {
+    for (pqPipelineSource* sourceB: sources) {
+      updateConnectionRepresentations(sourceA, sourceB);
+    }
+  }
+
   installEventFilter(connectionDragHelper_);
 
   connect(this, &QGraphicsScene::selectionChanged, this, &NetworkEditor::onSelectionChanged);
@@ -177,6 +188,8 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
     pos.setX(this->itemsBoundingRect().left() + SourceGraphicsItem::size_.width() / 2.);
     pos.setY(this->itemsBoundingRect().bottom() + SourceGraphicsItem::size_.height() / 2. + gridSpacing_);
   }
+  proxy->SetAnnotation("Node.x", std::to_string(pos.x()).c_str());
+  proxy->SetAnnotation("Node.y", std::to_string(pos.y()).c_str());
   sourceGraphicsItem->setPos(snapToGrid(pos));
 
   sourceGraphicsItems_[source] = sourceGraphicsItem;
@@ -243,6 +256,8 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pq
   // collect connections from ParaView pipeline
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
   pqPipelineFilter* filter = qobject_cast<pqPipelineFilter*>(dest);
+  if (!filter)
+    return;
   assert(filter);
   for (int input_id = 0; input_id < filter->getNumberOfInputPorts(); ++input_id) {
     const char* input_name = filter->getInputPortName(input_id).toLocal8Bit().constData();
@@ -551,7 +566,7 @@ void NetworkEditor::updateSceneSize() {
   QRectF bounding = getSourcesBoundingRect().adjusted(-50, -50, 50, 50);
   QRectF extended = bounding.united(sr);
   // hack for allowing small scenes to be moved freely within the window
-  if (extended.width() <= views().front()->width() + 50 && extended.height() <= views().front()->height() + 50)
+  if (!views().empty() && (extended.width() <= views().front()->width() + 50 && extended.height() <= views().front()->height() + 50))
     setSceneRect(extended);
   else
     setSceneRect(bounding);
