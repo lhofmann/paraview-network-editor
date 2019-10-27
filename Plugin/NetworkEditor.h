@@ -78,6 +78,7 @@ class NetworkEditor : public QGraphicsScene {
 
   QPointF lastMousePos_ = QPointF(0., 0.);
   bool addSourceAtMousePos_ = false;
+  bool addSourceToSelection_ = false;
 
   SourceGraphicsItem* activeSourceItem_ {nullptr};
 

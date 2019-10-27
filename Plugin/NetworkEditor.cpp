@@ -202,6 +202,11 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
   sourceGraphicsItems_[source] = sourceGraphicsItem;
   this->addItem(sourceGraphicsItem);
   updateSceneSize();
+
+  if (addSourceToSelection_) {
+    sourceGraphicsItem->setSelected(true);
+    std::cout << "added to selection" << std::endl;
+  }
 }
 
 void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
@@ -329,6 +334,8 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pq
 }
 
 void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
+  lastMousePos_ = e->scenePos();
+
   QMenu menu;
   for (auto& item : items(e->scenePos())) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
@@ -374,7 +381,9 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
   });
 
   if (!menu.isEmpty()) {
+    addSourceAtMousePos_ = true;
     menu.exec(QCursor::pos());
+    addSourceAtMousePos_ = false;
     e->accept();
   }
 }
@@ -580,9 +589,15 @@ void NetworkEditor::paste(float x, float y) {
     }
   }
 
+  clearSelection();
+  addSourceToSelection_ = true;
+  updateSelection_ = true;
   auto app = pqApplicationCore::instance();
   auto server = app->getActiveServer();
   server->proxyManager()->LoadXMLState(parser->GetRootElement(), nullptr, false);
+  addSourceToSelection_ = false;
+  updateSelection_ = false;
+  this->onSelectionChanged();
 }
 
 void NetworkEditor::paste() {
