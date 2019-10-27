@@ -83,12 +83,42 @@ void NetworkEditorWidget::constructor()
 
   hLayout->addStretch();
 
+  QString help_text = R"HTML(
+  <html><body style="color: #9d9995; background-color: #323235; border-radius: 0.1875em; border: 0.0625em solid #1b1b1d; padding: 0.1875em;">
+  <p>Help</p>
+  <p>Shortcuts</p>
+  <table>
+    <tr>
+      <th align="left"  valign="middle">Double Click</th>
+      <td><b>Background:</b> Fit to view<br/>  <b>Source:</b> Toggle visibility</td>
+    </tr>
+    <tr>
+      <th align="left">Ctrl+A</th>
+      <td>Select all</td>
+    </tr>
+    <tr>
+      <th align="left">Ctrl+C</th>
+      <td>Copy sources</td>
+    </tr>
+    <tr>
+      <th align="left">Ctrl+V</th>
+      <td>Paste sources</td>
+    </tr>
+    <tr>
+      <th align="left">Delete</th>
+      <td>Delete selected</td>
+    </tr>
+  </table>
+  </body></html>
+  )HTML";
+
   auto help = new QAction("Help", this);
   auto btnHelp = new QToolButton(titleBar);
-  connect(help, &QAction::triggered, this, [this]() {
-    // TODO
+  connect(help, &QAction::triggered,  [btnHelp, help_text]() {
+    QToolTip::showText(btnHelp->mapToGlobal(btnHelp->rect().center()), help_text, btnHelp);
   });
   btnHelp->setDefaultAction(help);
+  btnHelp->setToolTip(help_text);
   hLayout->addWidget(btnHelp);
 
   auto search = new QAction("Search", this);
