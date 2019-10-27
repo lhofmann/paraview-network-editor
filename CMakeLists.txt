@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.8)
 project(ParaViewNetworkEditor)
 
+include(find_graphviz.cmake)
+
 find_package(ParaView REQUIRED)
 
 set(BUILD_SHARED_LIBS ON)
