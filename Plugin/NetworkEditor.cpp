@@ -26,6 +26,7 @@
 #include <pqDataRepresentation.h>
 #include <pqScalarBarVisibilityReaction.h>
 #include <pqDeleteReaction.h>
+#include <pqPVApplicationCore.h>
 
 #include <QGraphicsView>
 #include <QPainter>
@@ -185,8 +186,14 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
     pos.setX(std::stof(proxy->GetAnnotation("Node.x")));
     pos.setY(std::stof(proxy->GetAnnotation("Node.y")));
   } else {
-    pos.setX(this->itemsBoundingRect().left() + SourceGraphicsItem::size_.width() / 2.);
-    pos.setY(this->itemsBoundingRect().bottom() + SourceGraphicsItem::size_.height() / 2. + gridSpacing_);
+    if (addSourceAtMousePos_) {
+      pos = lastMousePos_;
+    } else {
+      pos.setX(this->itemsBoundingRect().left());
+      pos.setY(this->itemsBoundingRect().bottom() + gridSpacing_);
+    }
+    pos.setX(pos.x() + SourceGraphicsItem::size_.width() / 2.);
+    pos.setY(pos.y() +  SourceGraphicsItem::size_.height() / 2.);
   }
   proxy->SetAnnotation("Node.x", std::to_string(pos.x()).c_str());
   proxy->SetAnnotation("Node.y", std::to_string(pos.y()).c_str());
@@ -703,4 +710,10 @@ void NetworkEditor::selectAll() {
       source->setSelected(true);
     }
   }
+}
+
+void NetworkEditor::quickLaunch() {
+  addSourceAtMousePos_ = true;
+  pqPVApplicationCore::instance()->quickLaunch();
+  addSourceAtMousePos_ = false;
 }

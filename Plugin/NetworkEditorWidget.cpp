@@ -86,11 +86,10 @@ void NetworkEditorWidget::constructor()
   auto search = new QAction("Search", this);
   search->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
   search->setShortcut(QKeySequence(Qt::ControlModifier + Qt::Key_Space));
-  // auto btnSearch = new QToolButton(titleBar);
-  // btnSearch->setDefaultAction(search);
-  // btnSearch->setVisible(false);
-  // hLayout->addWidget(btnSearch);
   networkEditorView_->addAction(search);
+  connect(search, &QAction::triggered, this, [this]() {
+    networkEditor_->quickLaunch();
+  });
 
   auto select_all_action = new QAction("Select All", this);
   select_all_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
@@ -126,10 +125,6 @@ void NetworkEditorWidget::constructor()
     this->setWidget(networkEditorWidget_);
     this->setWindowTitle("Network Editor");
   }
-
-  connect(search, &QAction::triggered, this, [this]() {
-    pqPVApplicationCore::instance()->quickLaunch();
-  });
 
   auto main_window = qobject_cast<QMainWindow*>(pqCoreUtilities::mainWidget());
   main_window->installEventFilter(new MainWindowEventFilter(networkEditorView_));

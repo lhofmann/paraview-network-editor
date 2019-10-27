@@ -37,6 +37,7 @@ class NetworkEditor : public QGraphicsScene {
   void copy();
   void paste(float x, float y);
   void paste();
+  void quickLaunch();
 
   void updateSceneSize();
   bool empty() const;
@@ -76,6 +77,7 @@ class NetworkEditor : public QGraphicsScene {
   QPointF snapToGrid(const QPointF& pos);
 
   QPointF lastMousePos_ = QPointF(0., 0.);
+  bool addSourceAtMousePos_ = false;
 
   SourceGraphicsItem* activeSourceItem_ {nullptr};
 
