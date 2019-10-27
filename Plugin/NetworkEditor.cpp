@@ -31,6 +31,7 @@
 #include <pqProxyGroupMenuManager.h>
 #include <pqSourcesMenuReaction.h>
 #include <pqCoreUtilities.h>
+#include <pqUndoStack.h>
 
 #include <QGraphicsView>
 #include <QPainter>
@@ -677,12 +678,20 @@ void NetworkEditor::deleteSelected() {
   auto items = this->selectedItems();
   this->clearSelection();
   QSet<pqPipelineSource*> delete_sources;
+  QSet<ConnectionGraphicsItem*> delete_connections;
   for (QGraphicsItem* item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
       delete_sources.insert(source->getSource());
     } else if (auto connection = qgraphicsitem_cast<ConnectionGraphicsItem*>(item)) {
+      delete_connections.insert(connection);
+    }
+  }
+  if (!delete_connections.empty()) {
+    BEGIN_UNDO_SET("Delete Selected Connections");
+    for (auto connection : delete_connections) {
       removeConnection(connection);
     }
+    END_UNDO_SET();
   }
   if (!delete_sources.empty()) {
     deleteReaction_->deleteSources(delete_sources);
