@@ -30,6 +30,7 @@ class NetworkEditor : public QGraphicsScene {
   void deleteSelected();
   void copy();
   void paste(float x, float y);
+  void paste();
 
   void updateSceneSize();
   bool empty() const;
@@ -67,6 +68,8 @@ class NetworkEditor : public QGraphicsScene {
   bool updateSelection_ = false;
   static const int gridSpacing_;
   QPointF snapToGrid(const QPointF& pos);
+
+  QPointF lastMousePos_ = QPointF(0., 0.);
 
   SourceGraphicsItem* activeSourceItem_ {nullptr};
 

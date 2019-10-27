@@ -410,11 +410,13 @@ QPointF NetworkEditor::snapToGrid(const QPointF& pos) {
 }
 
 void NetworkEditor::mousePressEvent(QGraphicsSceneMouseEvent* e) {
+  lastMousePos_ = e->scenePos();
   activeSourceItem_ = getGraphicsItemAt<SourceGraphicsItem>(e->scenePos());
   QGraphicsScene::mousePressEvent(e);
 }
 
 void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
+  lastMousePos_ = e->scenePos();
   // snap selected sources to grid
   for (auto item : this->selectedItems()) {
     if (!qgraphicsitem_cast<SourceGraphicsItem*>(item))
@@ -560,6 +562,9 @@ void NetworkEditor::paste(float x, float y) {
   server->proxyManager()->LoadXMLState(parser->GetRootElement(), nullptr, false);
 }
 
+void NetworkEditor::paste() {
+  paste(lastMousePos_.x(), lastMousePos_.y());
+}
 
 void NetworkEditor::updateSceneSize() {
   QRectF sr = this->sceneRect();
@@ -619,6 +624,7 @@ void NetworkEditor::removeConnection(ConnectionGraphicsItem* connection) {
 
 void NetworkEditor::deleteSelected() {
   auto items = this->selectedItems();
+  this->clearSelection();
   QSet<pqPipelineSource*> delete_sources;
   for (QGraphicsItem* item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {

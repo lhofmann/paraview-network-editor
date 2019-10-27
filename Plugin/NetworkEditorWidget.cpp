@@ -98,6 +98,18 @@ void NetworkEditorWidget::constructor()
   connect(delete_action, &QAction::triggered, networkEditor_.get(), &NetworkEditor::deleteSelected);
   networkEditorView_->addAction(delete_action);
 
+  auto copy_action = new QAction("Copy", this);
+  copy_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
+  copy_action->setShortcut(QKeySequence::Copy);
+  connect(copy_action, &QAction::triggered, networkEditor_.get(), &NetworkEditor::copy);
+  networkEditorView_->addAction(copy_action);
+
+  auto paste_action = new QAction("Paste", this);
+  paste_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
+  paste_action->setShortcut(QKeySequence::Paste);
+  connect(paste_action, &QAction::triggered, networkEditor_.get(), static_cast<void (NetworkEditor::*)()>(&NetworkEditor::paste));
+  networkEditorView_->addAction(paste_action);
+
   vLayout->addWidget(titleBar);
   vLayout->addWidget(networkEditorView_);
   networkEditorWidget_->setLayout(vLayout);
