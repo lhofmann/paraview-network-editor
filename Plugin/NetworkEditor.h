@@ -32,6 +32,7 @@ class NetworkEditor : public QGraphicsScene {
   void showSelectedScalarBars();
   void hideSelectedScalarBars();
 
+  void selectAll();
   void deleteSelected();
   void copy();
   void paste(float x, float y);

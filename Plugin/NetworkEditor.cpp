@@ -336,6 +336,9 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
     }
   }
 
+  auto select_all_action = menu.addAction(tr("Select All"));
+  connect(select_all_action, &QAction::triggered, this, &NetworkEditor::selectAll);
+
   menu.addSeparator();
 
   auto show_action = menu.addAction(tr("Show"));
@@ -692,3 +695,12 @@ void NetworkEditor::hideSelectedScalarBars() {
   pqActiveObjects::instance().activeView()->render();
 }
 
+void NetworkEditor::selectAll() {
+  this->clearSelection();
+  auto items = this->items();
+  for (QGraphicsItem* item : items) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
+      source->setSelected(true);
+    }
+  }
+}

@@ -92,6 +92,12 @@ void NetworkEditorWidget::constructor()
   // hLayout->addWidget(btnSearch);
   networkEditorView_->addAction(search);
 
+  auto select_all_action = new QAction("Select All", this);
+  select_all_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
+  select_all_action->setShortcut(QKeySequence(Qt::ControlModifier + Qt::Key_A));
+  connect(select_all_action, &QAction::triggered, networkEditor_.get(), &NetworkEditor::selectAll);
+  networkEditorView_->addAction(select_all_action);
+
   auto delete_action = new QAction("Delete", this);
   delete_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
   delete_action->setShortcut(QKeySequence::Delete);
