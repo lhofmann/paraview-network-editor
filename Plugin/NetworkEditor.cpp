@@ -21,6 +21,7 @@
 #include <vtkPVXMLParser.h>
 #include <vtkSMProxyManager.h>
 #include <vtkCollection.h>
+#include <vtkVersion.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -558,10 +559,11 @@ void NetworkEditor::copy() {
     itemElement->SetName("Item");
     itemElement->AddAttribute("id", std::get<1>(kv)->GetGlobalID());
     itemElement->AddAttribute("name", std::get<0>(kv).c_str());
-    if (std::get<1>(kv)->GetLogName() != nullptr)
-    {
+#if VTK_MAJOR_VERSION > 8 || VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 90
+    if (std::get<1>(kv)->GetLogName() != nullptr) {
       itemElement->AddAttribute("logname", std::get<1>(kv)->GetLogName());
     }
+#endif
     collectionElement->AddNestedElement(itemElement);
     itemElement->Delete();
   }

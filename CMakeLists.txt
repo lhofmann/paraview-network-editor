@@ -5,7 +5,11 @@ include(find_graphviz.cmake)
 
 find_package(ParaView REQUIRED)
 
-set(BUILD_SHARED_LIBS ON)
+if (ParaView_VERSION VERSION_LESS 5.7)
+  set(legacy_build_system TRUE)
+else ()
+  set(legacy_build_system FALSE)
+endif ()
 
 add_compile_options(-Wall)
 
@@ -14,34 +18,48 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_BINDIR}"
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
 
-vtk_module_scan(
-    MODULE_FILES         "${CMAKE_CURRENT_SOURCE_DIR}/Settings/vtk.module"
-    PROVIDES_MODULES     modules
-    REQUIRES_MODULES     required_modules
-    UNRECOGNIZED_MODULES unrecognized_modules
-    WANT_BY_DEFAULT      ON)
-vtk_module_build(
-    MODULES             ${modules}
-    INSTALL_HEADERS     OFF)
+if (legacy_build_system)
+  include(GenerateExportHeader)
+  include(${ParaView_USE_FILE})
 
-paraview_plugin_scan(
-  PLUGIN_FILES      "${CMAKE_CURRENT_SOURCE_DIR}/Plugin/paraview.plugin"
-  PROVIDES_PLUGINS  plugins
-  REQUIRES_MODULES  required_modules
-  ENABLE_BY_DEFAULT ON)
+  if(POLICY CMP0071)
+    cmake_policy(SET CMP0071 NEW)
+  endif()
+  set(CMAKE_AUTOMOC TRUE)
 
-foreach (module IN LISTS required_modules)
-  if (NOT TARGET "${module}")
-    message("Missing required module: ${module}")
-    return ()
-  endif ()
-endforeach ()
+  add_subdirectory(Plugin)
+  set(plugins NetworkEditor)
+else ()
+  set(BUILD_SHARED_LIBS ON)
+  vtk_module_scan(
+      MODULE_FILES         "${CMAKE_CURRENT_SOURCE_DIR}/Settings/vtk.module"
+      PROVIDES_MODULES     modules
+      REQUIRES_MODULES     required_modules
+      UNRECOGNIZED_MODULES unrecognized_modules
+      WANT_BY_DEFAULT      ON)
+  vtk_module_build(
+      MODULES             ${modules}
+      INSTALL_HEADERS     OFF)
 
-paraview_plugin_build(
-  RUNTIME_DESTINATION "${CMAKE_INSTALL_BINDIR}"
-  LIBRARY_DESTINATION "${CMAKE_INSTALL_LIBDIR}"
-  LIBRARY_SUBDIRECTORY "${PARAVIEW_PLUGIN_SUBDIR}"
-  PLUGINS ${plugins})
+  paraview_plugin_scan(
+    PLUGIN_FILES      "${CMAKE_CURRENT_SOURCE_DIR}/Plugin/paraview.plugin"
+    PROVIDES_PLUGINS  plugins
+    REQUIRES_MODULES  required_modules
+    ENABLE_BY_DEFAULT ON)
+
+  foreach (module IN LISTS required_modules)
+    if (NOT TARGET "${module}")
+      message("Missing required module: ${module}")
+      return ()
+    endif ()
+  endforeach ()
+
+  paraview_plugin_build(
+    RUNTIME_DESTINATION "${CMAKE_INSTALL_BINDIR}"
+    LIBRARY_DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+    LIBRARY_SUBDIRECTORY "${PARAVIEW_PLUGIN_SUBDIR}"
+    PLUGINS ${plugins})
+endif ()
 
 set(_plugin_config_file "")
 foreach(plugin ${plugins})
