@@ -53,6 +53,8 @@ This behavior can be changed in ParaView settings (menu `Edit > Settings... > Ne
 * Add search, that selects pipeline items by name, type, ...
 * Add a dock widget, that contains a filterable list of sources/filters, that can be drag/dropped into the network editor
 * Color connections by data type
+* Display and edit property links
+* Add support for grouping/ungrouping parts of the pipeline (custom filters / vtkSMCompoundSourceProxy)
 * Add tooltips, that show information about sources and their output ports
 * Custom graph layout algorithm, that takes grid into account (not possible with graphviz)
 * Choose better node positions when inserting new sources
