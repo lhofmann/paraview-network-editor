@@ -72,8 +72,8 @@ SourceGraphicsItem* PortGraphicsItem::getSourceGraphicsItem() const { return sou
 PortGraphicsItem::~PortGraphicsItem() = default;
 
 InputPortGraphicsItem::InputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, int port_id)
-: portID_(port_id),
-  PortGraphicsItem(parent, pos, true, dummy_color)
+: PortGraphicsItem(parent, pos, true, dummy_color),
+  portID_(port_id)
 {}
 
 std::pair<pqPipelineFilter*, int> InputPortGraphicsItem::getPort() const {

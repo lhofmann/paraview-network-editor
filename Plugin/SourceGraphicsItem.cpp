@@ -216,13 +216,13 @@ void SourceGraphicsItem::loadPosition() {
 }
 
 InputPortGraphicsItem* SourceGraphicsItem::getInputPortGraphicsItem(int port) const {
-  if ((port < 0) || (port >= inportItems_.size()))
+  if ((port < 0) || ((size_t)port >= inportItems_.size()))
     return nullptr;
   return this->inportItems_[port];
 }
 
 OutputPortGraphicsItem* SourceGraphicsItem::getOutputPortGraphicsItem(int port) const {
-  if ((port < 0) || (port >= outportItems_.size()))
+  if ((port < 0) || ((size_t)port >= outportItems_.size()))
     return nullptr;
   return this->outportItems_[port];
 }

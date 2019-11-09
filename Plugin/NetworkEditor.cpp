@@ -523,8 +523,6 @@ void NetworkEditor::helpEvent(QGraphicsSceneHelpEvent* e) {
 }
 
 void NetworkEditor::copy() {
-  auto app = pqApplicationCore::instance();
-  // vtkPVXMLElement* state = app->saveState();
   vtkPVXMLElement* state = vtkPVXMLElement::New();
   state->SetName("ParaView");
 

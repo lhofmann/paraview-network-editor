@@ -98,7 +98,7 @@ void remove_connection(pqPipelineSource* source, int out_port, pqPipelineFilter*
   for (unsigned int cc = 0; cc < numProxies; cc++) {
     vtkSMProxy* proxy = helper.GetAsProxy(cc);
     unsigned int port = helper.GetOutputPort(cc);
-    if (proxy == source->getProxy() && port == out_port) {
+    if (proxy == source->getProxy() && (int)port == out_port) {
       continue;
     }
     inputPtrs.push_back(helper.GetAsProxy(cc));
