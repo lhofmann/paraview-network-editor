@@ -9,7 +9,10 @@ This project is in large parts based on inviwo (https://github.com/inviwo/inviwo
 
 ## Usage
 
-CMake &ge; 3.8, ParaView &ge; 5.7.0, and optionally graphviz are required.
+CMake &ge; 3.8, ParaView, and optionally graphviz are required.
+
+ParaView needs to be build from source, with `BUILD_SHARED_LIBS`, `PARAVIEW_BUILD_QT_GUI` and `PARAVIEW_INSTALL_DEVELOPMENT_FILES` enabled.
+Tested with v5.6.3 and v5.7.0 on Linux, but earlier versions might also work.
 
 Clone and build the plugin
 ```bash
