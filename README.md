@@ -5,6 +5,8 @@ In its current state, this is a prototype at best, so **use at your own risk**!
 
 This project is in large parts based on inviwo (https://github.com/inviwo/inviwo), which is licensed under the BSD 2-Clause license. See `LICENSE.inviwo` for details.
 
+![Demo](demo.gif)
+
 ## Usage
 
 CMake &ge; 3.8, ParaView &ge; 5.7.0, and optionally graphviz are required.
