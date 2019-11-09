@@ -38,7 +38,7 @@ if (legacy_build_system)
         SERVER_MANAGER_SOURCES ${settings_sources}
         GUI_INTERFACES ${interfaces}
         GUI_SOURCES ${sources})
-
+    set_target_properties(NetworkEditor PROPERTIES PREFIX "")
     target_include_directories(NetworkEditor PUBLIC ${settings_dir})
 
     generate_export_header(NetworkEditor
@@ -63,6 +63,7 @@ else ()
       XML_DOCUMENTATION OFF
       MODULES NetworkEditorSettings)
 
+    set_target_properties(NetworkEditor PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR}")
     set_target_properties(NetworkEditor PROPERTIES LINK_FLAGS "-Wl,--no-undefined")
 
     target_link_libraries(NetworkEditor

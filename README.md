@@ -27,7 +27,7 @@ Run paraview with
 paraview-network-editor-build/paraview.sh
 ```
 This script runs paraview and automatically loads the plugin.
-You can also manually load the file `paraview-network-editor-build/lib/paraview-5.7/plugins/NetworkEditor/NetworkEditor.so` as plugin.
+You can also manually load the file `paraview-network-editor-build/lib/NNetworkEditor.so` as plugin.
 
 By default, the network editor plugin swaps places with the render view on load. 
 This behavior can be changed in ParaView settings (menu `Edit > Settings... > Network Editor`). 
