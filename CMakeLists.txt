@@ -24,13 +24,11 @@ vtk_module_build(
     MODULES             ${modules}
     INSTALL_HEADERS     OFF)
 
-set("_paraview_plugin_default_NetworkEditor" ON)
 paraview_plugin_scan(
   PLUGIN_FILES      "${CMAKE_CURRENT_SOURCE_DIR}/Plugin/paraview.plugin"
-                    "${CMAKE_CURRENT_SOURCE_DIR}/StylesheetPlugin/paraview.plugin"
   PROVIDES_PLUGINS  plugins
   REQUIRES_MODULES  required_modules
-  ENABLE_BY_DEFAULT OFF)
+  ENABLE_BY_DEFAULT ON)
 
 foreach (module IN LISTS required_modules)
   if (NOT TARGET "${module}")
