@@ -5,6 +5,7 @@
 #include "ConnectionDragHelper.h"
 #include "vtkPVNetworkEditorSettings.h"
 #include "utilpq.h"
+#include "debug_message.h"
 
 #ifdef ENABLE_GRAPHVIZ
 # include "graph_layout.h"
@@ -102,12 +103,12 @@ NetworkEditor::NetworkEditor()
 
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
   connect(smModel, &pqServerManagerModel::sourceAdded, this, [this](pqPipelineSource* source) {
-    std::cout << "added source " << source->getSMName().toStdString() << std::endl;
+    DEBUG_MSG("added source " << source->getSMName().toStdString());
     addSourceRepresentation(source);
   });
 
   connect(smModel, &pqServerManagerModel::preSourceRemoved, this, [this](pqPipelineSource* source) {
-    std::cout << "preSourceRemoved " << source->getSMName().toStdString() << std::endl;
+  DEBUG_MSG("preSourceRemoved " << source->getSMName().toStdString());
     auto it = sourceGraphicsItems_.find(source);
     if (it != sourceGraphicsItems_.end()) {
       it->second->aboutToRemoveSource();
@@ -115,28 +116,28 @@ NetworkEditor::NetworkEditor()
   });
 
   connect(smModel, &pqServerManagerModel::sourceRemoved, this, [this](pqPipelineSource* source) {
-    std::cout << "removed source " << source->getSMName().toStdString() << std::endl;
+    DEBUG_MSG("removed source " << source->getSMName().toStdString());
     removeSourceRepresentation(source);
   });
 
   connect(smModel, &pqServerManagerModel::connectionAdded, this, [this](pqPipelineSource* source, pqPipelineSource* dest, int sourcePort) {
-    std::cout << "added connection "
-              << source->getSMName().toStdString() << " (" << sourcePort << ") -> " << dest->getSMName().toStdString()  << std::endl;
+    DEBUG_MSG("added connection "
+              << source->getSMName().toStdString() << " (" << sourcePort << ") -> " << dest->getSMName().toStdString() );
     updateConnectionRepresentations(source, dest);
   });
 
   connect(smModel, &pqServerManagerModel::connectionRemoved, this, [this](pqPipelineSource* source, pqPipelineSource* dest, int sourcePort) {
-    std::cout << "removed connection "
-              << source->getSMName().toStdString() << " (" << sourcePort << ") -> " << dest->getSMName().toStdString()  << std::endl;
+    DEBUG_MSG("removed connection "
+              << source->getSMName().toStdString() << " (" << sourcePort << ") -> " << dest->getSMName().toStdString() );
     updateConnectionRepresentations(source, dest);
   });
 
   connect(smModel, &pqServerManagerModel::representationAdded, this, [this](pqRepresentation* rep) {
-    std::cout << "added representation " << rep->getSMName().toStdString() << std::endl;
+    DEBUG_MSG("added representation " << rep->getSMName().toStdString());
   });
 
   connect(smModel, &pqServerManagerModel::representationRemoved, this, [this](pqRepresentation* rep) {
-    std::cout << "removed representation " << rep->getSMName().toStdString() << std::endl;
+    DEBUG_MSG("removed representation " << rep->getSMName().toStdString());
   });
 
   connect(smModel, &pqServerManagerModel::modifiedStateChanged, this, [this](pqServerManagerModelItem* item) {
@@ -229,7 +230,6 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
 
   if (addSourceToSelection_) {
     sourceGraphicsItem->setSelected(true);
-    std::cout << "added to selection" << std::endl;
   }
 }
 
@@ -313,17 +313,14 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pq
     }
   }
 
-  // debug output
-  std::cout << "Known: ";
+  DEBUG_MSG("Known: ");
   for (const auto& conn : connections) {
-    std::cout << std::get<0>(conn) << "->" << std::get<1>(conn) << "; ";
+    DEBUG_MSG(std::get<0>(conn) << "->" << std::get<1>(conn) << "; ");
   }
-  std::cout << std::endl;
-  std::cout << "SM: ";
+  DEBUG_MSG("SM: ");
   for (const auto& conn : sm_connections) {
-    std::cout << std::get<0>(conn) << "->" << std::get<1>(conn) << "; ";
+    DEBUG_MSG(std::get<0>(conn) << "->" << std::get<1>(conn) << "; ");
   }
-  std::cout << std::endl;
 
   std::set<std::tuple<int, int>> added, removed;
   std::set_difference(
@@ -577,7 +574,7 @@ void NetworkEditor::copy() {
   std::stringstream ss;
   state->PrintXML(ss, vtkIndent());
   std::string str = ss.str();
-  // std::cout << str << std::endl;
+
   QByteArray data(str.c_str(), str.length());
   auto mimedata = std::make_unique<QMimeData>();
   mimedata->setData(QString("text/plain"), data);
