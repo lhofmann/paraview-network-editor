@@ -61,12 +61,12 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
   positionLablels();
 
   for (int i = 0; i < source->getNumberOfOutputPorts(); ++i) {
-    this->addOutport(source, i);
+    this->addOutport(i);
   }
 
   if (pqPipelineFilter* filter = qobject_cast<pqPipelineFilter*>(source)) {
     for (int i = 0; i < filter->getNumberOfInputPorts(); ++i) {
-      this->addInport(filter, i);
+      this->addInport(i);
     }
   }
 
@@ -101,17 +101,17 @@ QPointF SourceGraphicsItem::portPosition(PortType type, size_t index) {
   return rect().center() + portOffset(type, index);
 }
 
-void SourceGraphicsItem::addInport(pqPipelineFilter* filter, int port) {
+void SourceGraphicsItem::addInport(int port) {
   auto pos = portPosition(PortType::In, inportItems_.size());
-  inportItems_.emplace_back(new InputPortGraphicsItem(this, pos, filter, port));
+  inportItems_.emplace_back(new InputPortGraphicsItem(this, pos, port));
 }
 
-void SourceGraphicsItem::addOutport(pqPipelineSource* source, int port) {
+void SourceGraphicsItem::addOutport(int port) {
   auto pos = portPosition(PortType::Out, outportItems_.size());
-  outportItems_.emplace_back(new OutputPortGraphicsItem(this, pos, source, port));
+  outportItems_.emplace_back(new OutputPortGraphicsItem(this, pos, port));
 
   pos += QPointF(10.f, 0.f);
-  auto status = new OutputPortStatusGraphicsItem(this, source->getOutputPort(port));
+  auto status = new OutputPortStatusGraphicsItem(this, port);
   status->setPos(pos);
 }
 
@@ -231,4 +231,8 @@ void SourceGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) {
   utilpq::toggle_source_visibility(source_);
   pqView* activeView = pqActiveObjects::instance().activeView();
   activeView->render();
+}
+
+void SourceGraphicsItem::aboutToRemoveSource() {
+  this->source_ = nullptr;
 }

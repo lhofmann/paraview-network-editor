@@ -10,7 +10,7 @@ class pqOutputPort;
 
 class OutputPortStatusGraphicsItem : public EditorGraphicsItem {
  public:
-  OutputPortStatusGraphicsItem(QGraphicsRectItem *parent, pqOutputPort* port);
+  OutputPortStatusGraphicsItem(QGraphicsRectItem *parent, int port);
   virtual ~OutputPortStatusGraphicsItem() = default;
 
   // override for qgraphicsitem_cast (refer qt documentation)
@@ -25,7 +25,7 @@ class OutputPortStatusGraphicsItem : public EditorGraphicsItem {
  private:
   float size_;
   float lineWidth_;
-  pqOutputPort* port_;
+  int portID_;
 };
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_OUTPUTPORTSTATUSGRAPHICSITEM_H_

@@ -21,6 +21,7 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
   void editIdentifier();
 
   pqPipelineSource* getSource() const;
+  void aboutToRemoveSource();
 
   enum class PortType { In, Out };
   static QPointF portOffset(PortType type, size_t index);
@@ -45,8 +46,8 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
   // pqPipelineSource signals
   void onSourceNameChanged(pqServerManagerModelItem*);
 
-  void addInport(pqPipelineFilter*, int);
-  void addOutport(pqPipelineSource*, int);
+  void addInport(int);
+  void addOutport(int);
 
  private:
   void positionLablels();

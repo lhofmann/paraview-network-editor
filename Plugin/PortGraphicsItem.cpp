@@ -67,18 +67,22 @@ std::vector<ConnectionGraphicsItem*>& PortGraphicsItem::getConnections() {
   return connections_;
 }
 
-SourceGraphicsItem* PortGraphicsItem::getSource() { return source_; }
+SourceGraphicsItem* PortGraphicsItem::getSourceGraphicsItem() const { return source_; }
 
 PortGraphicsItem::~PortGraphicsItem() = default;
 
-InputPortGraphicsItem::InputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, pqPipelineFilter* source, int port_id_)
-: port_id(port_id_),
-  pipeline_filter_(source),
+InputPortGraphicsItem::InputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, int port_id)
+: portID_(port_id),
   PortGraphicsItem(parent, pos, true, dummy_color)
 {}
 
 std::pair<pqPipelineFilter*, int> InputPortGraphicsItem::getPort() const {
-  return {pipeline_filter_, port_id};
+  pqPipelineSource* source = this->getSourceGraphicsItem()->getSource();
+  pqPipelineFilter* filter = nullptr;
+  if (source) {
+    filter = qobject_cast<pqPipelineFilter*>(source);
+  }
+  return {filter, portID_};
 }
 
 void InputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
@@ -112,7 +116,12 @@ void InputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, 
   p->setBrush(color);
   p->setPen(QPen(borderColor, lineWidth_));
 
-  if (utilpq::optional_input(pipeline_filter_, port_id)) {
+  pqPipelineSource* source = this->getSourceGraphicsItem()->getSource();
+  pqPipelineFilter* filter = nullptr;
+  if (source) {
+    filter = qobject_cast<pqPipelineFilter*>(source);
+  }
+  if (filter && utilpq::optional_input(filter, portID_)) {
     // Use a different shape for optional ports (rounded at the bottom)
     QPainterPath path;
     auto start = (portRect.topRight() + portRect.bottomRight()) * 0.5;
@@ -137,12 +146,13 @@ void InputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, 
   p->restore();
 }
 
-OutputPortGraphicsItem::OutputPortGraphicsItem(SourceGraphicsItem* parent,  const QPointF& pos, pqPipelineSource* source, int port_id_)
-: PortGraphicsItem(parent, pos, false, dummy_color), port_id(port_id_), pipeline_source_(source)
+OutputPortGraphicsItem::OutputPortGraphicsItem(SourceGraphicsItem* parent,  const QPointF& pos, int port_id)
+: PortGraphicsItem(parent, pos, false, dummy_color), portID_(port_id)
 { }
 
 std::pair<pqPipelineSource*, int> OutputPortGraphicsItem::getPort() const {
-  return {pipeline_source_, port_id};
+  pqPipelineSource* source = this->getSourceGraphicsItem()->getSource();
+  return {source, portID_};
 }
 
 void OutputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
@@ -151,9 +161,10 @@ void OutputPortGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
   }
   e->accept();
 
-  pqPipelineSource* source = this->source_->getSource();
-  pqOutputPort* port = source->getOutputPort(port_id);
-  pqActiveObjects::instance().setActivePort(port);
+  if (pqPipelineSource* source = this->source_->getSource()) {
+    pqOutputPort *port = source->getOutputPort(portID_);
+    pqActiveObjects::instance().setActivePort(port);
+  }
 }
 
 void OutputPortGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) {
@@ -162,11 +173,12 @@ void OutputPortGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) 
   vtkSMViewProxy* viewProxy = activeView ? activeView->getViewProxy() : nullptr;
   if (!viewProxy)
     return;
-  pqPipelineSource* source = this->source_->getSource();
-  pqOutputPort* port = source->getOutputPort(port_id);
-  bool visible = controller->GetVisibility(port->getSourceProxy(), port->getPortNumber(), viewProxy);
-  controller->SetVisibility(port->getSourceProxy(), port->getPortNumber(), viewProxy, !visible);
-  activeView->render();
+  if (pqPipelineSource* source = this->source_->getSource()) {
+    pqOutputPort *port = source->getOutputPort(portID_);
+    bool visible = controller->GetVisibility(port->getSourceProxy(), port->getPortNumber(), viewProxy);
+    controller->SetVisibility(port->getSourceProxy(), port->getPortNumber(), viewProxy, !visible);
+    activeView->render();
+  }
 }
 
 void OutputPortGraphicsItem::updateConnectionPositions() {
@@ -187,12 +199,13 @@ void OutputPortGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*,
   QColor borderColor(40, 40, 40);
   float borderWidth = lineWidth_;
 
-  pqPipelineSource* source = this->source_->getSource();
-  pqOutputPort* source_port = source->getOutputPort(port_id);
-  pqOutputPort* active_port = pqActiveObjects::instance().activePort();
-  if (active_port == source_port) {
-    borderColor = Qt::white;
-    borderWidth *= 1.5;
+  if (pqPipelineSource* source = this->source_->getSource()) {
+    pqOutputPort *source_port = source->getOutputPort(portID_);
+    pqOutputPort *active_port = pqActiveObjects::instance().activePort();
+    if (active_port == source_port) {
+      borderColor = Qt::white;
+      borderWidth *= 1.5;
+    }
   }
 
   // uvec3 color = outport_->getColorCode();

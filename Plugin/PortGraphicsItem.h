@@ -36,7 +36,7 @@ public:
     void addConnection(ConnectionGraphicsItem* connection);
     void removeConnection(ConnectionGraphicsItem* connection);
     std::vector<ConnectionGraphicsItem*>& getConnections();
-    SourceGraphicsItem* getSource();
+    SourceGraphicsItem* getSourceGraphicsItem() const;
     virtual void showToolTip(QGraphicsSceneHelpEvent* e) override = 0;
 
 protected:
@@ -52,7 +52,7 @@ protected:
 
 class InputPortGraphicsItem : public PortGraphicsItem {
 public:
-    InputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, pqPipelineFilter* source, int port_id);
+    InputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, int port_id);
     virtual ~InputPortGraphicsItem() = default;
 
     // override for qgraphicsitem_cast (refer qt documentation)
@@ -64,8 +64,7 @@ public:
     std::pair<pqPipelineFilter*, int> getPort() const;
 
 protected:
-    pqPipelineFilter* pipeline_filter_;
-    int port_id;
+    int portID_;
 
     virtual void paint(QPainter* p, const QStyleOptionGraphicsItem* options,
                        QWidget* widget) override;
@@ -75,7 +74,7 @@ protected:
 
 class OutputPortGraphicsItem : public PortGraphicsItem {
 public:
-    OutputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, pqPipelineSource* source, int port_id);
+    OutputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, int port_id);
     virtual ~OutputPortGraphicsItem() = default;
 
     // override for qgraphicsitem_cast (refer qt documentation)
@@ -87,8 +86,7 @@ public:
     std::pair<pqPipelineSource*, int> getPort() const;
 
 protected:
-    pqPipelineSource* pipeline_source_;
-    int port_id;
+  int portID_;
 
     virtual void paint(QPainter* p, const QStyleOptionGraphicsItem* options,
                        QWidget* widget) override;

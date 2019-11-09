@@ -1,4 +1,5 @@
 #include "OutputPortStatusGraphicsItem.h"
+#include "SourceGraphicsItem.h"
 #include "utilpq.h"
 
 #include <vtkSMParaViewPipelineControllerWithRendering.h>
@@ -14,11 +15,11 @@
 #include <QBrush>
 #include <QColor>
 
-OutputPortStatusGraphicsItem::OutputPortStatusGraphicsItem(QGraphicsRectItem* parent, pqOutputPort* port)
+OutputPortStatusGraphicsItem::OutputPortStatusGraphicsItem(QGraphicsRectItem* parent, int port)
     : EditorGraphicsItem(parent)
     , size_(9.0f)
     , lineWidth_(1.0f)
-    , port_(port)
+    , portID_(port)
 {
   setRect(-0.5f * size_ - lineWidth_, -0.5f * size_ - lineWidth_, 1.5 * size_ + 2.0 * lineWidth_,
           size_ + 2.0 * lineWidth_);
@@ -33,7 +34,11 @@ void OutputPortStatusGraphicsItem::paint(QPainter* p, const QStyleOptionGraphics
 
   bool visible = false;
   bool scalar_bar = false;
-  std::tie(visible, scalar_bar) = utilpq::output_visibiility(port_->getSource(), port_->getPortNumber());
+
+  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem*>(this->parentItem());
+  if (source_graphicsitem && source_graphicsitem->getSource()) {
+    std::tie(visible, scalar_bar) = utilpq::output_visibiility(source_graphicsitem->getSource(), portID_);
+  }
 
   if (visible) {
     ledColor = baseColor;
@@ -92,11 +97,18 @@ void OutputPortStatusGraphicsItem::paint(QPainter* p, const QStyleOptionGraphics
 }
 
 void OutputPortStatusGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
-  pqActiveObjects::instance().setActivePort(port_);
+  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem*>(this->parentItem());
+  if (source_graphicsitem && source_graphicsitem->getSource()) {
+    pqOutputPort* output_port = source_graphicsitem->getSource()->getOutputPort(portID_);
+    pqActiveObjects::instance().setActivePort(output_port);
+  }
 }
 
 void OutputPortStatusGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) {
-  utilpq::toggle_output_visibility(port_->getSource(), port_->getPortNumber());
-  pqView* activeView = pqActiveObjects::instance().activeView();
-  activeView->render();
+  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem*>(this->parentItem());
+  if (source_graphicsitem && source_graphicsitem->getSource()) {
+    utilpq::toggle_output_visibility(source_graphicsitem->getSource(), portID_);
+    pqView *activeView = pqActiveObjects::instance().activeView();
+    activeView->render();
+  }
 }

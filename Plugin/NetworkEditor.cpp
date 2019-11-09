@@ -106,6 +106,14 @@ NetworkEditor::NetworkEditor()
     addSourceRepresentation(source);
   });
 
+  connect(smModel, &pqServerManagerModel::preSourceRemoved, this, [this](pqPipelineSource* source) {
+    std::cout << "preSourceRemoved " << source->getSMName().toStdString() << std::endl;
+    auto it = sourceGraphicsItems_.find(source);
+    if (it != sourceGraphicsItems_.end()) {
+      it->second->aboutToRemoveSource();
+    }
+  });
+
   connect(smModel, &pqServerManagerModel::sourceRemoved, this, [this](pqPipelineSource* source) {
     std::cout << "removed source " << source->getSMName().toStdString() << std::endl;
     removeSourceRepresentation(source);
@@ -423,11 +431,12 @@ void NetworkEditor::onSelectionChanged() {
       auto source_item = qgraphicsitem_cast<SourceGraphicsItem *>(item);
       if (!source_item)
         continue;
-      auto source = source_item->getSource();
-      selection.push_back(source);
-      if (!active_source)
-        active_source = source;
-      ++num_selected;
+      if (auto source = source_item->getSource()) {
+        selection.push_back(source);
+        if (!active_source)
+          active_source = source;
+        ++num_selected;
+      }
     }
 
     if (vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject()) {
@@ -536,10 +545,11 @@ void NetworkEditor::copy() {
     if (!source_item)
       continue;
 
-    auto source = source_item->getSource();
-    vtkSMProxy* proxy = source->getProxy();
-    source_proxies.emplace_back(std::make_tuple(source->getSMName().toStdString(), proxy));
-    proxy->SaveXMLState(rootElement);
+    if (auto source = source_item->getSource()) {
+      vtkSMProxy *proxy = source->getProxy();
+      source_proxies.emplace_back(std::make_tuple(source->getSMName().toStdString(), proxy));
+      proxy->SaveXMLState(rootElement);
+    }
   }
 
   // add proxycollection for sources
@@ -694,7 +704,9 @@ void NetworkEditor::deleteSelected() {
   QSet<ConnectionGraphicsItem*> delete_connections;
   for (QGraphicsItem* item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
-      delete_sources.insert(source->getSource());
+      if (source->getSource()) {
+        delete_sources.insert(source->getSource());
+      }
     } else if (auto connection = qgraphicsitem_cast<ConnectionGraphicsItem*>(item)) {
       delete_connections.insert(connection);
     }
@@ -716,7 +728,9 @@ void NetworkEditor::showSelected() {
   auto items = this->selectedItems();
   for (QGraphicsItem* item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
-      utilpq::set_source_visiblity(source->getSource(), true);
+      if (source->getSource()) {
+        utilpq::set_source_visiblity(source->getSource(), true);
+      }
     }
   }
   pqActiveObjects::instance().activeView()->render();
@@ -726,7 +740,9 @@ void NetworkEditor::hideSelected() {
   auto items = this->selectedItems();
   for (QGraphicsItem* item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
-      utilpq::set_source_visiblity(source->getSource(), false);
+      if (source->getSource()) {
+        utilpq::set_source_visiblity(source->getSource(), false);
+      }
     }
   }
   pqActiveObjects::instance().activeView()->render();
@@ -736,7 +752,9 @@ void NetworkEditor::showSelectedScalarBars() {
   auto items = this->selectedItems();
   for (QGraphicsItem* item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
-      utilpq::set_source_scalar_bar_visiblity(source->getSource(), true);
+      if (source->getSource()) {
+        utilpq::set_source_scalar_bar_visiblity(source->getSource(), true);
+      }
     }
   }
   pqActiveObjects::instance().activeView()->render();
@@ -747,7 +765,9 @@ void NetworkEditor::hideSelectedScalarBars() {
   auto items = this->selectedItems();
   for (QGraphicsItem* item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
-      utilpq::set_source_scalar_bar_visiblity(source->getSource(), false);
+      if (source->getSource()) {
+        utilpq::set_source_scalar_bar_visiblity(source->getSource(), false);
+      }
     }
   }
   pqActiveObjects::instance().activeView()->render();
@@ -792,8 +812,11 @@ void NetworkEditor::computeGraphLayout() {
       if (!output)
         continue;
       for (ConnectionGraphicsItem* connection : output->getConnections()) {
-        size_t dest_id = connection->getInportGraphicsItem()->getSource()->getSource()->getProxy()->GetGlobalID();
-        edges.emplace_back(std::make_pair(dest_id, id));
+        pqPipelineSource* source = connection->getInportGraphicsItem()->getSourceGraphicsItem()->getSource();
+        if (source) {
+          size_t dest_id = source->getProxy()->GetGlobalID();
+          edges.emplace_back(std::make_pair(dest_id, id));
+        }
       }
     }
   }
