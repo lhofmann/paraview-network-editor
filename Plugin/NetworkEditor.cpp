@@ -623,6 +623,41 @@ void NetworkEditor::paste(float x, float y) {
     }
   }
 
+  std::unordered_set<std::string> source_names;
+  auto sources = utilpq::get_sources();
+  for (auto source : sources) {
+    source_names.insert(source->getSMName().toStdString());
+  }
+
+  auto proxy_collections = vtkSmartPointer<vtkCollection>::New();
+  parser->GetRootElement()->GetElementsByName("ProxyCollection", proxy_collections);
+  for (int i = 0; i < proxy_collections->GetNumberOfItems(); ++i) {
+    auto collection = vtkPVXMLElement::SafeDownCast(proxy_collections->GetItemAsObject(i));
+    if (!collection)
+      continue;
+    if (collection->GetAttributeOrEmpty("name") != std::string("sources"))
+      continue;
+    for (int j = 0; j < collection->GetNumberOfNestedElements(); ++j) {
+      vtkPVXMLElement* child = collection->GetNestedElement(j);
+      const char* name = child->GetAttribute("name");
+      if (!name)
+        continue;
+      std::string new_name(name);
+      if (new_name.length() <= 0)
+        continue;
+      while (source_names.count(new_name) > 0) {
+        int k = new_name.length();
+        while (k > 0 && std::isdigit(new_name[k - 1])) {
+          --k;
+        }
+        int number = std::atoi(new_name.substr(k, std::string::npos).c_str());
+        new_name = new_name.substr(0, k) + std::to_string(number + 1);
+      }
+      source_names.insert(new_name);
+      child->SetAttribute("name", new_name.c_str());
+    }
+  }
+
   clearSelection();
   addSourceToSelection_ = true;
   updateSelection_ = true;
