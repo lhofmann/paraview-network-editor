@@ -22,6 +22,7 @@
 #include <vtkSMProxyManager.h>
 #include <vtkCollection.h>
 #include <vtkVersion.h>
+#include <vtkSMParaViewPipelineController.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -523,10 +524,13 @@ void NetworkEditor::helpEvent(QGraphicsSceneHelpEvent* e) {
 }
 
 void NetworkEditor::copy() {
-  vtkPVXMLElement* state = vtkPVXMLElement::New();
+  // this creates a minimal statefile from the selected items
+  // see implementation of vtkSMSessionProxyManager::AddInternalState
+
+  vtkNew<vtkPVXMLElement> state;
   state->SetName("ParaView");
 
-  vtkPVXMLElement* rootElement = vtkPVXMLElement::New();
+  vtkNew<vtkPVXMLElement> rootElement;
   rootElement->SetName("ServerManagerState");
   std::ostringstream version_string;
   version_string << vtkSMProxyManager::GetVersionMajor() << "."
@@ -535,7 +539,8 @@ void NetworkEditor::copy() {
   rootElement->AddAttribute("version", version_string.str().c_str());
 
   // add sources
-  std::vector<std::tuple<std::string, vtkSMProxy*>> source_proxies;
+  auto smModel = pqApplicationCore::instance()->getServerManagerModel();
+  std::map<std::string, std::vector<std::tuple<std::string, vtkSMProxy*>>> collections;
   for (auto item : this->selectedItems()) {
     auto source_item = qgraphicsitem_cast<SourceGraphicsItem *>(item);
     if (!source_item)
@@ -543,33 +548,45 @@ void NetworkEditor::copy() {
 
     if (auto source = source_item->getSource()) {
       vtkSMProxy *proxy = source->getProxy();
-      source_proxies.emplace_back(std::make_tuple(source->getSMName().toStdString(), proxy));
+      collections["sources"].emplace_back(std::make_tuple(source->getSMName().toStdString(), proxy));
       proxy->SaveXMLState(rootElement);
+
+      // each pqProxy may have several "helper proxies" that do not appear elsewhere in the pipeline
+      std::string helper_group = vtkSMParaViewPipelineController::GetHelperProxyGroupName(proxy);
+      auto helper_proxies = source->getHelperProxies();
+      for (auto helper : helper_proxies) {
+        if (auto helper_proxy = smModel->findItem<pqProxy*>(helper->GetGlobalID())) {
+          collections[helper_group].emplace_back(std::make_tuple(helper_proxy->getSMName().toStdString(), helper));
+        } else {
+          // use id is name if pqProxy not found (seems to be the case most of the time?)
+          collections[helper_group].emplace_back(std::make_tuple(std::to_string(helper->GetGlobalID()), helper));
+        }
+        helper->SaveXMLState(rootElement);
+      }
     }
   }
 
-  // add proxycollection for sources
-  vtkPVXMLElement* collectionElement = vtkPVXMLElement::New();
-  collectionElement->SetName("ProxyCollection");
-  collectionElement->AddAttribute("name", "sources");
-  for (const auto& kv : source_proxies) {
-    vtkPVXMLElement* itemElement = vtkPVXMLElement::New();
-    itemElement->SetName("Item");
-    itemElement->AddAttribute("id", std::get<1>(kv)->GetGlobalID());
-    itemElement->AddAttribute("name", std::get<0>(kv).c_str());
-#if VTK_MAJOR_VERSION > 8 || VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 90
-    if (std::get<1>(kv)->GetLogName() != nullptr) {
-      itemElement->AddAttribute("logname", std::get<1>(kv)->GetLogName());
-    }
+  // add proxy collections
+  for (const auto& kv : collections) {
+    vtkNew<vtkPVXMLElement> collectionElement;
+    collectionElement->SetName("ProxyCollection");
+    collectionElement->AddAttribute("name", kv.first.c_str());
+    for (const auto &kv : kv.second) {
+      vtkNew<vtkPVXMLElement> itemElement;
+      itemElement->SetName("Item");
+      itemElement->AddAttribute("id", std::get<1>(kv)->GetGlobalID());
+      itemElement->AddAttribute("name", std::get<0>(kv).c_str());
+#if   VTK_MAJOR_VERSION > 8 || VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 90
+      if (std::get<1>(kv)->GetLogName() != nullptr) {
+        itemElement->AddAttribute("logname", std::get<1>(kv)->GetLogName());
+      }
 #endif
-    collectionElement->AddNestedElement(itemElement);
-    itemElement->Delete();
+      collectionElement->AddNestedElement(itemElement);
+    }
+    rootElement->AddNestedElement(collectionElement);
   }
-  rootElement->AddNestedElement(collectionElement);
-  collectionElement->Delete();
 
   state->AddNestedElement(rootElement);
-  rootElement->FastDelete();
 
   std::stringstream ss;
   state->PrintXML(ss, vtkIndent());
