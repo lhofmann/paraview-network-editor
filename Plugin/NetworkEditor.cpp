@@ -6,6 +6,7 @@
 #include "vtkPVNetworkEditorSettings.h"
 #include "utilpq.h"
 #include "debug_message.h"
+#include "vtkPasteStateLoader.h"
 
 #ifdef ENABLE_GRAPHVIZ
 # include "graph_layout.h"
@@ -23,6 +24,8 @@
 #include <vtkCollection.h>
 #include <vtkVersion.h>
 #include <vtkSMParaViewPipelineController.h>
+#include <vtkSMViewProxy.h>
+#include <vtkSMPropertyHelper.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -39,6 +42,8 @@
 #include <pqSourcesMenuReaction.h>
 #include <pqCoreUtilities.h>
 #include <pqUndoStack.h>
+#include <pqRepresentation.h>
+#include <pqDataRepresentation.h>
 
 #include <QGraphicsView>
 #include <QPainter>
@@ -136,6 +141,12 @@ NetworkEditor::NetworkEditor()
 
   connect(smModel, &pqServerManagerModel::representationAdded, this, [this](pqRepresentation* rep) {
     DEBUG_MSG("added representation " << rep->getSMName().toStdString());
+    if (auto data_repr = dynamic_cast<pqDataRepresentation*>(rep)) {
+      if (data_repr->getInput())
+        DEBUG_MSG("input " << data_repr->getInput()->getSMName().toStdString());
+      if (data_repr->getOutputPortFromInput())
+        DEBUG_MSG("port " << data_repr->getOutputPortFromInput()->getPortNumber());
+    }
   });
 
   connect(smModel, &pqServerManagerModel::representationRemoved, this, [this](pqRepresentation* rep) {
@@ -563,6 +574,26 @@ void NetworkEditor::copy() {
         }
         helper->SaveXMLState(rootElement);
       }
+
+      for (auto view : source->getViews()) {
+        for (auto representation : source->getRepresentations(view)) {
+          vtkSMProxy *proxy = representation->getProxy();
+          collections["representations"].emplace_back(std::make_tuple(representation->getSMName().toStdString(), proxy));
+          proxy->SaveXMLState(rootElement);
+
+          std::string helper_group = vtkSMParaViewPipelineController::GetHelperProxyGroupName(proxy);
+          auto helper_proxies = representation->getHelperProxies();
+          for (auto helper : helper_proxies) {
+            if (auto helper_proxy = smModel->findItem<pqProxy*>(helper->GetGlobalID())) {
+              collections[helper_group].emplace_back(std::make_tuple(helper_proxy->getSMName().toStdString(), helper));
+            } else {
+              // use id is name if pqProxy not found (seems to be the case most of the time?)
+              collections[helper_group].emplace_back(std::make_tuple(std::to_string(helper->GetGlobalID()), helper));
+            }
+            helper->SaveXMLState(rootElement);
+          }
+        }
+      }
     }
   }
 
@@ -680,7 +711,29 @@ void NetworkEditor::paste(float x, float y) {
   updateSelection_ = true;
   auto app = pqApplicationCore::instance();
   auto server = app->getActiveServer();
-  server->proxyManager()->LoadXMLState(parser->GetRootElement(), nullptr, false);
+  vtkNew<vtkPasteStateLoader> loader;
+  loader->SetSessionProxyManager(server->proxyManager());
+  server->proxyManager()->LoadXMLState(parser->GetRootElement(), loader, false);
+  DEBUG_MSG("done pasting");
+
+  auto smModel = app->getServerManagerModel();
+  auto pm = server->proxyManager();
+  for (auto proxy : loader->representation_proxies) {
+    auto repr = smModel->findItem<pqDataRepresentation*>(proxy->GetGlobalID());
+    if (!repr)
+      continue;
+    DEBUG_MSG("Repr " << repr->getSMName().toStdString());
+    if (auto input = repr->getInput())
+      DEBUG_MSG("Input " << input->getSMName().toStdString());
+
+    auto view = pqActiveObjects::instance().activeView();
+    auto view_proxy = view->getViewProxy();
+
+    vtkSMPropertyHelper(view_proxy, "Representations").Add(proxy);
+    view_proxy->UpdateVTKObjects();
+    repr->setVisible(vtkSMPropertyHelper(proxy, "Visibility").GetAsInt());
+  }
+
   addSourceToSelection_ = false;
   updateSelection_ = false;
   this->onSelectionChanged();

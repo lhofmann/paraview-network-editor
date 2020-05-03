@@ -16,7 +16,8 @@ set(sources
     OutputPortStatusGraphicsItem.cpp
     utilqt.cpp
     utilpq.cpp
-    observer.cpp)
+    observer.cpp
+    vtkPasteStateLoader.cpp)
 
 
 if (legacy_build_system)
