@@ -75,6 +75,7 @@ class NetworkEditor : public QGraphicsScene {
   // connectionGraphicsItems_[source, dest][output_id, input_id]
   std::map<std::tuple<pqPipelineSource*, pqPipelineSource*>, std::map<std::tuple<int, int>, ConnectionGraphicsItem*>> connectionGraphicsItems_;
 
+  bool selectionDirty_ = false;
   bool updateSelection_ = false;
   static const int gridSpacing_;
   QPointF snapToGrid(const QPointF& pos);

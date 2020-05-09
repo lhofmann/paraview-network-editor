@@ -82,6 +82,9 @@ NetworkEditor::NetworkEditor()
 
   // only synchronize selection on mouse leave event for peformance
   // connect(this, &QGraphicsScene::selectionChanged, this, &NetworkEditor::onSelectionChanged);
+  connect(this, &QGraphicsScene::selectionChanged, this, [this]() {
+    selectionDirty_ = true;
+  });
 
   // observe ParaView's pipeline
   connect(&pqActiveObjects::instance(), &pqActiveObjects::selectionChanged, this, [this](const pqProxySelection& selection) {
@@ -433,6 +436,10 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
 void NetworkEditor::onSelectionChanged() {
   if (updateSelection_)
     return;
+
+  if (!selectionDirty_)
+    return;
+  selectionDirty_ = false;
 
   {
     pqProxySelection selection;
