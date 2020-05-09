@@ -80,7 +80,8 @@ NetworkEditor::NetworkEditor()
 
   installEventFilter(connectionDragHelper_);
 
-  connect(this, &QGraphicsScene::selectionChanged, this, &NetworkEditor::onSelectionChanged);
+  // only synchronize selection on mouse leave event for peformance
+  // connect(this, &QGraphicsScene::selectionChanged, this, &NetworkEditor::onSelectionChanged);
 
   // observe ParaView's pipeline
   connect(&pqActiveObjects::instance(), &pqActiveObjects::selectionChanged, this, [this](const pqProxySelection& selection) {
@@ -490,7 +491,7 @@ void NetworkEditor::mousePressEvent(QGraphicsSceneMouseEvent* e) {
 }
 
 void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
-
+  this->onSelectionChanged();
   lastMousePos_ = e->scenePos();
 
   // snap selected sources to grid and store position in proxies
