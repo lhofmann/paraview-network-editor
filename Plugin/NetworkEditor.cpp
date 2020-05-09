@@ -724,6 +724,11 @@ void NetworkEditor::paste(float x, float y) {
   server->proxyManager()->LoadXMLState(parser->GetRootElement(), loader, false);
   DEBUG_MSG("done pasting");
 
+  // TODO: lookup tables are not pasted properly (use vtkSMTransferFunctionManager)
+  // TODO: currently, all representations from all views are pasted into the active view
+  // TODO: implement two modes:
+  //   - copy representation from active to active view
+  //   - copy all representations within their respective views
   auto smModel = app->getServerManagerModel();
   auto pm = server->proxyManager();
   for (auto proxy : loader->representation_proxies) {
