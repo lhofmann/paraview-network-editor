@@ -55,7 +55,14 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
     typeLabel_->setFont(classFont);
 
     auto smproxy = source->getSourceProxy();
-    typeLabel_->setText(smproxy->GetVTKClassName());
+    std::string vtk_class = smproxy->GetVTKClassName();
+    // stip python module paths
+    size_t pos = vtk_class.rfind('.');
+    if (pos != std::string::npos) {
+      vtk_class = vtk_class.substr(pos + 1, std::string::npos);
+    }
+
+    typeLabel_->setText(vtk_class.c_str());
     LabelGraphicsItemObserver::addObservation(typeLabel_);
   }
   positionLablels();
