@@ -72,7 +72,8 @@ else ()
         Qt5::Widgets
         ParaView::pqComponents
         ParaView::pqApplicationComponents
-        ParaView::ServerManagerRendering
+        ParaView::RemotingViews
+        #ParaView::ServerManagerRendering
     )
 endif ()
 
