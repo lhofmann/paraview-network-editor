@@ -29,13 +29,16 @@
 
 #include <iostream>
 
-class MyProxyStyle : public QProxyStyle
-{
+namespace ParaViewNetworkEditor {
+
+class MyProxyStyle : public QProxyStyle {
  public:
   using QProxyStyle::QProxyStyle;
 
-  int styleHint(StyleHint hint, const QStyleOption* option = nullptr, const QWidget* widget = nullptr, QStyleHintReturn* returnData = nullptr) const override
-  {
+  int styleHint(StyleHint hint,
+                const QStyleOption *option = nullptr,
+                const QWidget *widget = nullptr,
+                QStyleHintReturn *returnData = nullptr) const override {
     if (hint == QStyle::SH_ToolTip_WakeUpDelay) {
       return vtkPVNetworkEditorSettings::GetInstance()->GetTooltipWakeupDelay();
     }
@@ -44,9 +47,12 @@ class MyProxyStyle : public QProxyStyle
   }
 };
 
+}
 
 void NetworkEditorWidget::constructor()
 {
+  using namespace ParaViewNetworkEditor;
+
   isCentralWidget_ = false;
   networkEditor_ = std::make_unique<NetworkEditor>();
   networkEditorView_ = new NetworkEditorView(networkEditor_.get(), this);
@@ -200,6 +206,8 @@ void NetworkEditorWidget::swapWithCentralWidget() {
   isCentralWidget_ = !isCentralWidget_;
 }
 
+namespace ParaViewNetworkEditor {
+
 bool MainWindowEventFilter::eventFilter(QObject *obj, QEvent *event) {
   if (event->type() == QEvent::ShortcutOverride) {
     QKeyEvent* key_event = static_cast<QKeyEvent*>(event);
@@ -216,4 +224,6 @@ bool MainWindowEventFilter::eventFilter(QObject *obj, QEvent *event) {
     }
   }
   return false;
+}
+
 }

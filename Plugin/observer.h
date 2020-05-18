@@ -36,6 +36,8 @@
 #include <algorithm>
 #include <vector>
 
+namespace ParaViewNetworkEditor {
+
 class ObservableInterface;
 
 /** \class Observer
@@ -354,5 +356,6 @@ bool Observable<T>::removeObserverInternal(Observer* aObserver) {
   }
 }
 
+}
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_OBSERVER_H_

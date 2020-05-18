@@ -14,14 +14,17 @@
 
 #include "debug_message.h"
 
+
+namespace ParaViewNetworkEditor {
+
 vtkStandardNewMacro(vtkPasteStateLoader);
 
 vtkPasteStateLoader::vtkPasteStateLoader() = default;
 
 vtkPasteStateLoader::~vtkPasteStateLoader() = default;
 
-vtkSMProxy* vtkPasteStateLoader::NewProxy(vtkTypeUInt32 id, vtkSMProxyLocator* locator) {
-  vtkSMProxy* result = this->Superclass::NewProxy(id, locator);
+vtkSMProxy *vtkPasteStateLoader::NewProxy(vtkTypeUInt32 id, vtkSMProxyLocator *locator) {
+  vtkSMProxy *result = this->Superclass::NewProxy(id, locator);
   if (result) {
     DEBUG_MSG(result->GetXMLName() << " " << result->GetXMLGroup() << " " << result->GetGlobalID());
     if (result->GetXMLGroup() == std::string("representations")) {
@@ -31,6 +34,8 @@ vtkSMProxy* vtkPasteStateLoader::NewProxy(vtkTypeUInt32 id, vtkSMProxyLocator* l
   return result;
 }
 
-void vtkPasteStateLoader::PrintSelf(ostream& os, vtkIndent indent) {
+void vtkPasteStateLoader::PrintSelf(ostream &os, vtkIndent indent) {
   this->Superclass::PrintSelf(os, indent);
+}
+
 }

@@ -32,13 +32,15 @@
 
 #include <QFontMetrics>
 
-namespace utilqt{
+namespace ParaViewNetworkEditor {
+namespace utilqt {
 
 constexpr int refEm() { return 11; }
 
-int emToPx(const QWidget* w, double em);
-int emToPx(const QFontMetrics& m, double em);
+int emToPx(const QWidget *w, double em);
+int emToPx(const QFontMetrics &m, double em);
 
+}
 }
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_UTILQT_H_

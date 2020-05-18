@@ -8,6 +8,8 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QApplication>
 
+namespace ParaViewNetworkEditor {
+
 ConnectionDragHelper::ConnectionDragHelper(NetworkEditor &editor)
     : QObject(&editor), editor_{editor} {}
 
@@ -49,3 +51,5 @@ void ConnectionDragHelper::start(OutputPortGraphicsItem *outport, QPointF endPoi
 }
 
 void ConnectionDragHelper::reset() { connection_.reset(); }
+
+}

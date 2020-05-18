@@ -20,6 +20,8 @@
 #include <QTextCursor>
 #include <vtkSMSourceProxy.h>
 
+namespace ParaViewNetworkEditor {
+
 const QSizeF SourceGraphicsItem::size_ = {150.f, 50.f};
 
 int pointSizeToPixelSize(const int pointSize) {
@@ -28,8 +30,7 @@ int pointSizeToPixelSize(const int pointSize) {
 }
 
 SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
-: source_(source)
-{
+    : source_(source) {
   static constexpr int labelHeight = 8;
   auto width = static_cast<int>(size_.width());
 
@@ -71,7 +72,7 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
     this->addOutport(i);
   }
 
-  if (pqPipelineFilter* filter = qobject_cast<pqPipelineFilter*>(source)) {
+  if (pqPipelineFilter *filter = qobject_cast<pqPipelineFilter *>(source)) {
     for (int i = 0; i < filter->getNumberOfInputPorts(); ++i) {
       this->addInport(i);
     }
@@ -79,14 +80,14 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
 
   connect(source_, &pqPipelineSource::nameChanged, this, &SourceGraphicsItem::onSourceNameChanged);
 
-  connect(source_, &pqPipelineSource::visibilityChanged, this, [this] () {
+  connect(source_, &pqPipelineSource::visibilityChanged, this, [this]() {
     this->update();
   });
 }
 
 SourceGraphicsItem::~SourceGraphicsItem() = default;
 
-pqPipelineSource* SourceGraphicsItem::getSource() const {
+pqPipelineSource *SourceGraphicsItem::getSource() const {
   return source_;
 }
 
@@ -175,7 +176,7 @@ void SourceGraphicsItem::positionLablels() {
   typeLabel_->setPos(QPointF(rect().left() + labelMargin, -3));
 }
 
-void SourceGraphicsItem::onLabelGraphicsItemChanged(LabelGraphicsItem* item) {
+void SourceGraphicsItem::onLabelGraphicsItemChanged(LabelGraphicsItem *item) {
   if (item == identifierLabel_ && identifierLabel_->isFocusOut()) {
     QString newName = identifierLabel_->text();
     if (newName != "" && newName != source_->getSMName()) {
@@ -185,11 +186,11 @@ void SourceGraphicsItem::onLabelGraphicsItemChanged(LabelGraphicsItem* item) {
   }
 }
 
-void SourceGraphicsItem::onLabelGraphicsItemEdited(LabelGraphicsItem*) {
+void SourceGraphicsItem::onLabelGraphicsItemEdited(LabelGraphicsItem *) {
   positionLablels();
 }
 
-void SourceGraphicsItem::onSourceNameChanged(pqServerManagerModelItem*) {
+void SourceGraphicsItem::onSourceNameChanged(pqServerManagerModelItem *) {
   QString newName = source_->getSMName();
   if (newName != identifierLabel_->text()) {
     identifierLabel_->setText(newName);
@@ -222,24 +223,26 @@ void SourceGraphicsItem::loadPosition() {
   }
 }
 
-InputPortGraphicsItem* SourceGraphicsItem::getInputPortGraphicsItem(int port) const {
-  if ((port < 0) || ((size_t)port >= inportItems_.size()))
+InputPortGraphicsItem *SourceGraphicsItem::getInputPortGraphicsItem(int port) const {
+  if ((port < 0) || ((size_t) port >= inportItems_.size()))
     return nullptr;
   return this->inportItems_[port];
 }
 
-OutputPortGraphicsItem* SourceGraphicsItem::getOutputPortGraphicsItem(int port) const {
-  if ((port < 0) || ((size_t)port >= outportItems_.size()))
+OutputPortGraphicsItem *SourceGraphicsItem::getOutputPortGraphicsItem(int port) const {
+  if ((port < 0) || ((size_t) port >= outportItems_.size()))
     return nullptr;
   return this->outportItems_[port];
 }
 
-void SourceGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) {
+void SourceGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *e) {
   utilpq::toggle_source_visibility(source_);
-  pqView* activeView = pqActiveObjects::instance().activeView();
+  pqView *activeView = pqActiveObjects::instance().activeView();
   activeView->render();
 }
 
 void SourceGraphicsItem::aboutToRemoveSource() {
   this->source_ = nullptr;
+}
+
 }

@@ -6,10 +6,13 @@
 
 #include <memory>
 
+class QEvent;
+
+namespace ParaViewNetworkEditor {
+
 class NetworkEditor;
 class ConnectionDragGraphicsItem;
 class OutputPortGraphicsItem;
-class QEvent;
 
 class ConnectionDragHelper : public QObject {
  Q_OBJECT
@@ -27,5 +30,7 @@ class ConnectionDragHelper : public QObject {
   NetworkEditor &editor_;
   std::unique_ptr<ConnectionDragGraphicsItem> connection_;
 };
+
+}
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_CONNECTIONDRAGHELPER_H_

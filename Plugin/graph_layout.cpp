@@ -4,11 +4,12 @@
 #include <graphviz/gvc.h>
 #include <string>
 
+namespace ParaViewNetworkEditor {
+
 std::map<size_t, std::pair<float, float>> compute_graph_layout(
-    const std::vector<size_t>& nodes,
-    const std::vector<std::pair<size_t, size_t>>& edges
-)
-{
+    const std::vector<size_t> &nodes,
+    const std::vector<std::pair<size_t, size_t>> &edges
+) {
   std::string dot;
 
   dot = R"DOT(
@@ -20,7 +21,7 @@ std::map<size_t, std::pair<float, float>> compute_graph_layout(
   for (size_t i : nodes) {
     dot += std::to_string(i) + "\n";
   }
-  for (const auto& e : edges) {
+  for (const auto &e : edges) {
     dot += std::to_string(e.first) + " -> " + std::to_string(e.second) + "\n";
   }
 
@@ -33,7 +34,7 @@ std::map<size_t, std::pair<float, float>> compute_graph_layout(
   std::map<size_t, std::pair<float, float>> result;
 
   for (size_t i : nodes) {
-    Agnode_t* node = agnode(G, const_cast<char *>(std::to_string(i).data()), 0);
+    Agnode_t *node = agnode(G, const_cast<char *>(std::to_string(i).data()), 0);
     if (node) {
       auto &coord = ND_coord(node);
       result[i] = std::make_pair(coord.x, coord.y);
@@ -45,4 +46,6 @@ std::map<size_t, std::pair<float, float>> compute_graph_layout(
   gvFreeContext(gvc);
 
   return result;
+}
+
 }

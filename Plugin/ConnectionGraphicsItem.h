@@ -10,6 +10,8 @@
 #include <QColor>
 #include <QPointF>
 
+namespace ParaViewNetworkEditor {
+
 class CurveGraphicsItem : public EditorGraphicsItem {
  public:
   CurveGraphicsItem(QColor color = QColor(38, 38, 38), QColor borderColor = Qt::black,
@@ -64,7 +66,7 @@ class ConnectionDragGraphicsItem : public CurveGraphicsItem {
   virtual QPointF getEndPoint() const override;
   void setEndPoint(QPointF endPoint);
 
-  OutputPortGraphicsItem* getOutportGraphicsItem() const;
+  OutputPortGraphicsItem *getOutportGraphicsItem() const;
 
   void reactToPortHover(InputPortGraphicsItem *inport);
 
@@ -92,8 +94,8 @@ class ConnectionGraphicsItem : public CurveGraphicsItem {
   virtual QPointF getStartPoint() const override;
   virtual QPointF getEndPoint() const override;
 
-  InputPortGraphicsItem* getInportGraphicsItem() const;
-  OutputPortGraphicsItem* getOutportGraphicsItem() const;
+  InputPortGraphicsItem *getInportGraphicsItem() const;
+  OutputPortGraphicsItem *getOutportGraphicsItem() const;
 
   virtual void showToolTip(QGraphicsSceneHelpEvent *e) override;
 
@@ -104,5 +106,6 @@ class ConnectionGraphicsItem : public CurveGraphicsItem {
   InputPortGraphicsItem *inport_;
 };
 
+}
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_CONNECTIONGRAPHICSITEM_H_

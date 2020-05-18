@@ -9,6 +9,8 @@
 
 #include <cmath>
 
+namespace ParaViewNetworkEditor {
+
 const QColor dummy_color(44, 123, 182);
 
 CurveGraphicsItem::CurveGraphicsItem(QColor color, QColor borderColor, QColor selectedBorderColor)
@@ -50,7 +52,7 @@ QPainterPath CurveGraphicsItem::obtainCurvePath(QPointF startPoint, QPointF endP
   return bezierCurve;
 }
 
-void CurveGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, QWidget*) {
+void CurveGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *) {
   const auto color = getColor();
   if (isSelected()) {
     p->setPen(QPen(selectedBorderColor_, 4.0, Qt::SolidLine, Qt::RoundCap));
@@ -93,14 +95,13 @@ void CurveGraphicsItem::setSelectedBorderColor(QColor selectedBorderColor) {
 
 QColor CurveGraphicsItem::getColor() const { return color_; }
 
-
-ConnectionDragGraphicsItem::ConnectionDragGraphicsItem(OutputPortGraphicsItem* outport,
+ConnectionDragGraphicsItem::ConnectionDragGraphicsItem(OutputPortGraphicsItem *outport,
                                                        QPointF endPoint, QColor color)
     : CurveGraphicsItem(color), endPoint_{endPoint}, outport_(outport) {}
 
 ConnectionDragGraphicsItem::~ConnectionDragGraphicsItem() = default;
 
-OutputPortGraphicsItem* ConnectionDragGraphicsItem::getOutportGraphicsItem() const {
+OutputPortGraphicsItem *ConnectionDragGraphicsItem::getOutportGraphicsItem() const {
   return outport_;
 }
 
@@ -115,7 +116,7 @@ void ConnectionDragGraphicsItem::setEndPoint(QPointF endPoint) {
   updateShape();
 }
 
-void ConnectionDragGraphicsItem::reactToPortHover(InputPortGraphicsItem* inport) {
+void ConnectionDragGraphicsItem::reactToPortHover(InputPortGraphicsItem *inport) {
   if (inport != nullptr) {
     auto ip = inport->getPort();
     auto op = outport_->getPort();
@@ -131,13 +132,10 @@ void ConnectionDragGraphicsItem::reactToPortHover(InputPortGraphicsItem* inport)
   }
 }
 
-
-ConnectionGraphicsItem::ConnectionGraphicsItem(OutputPortGraphicsItem* outport,
-                                               InputPortGraphicsItem* inport)
+ConnectionGraphicsItem::ConnectionGraphicsItem(OutputPortGraphicsItem *outport,
+                                               InputPortGraphicsItem *inport)
     : CurveGraphicsItem(dummy_color) // (utilqt::toQColor(connection.getInport()->getColorCode()))
-    , outport_(outport)
-    , inport_(inport)
-{
+    , outport_(outport), inport_(inport) {
   setFlags(ItemIsSelectable | ItemIsFocusable);
   setZValue(CONNECTIONGRAPHICSITEM_DEPTH);
   outport_->addConnection(this);
@@ -157,26 +155,26 @@ QPointF ConnectionGraphicsItem::getEndPoint() const {
   return inport_->mapToScene(inport_->rect().center());
 }
 
-void ConnectionGraphicsItem::showToolTip(QGraphicsSceneHelpEvent* e) {
+void ConnectionGraphicsItem::showToolTip(QGraphicsSceneHelpEvent *e) {
   // showPortInfo(e, getOutport());
 }
 
-QVariant ConnectionGraphicsItem::itemChange(GraphicsItemChange change, const QVariant& value) {
+QVariant ConnectionGraphicsItem::itemChange(GraphicsItemChange change, const QVariant &value) {
   switch (change) {
-    case QGraphicsItem::ItemSelectedHasChanged:
-      inport_->update();
+    case QGraphicsItem::ItemSelectedHasChanged:inport_->update();
       outport_->update();
       break;
-    default:
-      break;
+    default:break;
   }
   return QGraphicsItem::itemChange(change, value);
 }
 
-InputPortGraphicsItem* ConnectionGraphicsItem::getInportGraphicsItem() const {
+InputPortGraphicsItem *ConnectionGraphicsItem::getInportGraphicsItem() const {
   return inport_;
 }
 
-OutputPortGraphicsItem* ConnectionGraphicsItem::getOutportGraphicsItem() const {
+OutputPortGraphicsItem *ConnectionGraphicsItem::getOutportGraphicsItem() const {
   return outport_;
+}
+
 }

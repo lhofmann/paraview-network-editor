@@ -5,9 +5,11 @@
 #include <QGraphicsView>
 #include <QToolTip>
 
+namespace ParaViewNetworkEditor {
+
 EditorGraphicsItem::EditorGraphicsItem() : QGraphicsRectItem() {}
 
-EditorGraphicsItem::EditorGraphicsItem(QGraphicsItem* parent) : QGraphicsRectItem(parent) {}
+EditorGraphicsItem::EditorGraphicsItem(QGraphicsItem *parent) : QGraphicsRectItem(parent) {}
 
 EditorGraphicsItem::~EditorGraphicsItem() = default;
 
@@ -18,7 +20,7 @@ QPoint EditorGraphicsItem::mapPosToSceen(QPointF inPos) const {
       && scene()->views().first()->viewport() != nullptr  // ... and has a viewport
       ) {
     QPointF sceneP = mapToScene(inPos);
-    QGraphicsView* v = scene()->views().first();
+    QGraphicsView *v = scene()->views().first();
     QPoint viewP = v->mapFromScene(sceneP);
     return v->viewport()->mapToGlobal(viewP);
   } else {
@@ -26,16 +28,18 @@ QPoint EditorGraphicsItem::mapPosToSceen(QPointF inPos) const {
   }
 }
 
-void EditorGraphicsItem::showToolTip(QGraphicsSceneHelpEvent*) {}
+void EditorGraphicsItem::showToolTip(QGraphicsSceneHelpEvent *) {}
 
-void EditorGraphicsItem::showToolTipHelper(QGraphicsSceneHelpEvent* e, QString string) const {
-  QGraphicsView* v = scene()->views().first();
+void EditorGraphicsItem::showToolTipHelper(QGraphicsSceneHelpEvent *e, QString string) const {
+  QGraphicsView *v = scene()->views().first();
   QRectF rect = this->mapRectToScene(this->rect());
   QRect viewRect = v->mapFromScene(rect).boundingRect();
   e->accept();
   QToolTip::showText(e->screenPos(), string, v, viewRect);
 }
 
-NetworkEditor* EditorGraphicsItem::getNetworkEditor() const {
-  return qobject_cast<NetworkEditor*>(scene());
+NetworkEditor *EditorGraphicsItem::getNetworkEditor() const {
+  return qobject_cast<NetworkEditor *>(scene());
+}
+
 }

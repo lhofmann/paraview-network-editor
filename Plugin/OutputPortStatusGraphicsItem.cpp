@@ -15,17 +15,15 @@
 #include <QBrush>
 #include <QColor>
 
-OutputPortStatusGraphicsItem::OutputPortStatusGraphicsItem(QGraphicsRectItem* parent, int port)
-    : EditorGraphicsItem(parent)
-    , size_(9.0f)
-    , lineWidth_(1.0f)
-    , portID_(port)
-{
+namespace ParaViewNetworkEditor {
+
+OutputPortStatusGraphicsItem::OutputPortStatusGraphicsItem(QGraphicsRectItem *parent, int port)
+    : EditorGraphicsItem(parent), size_(9.0f), lineWidth_(1.0f), portID_(port) {
   setRect(-0.5f * size_ - lineWidth_, -0.5f * size_ - lineWidth_, 1.5 * size_ + 2.0 * lineWidth_,
           size_ + 2.0 * lineWidth_);
 }
 
-void OutputPortStatusGraphicsItem::paint(QPainter* p, const QStyleOptionGraphicsItem*, QWidget*) {
+void OutputPortStatusGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *) {
   qreal ledRadius = size_ / 2.0f;
   QColor baseColor = QColor(0, 170, 0).lighter(200);
 
@@ -35,7 +33,7 @@ void OutputPortStatusGraphicsItem::paint(QPainter* p, const QStyleOptionGraphics
   bool visible = false;
   bool scalar_bar = false;
 
-  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem*>(this->parentItem());
+  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem *>(this->parentItem());
   if (source_graphicsitem && source_graphicsitem->getSource()) {
     std::tie(visible, scalar_bar) = utilpq::output_visibiility(source_graphicsitem->getSource(), portID_);
   }
@@ -96,19 +94,21 @@ void OutputPortStatusGraphicsItem::paint(QPainter* p, const QStyleOptionGraphics
   p->restore();
 }
 
-void OutputPortStatusGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent* e) {
-  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem*>(this->parentItem());
+void OutputPortStatusGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent *e) {
+  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem *>(this->parentItem());
   if (source_graphicsitem && source_graphicsitem->getSource()) {
-    pqOutputPort* output_port = source_graphicsitem->getSource()->getOutputPort(portID_);
+    pqOutputPort *output_port = source_graphicsitem->getSource()->getOutputPort(portID_);
     pqActiveObjects::instance().setActivePort(output_port);
   }
 }
 
-void OutputPortStatusGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) {
-  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem*>(this->parentItem());
+void OutputPortStatusGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *e) {
+  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem *>(this->parentItem());
   if (source_graphicsitem && source_graphicsitem->getSource()) {
     utilpq::toggle_output_visibility(source_graphicsitem->getSource(), portID_);
     pqView *activeView = pqActiveObjects::instance().activeView();
     activeView->render();
   }
+}
+
 }

@@ -8,6 +8,8 @@
 
 class pqOutputPort;
 
+namespace ParaViewNetworkEditor {
+
 class OutputPortStatusGraphicsItem : public EditorGraphicsItem {
  public:
   OutputPortStatusGraphicsItem(QGraphicsRectItem *parent, int port);
@@ -19,13 +21,15 @@ class OutputPortStatusGraphicsItem : public EditorGraphicsItem {
 
  protected:
   void paint(QPainter *p, const QStyleOptionGraphicsItem *options, QWidget *widget) override;
-  void mousePressEvent(QGraphicsSceneMouseEvent* e) override;
-  void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) override;
+  void mousePressEvent(QGraphicsSceneMouseEvent *e) override;
+  void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *e) override;
 
  private:
   float size_;
   float lineWidth_;
   int portID_;
 };
+
+}
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_OUTPUTPORTSTATUSGRAPHICSITEM_H_

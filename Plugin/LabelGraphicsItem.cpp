@@ -7,13 +7,15 @@
 #include <QFontMetrics>
 #include <QTextDocument>
 
-LabelGraphicsItem::LabelGraphicsItem(QGraphicsItem* parent, int width, Qt::Alignment alignment)
-    : QGraphicsTextItem(parent)
-    , LabelGraphicsItemObservable()
-    , width_(width)
-    , focusOut_(false)
-    , orgText_("")
-    , alignment_(alignment) {
+namespace ParaViewNetworkEditor {
+
+LabelGraphicsItem::LabelGraphicsItem(QGraphicsItem *parent, int width, Qt::Alignment alignment)
+    : QGraphicsTextItem(parent),
+      LabelGraphicsItemObservable(),
+      width_(width),
+      focusOut_(false),
+      orgText_(""),
+      alignment_(alignment) {
   font().setPixelSize(4);
   document()->setDocumentMargin(1.0);
 }
@@ -25,7 +27,7 @@ QString LabelGraphicsItem::text() const {
     return toPlainText();
 }
 
-void LabelGraphicsItem::setText(const QString& str) {
+void LabelGraphicsItem::setText(const QString &str) {
   QFontMetrics fm = QFontMetrics(font());
   auto text = fm.elidedText(str, Qt::ElideMiddle, width_);
   setPlainText(text);
@@ -35,7 +37,7 @@ void LabelGraphicsItem::setText(const QString& str) {
   updatePosition();
 }
 
-void LabelGraphicsItem::setHtml(const QString& str) {
+void LabelGraphicsItem::setHtml(const QString &str) {
   QGraphicsTextItem::setHtml(str);
   updatePosition();
 }
@@ -86,7 +88,7 @@ void LabelGraphicsItem::setAlignment(Qt::Alignment alignment) {
   updatePosition();
 }
 
-void LabelGraphicsItem::keyPressEvent(QKeyEvent* keyEvent) {
+void LabelGraphicsItem::keyPressEvent(QKeyEvent *keyEvent) {
   if (keyEvent->key() == Qt::Key_Return || keyEvent->key() == Qt::Key_Enter) {
     clearFocus();
   } else {
@@ -96,11 +98,11 @@ void LabelGraphicsItem::keyPressEvent(QKeyEvent* keyEvent) {
   notifyObserversEdited(this);
 }
 
-void LabelGraphicsItem::focusInEvent(QFocusEvent*) {
+void LabelGraphicsItem::focusInEvent(QFocusEvent *) {
   if (isCropped()) setPlainText(orgText_);
 }
 
-void LabelGraphicsItem::focusOutEvent(QFocusEvent*) {
+void LabelGraphicsItem::focusOutEvent(QFocusEvent *) {
   focusOut_ = true;
   setFlags(nullptr);
   setTextInteractionFlags(Qt::NoTextInteraction);
@@ -112,10 +114,12 @@ void LabelGraphicsItem::focusOutEvent(QFocusEvent*) {
   focusOut_ = false;
 }
 
-void LabelGraphicsItemObservable::notifyObserversChanged(LabelGraphicsItem* item) {
-  forEachObserver([&](LabelGraphicsItemObserver* o) { o->onLabelGraphicsItemChanged(item); });
+void LabelGraphicsItemObservable::notifyObserversChanged(LabelGraphicsItem *item) {
+  forEachObserver([&](LabelGraphicsItemObserver *o) { o->onLabelGraphicsItemChanged(item); });
 }
 
-void LabelGraphicsItemObservable::notifyObserversEdited(LabelGraphicsItem* item) {
-  forEachObserver([&](LabelGraphicsItemObserver* o) { o->onLabelGraphicsItemEdited(item); });
+void LabelGraphicsItemObservable::notifyObserversEdited(LabelGraphicsItem *item) {
+  forEachObserver([&](LabelGraphicsItemObserver *o) { o->onLabelGraphicsItemEdited(item); });
+}
+
 }

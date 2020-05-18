@@ -4,6 +4,8 @@
 #include "observer.h"
 #include <QGraphicsTextItem>
 
+namespace ParaViewNetworkEditor {
+
 class LabelGraphicsItem;
 
 class LabelGraphicsItemObserver : public Observer {
@@ -60,5 +62,7 @@ class LabelGraphicsItem : public QGraphicsTextItem,
   QString orgText_;
   Qt::Alignment alignment_;  // Qt::AlignLeft/Right/HCenter | Qt::AlignTop/Bottom/VCenter
 };
+
+}
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_LABELGRAPHICSITEM_H_

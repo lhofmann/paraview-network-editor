@@ -10,90 +10,94 @@
 class pqPipelineFilter;
 class pqPipelineSource;
 
+namespace ParaViewNetworkEditor {
+
 class ConnectionGraphicsItem;
 class SourceGraphicsItem;
 class PortGraphicsItem;
 
 class PortConnectionIndicator : public EditorGraphicsItem {
-public:
-    PortConnectionIndicator(PortGraphicsItem* parent, bool up, QColor color);
-    virtual ~PortConnectionIndicator() = default;
+ public:
+  PortConnectionIndicator(PortGraphicsItem *parent, bool up, QColor color);
+  virtual ~PortConnectionIndicator() = default;
 
-protected:
-    void paint(QPainter* p, const QStyleOptionGraphicsItem* options, QWidget* widget) override;
+ protected:
+  void paint(QPainter *p, const QStyleOptionGraphicsItem *options, QWidget *widget) override;
 
-private:
-    PortGraphicsItem* portConnectionItem_;
-    bool up_;
-    QColor color_;
+ private:
+  PortGraphicsItem *portConnectionItem_;
+  bool up_;
+  QColor color_;
 };
 
 class PortGraphicsItem : public EditorGraphicsItem {
-public:
-    PortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, bool up, QColor color);
-    virtual ~PortGraphicsItem();
+ public:
+  PortGraphicsItem(SourceGraphicsItem *parent, const QPointF &pos, bool up, QColor color);
+  virtual ~PortGraphicsItem();
 
-    void addConnection(ConnectionGraphicsItem* connection);
-    void removeConnection(ConnectionGraphicsItem* connection);
-    std::vector<ConnectionGraphicsItem*>& getConnections();
-    SourceGraphicsItem* getSourceGraphicsItem() const;
-    virtual void showToolTip(QGraphicsSceneHelpEvent* e) override = 0;
+  void addConnection(ConnectionGraphicsItem *connection);
+  void removeConnection(ConnectionGraphicsItem *connection);
+  std::vector<ConnectionGraphicsItem *> &getConnections();
+  SourceGraphicsItem *getSourceGraphicsItem() const;
+  virtual void showToolTip(QGraphicsSceneHelpEvent *e) override = 0;
 
-protected:
-    virtual QVariant itemChange(GraphicsItemChange change, const QVariant& value) override;
-    virtual void updateConnectionPositions() = 0;
+ protected:
+  virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+  virtual void updateConnectionPositions() = 0;
 
-    std::vector<ConnectionGraphicsItem*> connections_;
-    SourceGraphicsItem* source_;
-    PortConnectionIndicator* connectionIndicator_;
-    float size_;
-    float lineWidth_;
+  std::vector<ConnectionGraphicsItem *> connections_;
+  SourceGraphicsItem *source_;
+  PortConnectionIndicator *connectionIndicator_;
+  float size_;
+  float lineWidth_;
 };
 
 class InputPortGraphicsItem : public PortGraphicsItem {
-public:
-    InputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, int port_id);
-    virtual ~InputPortGraphicsItem() = default;
+ public:
+  InputPortGraphicsItem(SourceGraphicsItem *parent, const QPointF &pos, int port_id);
+  virtual ~InputPortGraphicsItem() = default;
 
-    // override for qgraphicsitem_cast (refer qt documentation)
-    enum { Type = UserType + InputPortGraphicsType };
-    virtual int type() const override { return Type; }
+  // override for qgraphicsitem_cast (refer qt documentation)
+  enum { Type = UserType + InputPortGraphicsType };
+  virtual int type() const override { return Type; }
 
-    virtual void showToolTip(QGraphicsSceneHelpEvent* e) override;
+  virtual void showToolTip(QGraphicsSceneHelpEvent *e) override;
 
-    std::pair<pqPipelineFilter*, int> getPort() const;
+  std::pair<pqPipelineFilter *, int> getPort() const;
 
-protected:
-    int portID_;
+ protected:
+  int portID_;
 
-    virtual void paint(QPainter* p, const QStyleOptionGraphicsItem* options,
-                       QWidget* widget) override;
-    virtual void mousePressEvent(QGraphicsSceneMouseEvent* e) override;
-    virtual void updateConnectionPositions() override;
+  virtual void paint(QPainter *p, const QStyleOptionGraphicsItem *options,
+                     QWidget *widget) override;
+  virtual void mousePressEvent(QGraphicsSceneMouseEvent *e) override;
+  virtual void updateConnectionPositions() override;
 };
 
 class OutputPortGraphicsItem : public PortGraphicsItem {
-public:
-    OutputPortGraphicsItem(SourceGraphicsItem* parent, const QPointF& pos, int port_id);
-    virtual ~OutputPortGraphicsItem() = default;
+ public:
+  OutputPortGraphicsItem(SourceGraphicsItem *parent, const QPointF &pos, int port_id);
+  virtual ~OutputPortGraphicsItem() = default;
 
-    // override for qgraphicsitem_cast (refer qt documentation)
-    enum { Type = UserType + OutputPortGraphicsType };
-    virtual int type() const override { return Type; }
+  // override for qgraphicsitem_cast (refer qt documentation)
+  enum { Type = UserType + OutputPortGraphicsType };
+  virtual int type() const override { return Type; }
 
-    virtual void showToolTip(QGraphicsSceneHelpEvent* e) override;
+  virtual void showToolTip(QGraphicsSceneHelpEvent *e) override;
 
-    std::pair<pqPipelineSource*, int> getPort() const;
+  std::pair<pqPipelineSource *, int> getPort() const;
 
-protected:
+ protected:
   int portID_;
 
-    virtual void paint(QPainter* p, const QStyleOptionGraphicsItem* options,
-                       QWidget* widget) override;
-    virtual void mousePressEvent(QGraphicsSceneMouseEvent* e) override;
-    void mouseDoubleClickEvent(QGraphicsSceneMouseEvent* e) override;
-    virtual void updateConnectionPositions() override;
+  virtual void paint(QPainter *p, const QStyleOptionGraphicsItem *options,
+                     QWidget *widget) override;
+  virtual void mousePressEvent(QGraphicsSceneMouseEvent *e) override;
+  void mouseDoubleClickEvent(QGraphicsSceneMouseEvent *e) override;
+  virtual void updateConnectionPositions() override;
 };
+
+}
 
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_PORTGRAPHICSITEM_H_

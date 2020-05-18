@@ -29,6 +29,8 @@
 
 #include "observer.h"
 
+namespace ParaViewNetworkEditor {
+
 Observer::Observer(const Observer& rhs) {
   for (auto observable : rhs.observables_) addObservation(observable);
 }
@@ -89,3 +91,4 @@ void ObservableInterface::removeObservationHelper(Observer* observer) {
   observer->removeObservationInternal(this);
 }
 
+}

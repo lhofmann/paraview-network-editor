@@ -5,6 +5,8 @@
 #include <QGraphicsRectItem>
 #include <QGraphicsSceneHelpEvent>
 
+namespace ParaViewNetworkEditor {
+
 enum NetworkEditorGraphicsItemType {
   SourceGraphicsType = 1,
   CurveGraphicsType,
@@ -33,14 +35,16 @@ class NetworkEditor;
 class EditorGraphicsItem : public QGraphicsRectItem {
  public:
   EditorGraphicsItem();
-  EditorGraphicsItem(QGraphicsItem* parent);
+  EditorGraphicsItem(QGraphicsItem *parent);
   virtual ~EditorGraphicsItem();
   QPoint mapPosToSceen(QPointF pos) const;
 
-  virtual void showToolTip(QGraphicsSceneHelpEvent* event);
+  virtual void showToolTip(QGraphicsSceneHelpEvent *event);
  protected:
-  void showToolTipHelper(QGraphicsSceneHelpEvent* event, QString string) const;
-  NetworkEditor* getNetworkEditor() const;
+  void showToolTipHelper(QGraphicsSceneHelpEvent *event, QString string) const;
+  NetworkEditor *getNetworkEditor() const;
 };
+
+}
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_EDITORGRAPHICSITEM_H_

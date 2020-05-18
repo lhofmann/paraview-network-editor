@@ -8,34 +8,36 @@ class pqPipelineSource;
 class pqPipelineFilter;
 class vtkSMParaViewPipelineControllerWithRendering;
 
+namespace ParaViewNetworkEditor {
 namespace utilpq {
 
-bool multiple_inputs(pqPipelineFilter* filter, int port);
+bool multiple_inputs(pqPipelineFilter *filter, int port);
 
-bool optional_input(pqPipelineFilter* filter, int port);
+bool optional_input(pqPipelineFilter *filter, int port);
 
-bool can_connect(pqPipelineSource* source, int out_port, pqPipelineFilter* dest, int in_port);
+bool can_connect(pqPipelineSource *source, int out_port, pqPipelineFilter *dest, int in_port);
 
-void add_connection(pqPipelineSource* source, int out_port, pqPipelineFilter* dest, int in_port);
+void add_connection(pqPipelineSource *source, int out_port, pqPipelineFilter *dest, int in_port);
 
-void remove_connection(pqPipelineSource* source, int out_port, pqPipelineFilter* dest, int in_port);
+void remove_connection(pqPipelineSource *source, int out_port, pqPipelineFilter *dest, int in_port);
 
-void clear_connections(pqPipelineFilter* filter, int port);
+void clear_connections(pqPipelineFilter *filter, int port);
 
-std::vector<pqPipelineSource*> get_sources();
+std::vector<pqPipelineSource *> get_sources();
 
-std::pair<bool, bool> output_visibiility(pqPipelineSource* source, int out_port);
+std::pair<bool, bool> output_visibiility(pqPipelineSource *source, int out_port);
 
-void toggle_output_visibility(pqPipelineSource* source, int out_port);
+void toggle_output_visibility(pqPipelineSource *source, int out_port);
 
-void toggle_source_visibility(pqPipelineSource* source);
+void toggle_source_visibility(pqPipelineSource *source);
 
-void set_source_visiblity(pqPipelineSource* source, bool visible);
+void set_source_visiblity(pqPipelineSource *source, bool visible);
 
-void set_source_scalar_bar_visiblity(pqPipelineSource* source, bool visible);
+void set_source_scalar_bar_visiblity(pqPipelineSource *source, bool visible);
 
-std::vector<std::string> input_datatypes(pqPipelineFilter* filter, int in_port);
+std::vector<std::string> input_datatypes(pqPipelineFilter *filter, int in_port);
 
+}
 }
 
 #endif //PARAVIEWNETWORKEDITOR_PLUGIN_UTILPQ_H_

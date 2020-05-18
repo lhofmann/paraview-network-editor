@@ -58,22 +58,23 @@
 #include <algorithm>
 #include <set>
 
+namespace ParaViewNetworkEditor {
+
 const int NetworkEditor::gridSpacing_ = 25;
 
 NetworkEditor::NetworkEditor()
-: connectionDragHelper_{new ConnectionDragHelper(*this)}
-{
+    : connectionDragHelper_{new ConnectionDragHelper(*this)} {
   // The default BSP tends to crash...
   setItemIndexMethod(QGraphicsScene::NoIndex);
   setSceneRect(QRectF());
 
   // add current sources
   auto sources = utilpq::get_sources();
-  for (pqPipelineSource* source: sources) {
+  for (pqPipelineSource *source: sources) {
     addSourceRepresentation(source);
   }
-  for (pqPipelineSource* sourceA: sources) {
-    for (pqPipelineSource* sourceB: sources) {
+  for (pqPipelineSource *sourceA: sources) {
+    for (pqPipelineSource *sourceB: sources) {
       updateConnectionRepresentations(sourceA, sourceB);
     }
   }
@@ -87,65 +88,79 @@ NetworkEditor::NetworkEditor()
   });
 
   // observe ParaView's pipeline
-  connect(&pqActiveObjects::instance(), &pqActiveObjects::selectionChanged, this, [this](const pqProxySelection& selection) {
-    updateSelection_ = true;
-    for (auto const& item : sourceGraphicsItems_) {
-      bool selected = selection.contains(item.first);
-      for (pqServerManagerModelItem* proxy : selection) {
-        auto port = qobject_cast<pqOutputPort*>(proxy);
-        if (!port)
-          continue;
-        selected = selected || (item.first == port->getSource());
-      }
-      item.second->setSelected(selected);
-    }
-    updateSelection_ = false;
-  });
+  connect(&pqActiveObjects::instance(),
+          &pqActiveObjects::selectionChanged,
+          this,
+          [this](const pqProxySelection &selection) {
+            updateSelection_ = true;
+            for (auto const &item : sourceGraphicsItems_) {
+              bool selected = selection.contains(item.first);
+              for (pqServerManagerModelItem *proxy : selection) {
+                auto port = qobject_cast<pqOutputPort *>(proxy);
+                if (!port)
+                  continue;
+                selected = selected || (item.first == port->getSource());
+              }
+              item.second->setSelected(selected);
+            }
+            updateSelection_ = false;
+          });
 
-  connect(&pqActiveObjects::instance(), &pqActiveObjects::portChanged, this, [this](pqOutputPort*) {
+  connect(&pqActiveObjects::instance(), &pqActiveObjects::portChanged, this, [this](pqOutputPort *) {
     this->update();
   });
-  connect(&pqActiveObjects::instance(), &pqActiveObjects::viewChanged, this, [this](pqView*) {
+  connect(&pqActiveObjects::instance(), &pqActiveObjects::viewChanged, this, [this](pqView *) {
     this->update();
   });
-  connect(&pqActiveObjects::instance(), static_cast<void (pqActiveObjects::*)(pqDataRepresentation*)>(&pqActiveObjects::representationChanged), this, [this](pqDataRepresentation*) {
-    this->update();
-  });
+  connect(&pqActiveObjects::instance(),
+          static_cast<void (pqActiveObjects::*)(pqDataRepresentation *)>(&pqActiveObjects::representationChanged),
+          this,
+          [this](pqDataRepresentation *) {
+            this->update();
+          });
 
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
-  connect(smModel, &pqServerManagerModel::sourceAdded, this, [this](pqPipelineSource* source) {
+  connect(smModel, &pqServerManagerModel::sourceAdded, this, [this](pqPipelineSource *source) {
     DEBUG_MSG("added source " << source->getSMName().toStdString());
     addSourceRepresentation(source);
   });
 
-  connect(smModel, &pqServerManagerModel::preSourceRemoved, this, [this](pqPipelineSource* source) {
-  DEBUG_MSG("preSourceRemoved " << source->getSMName().toStdString());
+  connect(smModel, &pqServerManagerModel::preSourceRemoved, this, [this](pqPipelineSource *source) {
+    DEBUG_MSG("preSourceRemoved " << source->getSMName().toStdString());
     auto it = sourceGraphicsItems_.find(source);
     if (it != sourceGraphicsItems_.end()) {
       it->second->aboutToRemoveSource();
     }
   });
 
-  connect(smModel, &pqServerManagerModel::sourceRemoved, this, [this](pqPipelineSource* source) {
+  connect(smModel, &pqServerManagerModel::sourceRemoved, this, [this](pqPipelineSource *source) {
     DEBUG_MSG("removed source " << source->getSMName().toStdString());
     removeSourceRepresentation(source);
   });
 
-  connect(smModel, &pqServerManagerModel::connectionAdded, this, [this](pqPipelineSource* source, pqPipelineSource* dest, int sourcePort) {
-    DEBUG_MSG("added connection "
-              << source->getSMName().toStdString() << " (" << sourcePort << ") -> " << dest->getSMName().toStdString() );
-    updateConnectionRepresentations(source, dest);
-  });
+  connect(smModel,
+          &pqServerManagerModel::connectionAdded,
+          this,
+          [this](pqPipelineSource *source, pqPipelineSource *dest, int sourcePort) {
+            DEBUG_MSG("added connection "
+                          << source->getSMName().toStdString() << " (" << sourcePort << ") -> "
+                          << dest->getSMName().toStdString());
+            updateConnectionRepresentations(source, dest);
+          });
 
-  connect(smModel, &pqServerManagerModel::connectionRemoved, this, [this](pqPipelineSource* source, pqPipelineSource* dest, int sourcePort) {
-    DEBUG_MSG("removed connection "
-              << source->getSMName().toStdString() << " (" << sourcePort << ") -> " << dest->getSMName().toStdString() );
-    updateConnectionRepresentations(source, dest);
-  });
+  connect(smModel,
+          &pqServerManagerModel::connectionRemoved,
+          this,
+          [this](pqPipelineSource *source, pqPipelineSource *dest, int sourcePort) {
+            DEBUG_MSG("removed connection "
+                          << source->getSMName().toStdString() << " (" << sourcePort << ") -> "
+                          << dest->getSMName().toStdString());
+            updateConnectionRepresentations(source, dest);
+          });
 
-  connect(smModel, &pqServerManagerModel::representationAdded, this, [this](pqRepresentation* rep) {
+  connect(smModel, &pqServerManagerModel::representationAdded, this, [this](pqRepresentation *rep) {
     DEBUG_MSG("added representation " << rep->getSMName().toStdString());
-    if (auto data_repr = dynamic_cast<pqDataRepresentation*>(rep)) {
+    if (auto data_repr = dynamic_cast<pqDataRepresentation *>(rep)) {
       if (data_repr->getInput())
         DEBUG_MSG("input " << data_repr->getInput()->getSMName().toStdString());
       if (data_repr->getOutputPortFromInput())
@@ -153,12 +168,12 @@ NetworkEditor::NetworkEditor()
     }
   });
 
-  connect(smModel, &pqServerManagerModel::representationRemoved, this, [this](pqRepresentation* rep) {
+  connect(smModel, &pqServerManagerModel::representationRemoved, this, [this](pqRepresentation *rep) {
     DEBUG_MSG("removed representation " << rep->getSMName().toStdString());
   });
 
-  connect(smModel, &pqServerManagerModel::modifiedStateChanged, this, [this](pqServerManagerModelItem* item) {
-    auto source = qobject_cast<pqPipelineSource*>(item);
+  connect(smModel, &pqServerManagerModel::modifiedStateChanged, this, [this](pqServerManagerModelItem *item) {
+    auto source = qobject_cast<pqPipelineSource *>(item);
     if (!source)
       return;
     auto it = sourceGraphicsItems_.find(source);
@@ -168,11 +183,11 @@ NetworkEditor::NetworkEditor()
   });
 
   // undo/redo may change node positions
-  pqUndoStack* undo_stack = pqApplicationCore::instance()->getUndoStack();
+  pqUndoStack *undo_stack = pqApplicationCore::instance()->getUndoStack();
   connect(undo_stack, &pqUndoStack::undone, this, &NetworkEditor::updateSourcePositions);
   connect(undo_stack, &pqUndoStack::redone, this, &NetworkEditor::updateSourcePositions);
 
-  QAction* showSBAction = new QAction(this);
+  QAction *showSBAction = new QAction(this);
   connect(showSBAction, &QAction::toggled, this, [this](bool) { this->update(); });
   connect(showSBAction, &QAction::changed, this, [this]() { this->update(); });
   new pqScalarBarVisibilityReaction(showSBAction);
@@ -183,7 +198,7 @@ NetworkEditor::NetworkEditor()
 
 NetworkEditor::~NetworkEditor() = default;
 
-void NetworkEditor::drawBackground(QPainter* painter, const QRectF& rect) {
+void NetworkEditor::drawBackground(QPainter *painter, const QRectF &rect) {
   painter->save();
   painter->setWorldMatrixEnabled(true);
   painter->fillRect(rect, QColor(0x7d, 0x80, 0x83));
@@ -205,7 +220,7 @@ void NetworkEditor::drawBackground(QPainter* painter, const QRectF& rect) {
   painter->restore();
 }
 
-void NetworkEditor::drawForeground(QPainter* painter, const QRectF& rect) {
+void NetworkEditor::drawForeground(QPainter *painter, const QRectF &rect) {
   // For testing purposes only. Draw bounding rects around all graphics items
   if (false) {
     QList<QGraphicsItem *> items = QGraphicsScene::items(Qt::DescendingOrder);
@@ -219,7 +234,7 @@ void NetworkEditor::drawForeground(QPainter* painter, const QRectF& rect) {
   }
 }
 
-void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
+void NetworkEditor::addSourceRepresentation(pqPipelineSource *source) {
   auto sourceGraphicsItem = new SourceGraphicsItem(source);
 
   QPointF pos;
@@ -235,7 +250,7 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
       pos.setY(this->itemsBoundingRect().bottom() + gridSpacing_);
     }
     pos.setX(pos.x() + SourceGraphicsItem::size_.width() / 2.);
-    pos.setY(pos.y() +  SourceGraphicsItem::size_.height() / 2.);
+    pos.setY(pos.y() + SourceGraphicsItem::size_.height() / 2.);
   }
   proxy->SetAnnotation("Node.x", std::to_string(pos.x()).c_str());
   proxy->SetAnnotation("Node.y", std::to_string(pos.y()).c_str());
@@ -250,10 +265,10 @@ void NetworkEditor::addSourceRepresentation(pqPipelineSource* source) {
   }
 }
 
-void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
+void NetworkEditor::removeSourceRepresentation(pqPipelineSource *source) {
   // remove connections that belong to source
-  std::vector<pqPipelineSource*> dests, sources;
-  for (const auto& kv : connectionGraphicsItems_) {
+  std::vector<pqPipelineSource *> dests, sources;
+  for (const auto &kv : connectionGraphicsItems_) {
     if (std::get<0>(kv.first) == source) {
       dests.push_back(std::get<1>(kv.first));
     }
@@ -262,8 +277,8 @@ void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
     }
   }
   for (auto dest : dests) {
-    std::vector<ConnectionGraphicsItem*> connections;
-    for (const auto& kv : connectionGraphicsItems_[std::make_tuple(source, dest)]) {
+    std::vector<ConnectionGraphicsItem *> connections;
+    for (const auto &kv : connectionGraphicsItems_[std::make_tuple(source, dest)]) {
       connections.push_back(kv.second);
     }
     for (auto connection : connections) {
@@ -272,8 +287,8 @@ void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
     connectionGraphicsItems_.erase(std::make_tuple(source, dest));
   }
   for (auto src : sources) {
-    std::vector<ConnectionGraphicsItem*> connections;
-    for (const auto& kv : connectionGraphicsItems_[std::make_tuple(src, source)]) {
+    std::vector<ConnectionGraphicsItem *> connections;
+    for (const auto &kv : connectionGraphicsItems_[std::make_tuple(src, source)]) {
       connections.push_back(kv.second);
     }
     for (auto connection : connections) {
@@ -281,7 +296,6 @@ void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
     }
     connectionGraphicsItems_.erase(std::make_tuple(src, source));
   }
-
 
   auto it = sourceGraphicsItems_.find(source);
   if (it == sourceGraphicsItems_.end())
@@ -292,35 +306,35 @@ void NetworkEditor::removeSourceRepresentation(pqPipelineSource* source) {
   updateSceneSize();
 }
 
-void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pqPipelineSource* dest) {
-  std::tuple<pqPipelineSource*, pqPipelineSource*> key(source, dest);
+void NetworkEditor::updateConnectionRepresentations(pqPipelineSource *source, pqPipelineSource *dest) {
+  std::tuple<pqPipelineSource *, pqPipelineSource *> key(source, dest);
   std::set<std::tuple<int, int>> sm_connections, connections;
 
   // collect currently known connections
   auto it = connectionGraphicsItems_.find(key);
   if (it == connectionGraphicsItems_.end()) {
-    connectionGraphicsItems_[key] = std::map<std::tuple<int, int>, ConnectionGraphicsItem*>();
+    connectionGraphicsItems_[key] = std::map<std::tuple<int, int>, ConnectionGraphicsItem *>();
   } else {
-    for (auto const& kv : connectionGraphicsItems_[key]) {
+    for (auto const &kv : connectionGraphicsItems_[key]) {
       connections.insert(kv.first);
     }
   }
 
   // collect connections from ParaView pipeline
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
-  pqPipelineFilter* filter = qobject_cast<pqPipelineFilter*>(dest);
+  pqPipelineFilter *filter = qobject_cast<pqPipelineFilter *>(dest);
   if (!filter)
     return;
   assert(filter);
   for (int input_id = 0; input_id < filter->getNumberOfInputPorts(); ++input_id) {
-    const char* input_name = filter->getInputPortName(input_id).toLocal8Bit().constData();
+    const char *input_name = filter->getInputPortName(input_id).toLocal8Bit().constData();
     auto prop = vtkSMInputProperty::SafeDownCast(filter->getProxy()->GetProperty(input_name));
     assert(prop);
 
     vtkSMPropertyHelper helper(prop);
     unsigned int num_proxies = helper.GetNumberOfElements();
     for (unsigned int i = 0; i < num_proxies; ++i) {
-      auto proxy_source = smModel->findItem<pqPipelineSource*>(helper.GetAsProxy(i));
+      auto proxy_source = smModel->findItem<pqPipelineSource *>(helper.GetAsProxy(i));
       if (!proxy_source || proxy_source != source)
         continue;
       if (!proxy_source->getAllConsumers().contains(dest))
@@ -331,11 +345,11 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pq
   }
 
   DEBUG_MSG("Known: ");
-  for (const auto& conn : connections) {
+  for (const auto &conn : connections) {
     DEBUG_MSG(std::get<0>(conn) << "->" << std::get<1>(conn) << "; ");
   }
   DEBUG_MSG("SM: ");
-  for (const auto& conn : sm_connections) {
+  for (const auto &conn : sm_connections) {
     DEBUG_MSG(std::get<0>(conn) << "->" << std::get<1>(conn) << "; ");
   }
 
@@ -349,7 +363,7 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pq
       sm_connections.begin(), sm_connections.end(),
       std::inserter(removed, removed.begin()));
 
-  for (const auto& conn : removed) {
+  for (const auto &conn : removed) {
     if (connectionGraphicsItems_[key].count(conn) < 1) {
       continue;
     }
@@ -358,7 +372,7 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pq
     delete graphics_item;
   }
 
-  for (const auto& conn : added) {
+  for (const auto &conn : added) {
     auto outport_graphics = this->sourceGraphicsItems_[source]->getOutputPortGraphicsItem(std::get<0>(conn));
     auto inport_graphics = this->sourceGraphicsItems_[dest]->getInputPortGraphicsItem(std::get<1>(conn));
 
@@ -371,12 +385,12 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource* source, pq
   }
 }
 
-void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
+void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent *e) {
   lastMousePos_ = e->scenePos();
 
   QMenu menu;
-  for (auto& item : items(e->scenePos())) {
-    if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+  for (auto &item : items(e->scenePos())) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
       source->setSelected(true);
       auto editName = menu.addAction(tr("Edit Name"));
       connect(editName, &QAction::triggered, [this, source]() {
@@ -391,8 +405,8 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent* e) {
   auto select_all_action = menu.addAction(tr("Select All"));
   connect(select_all_action, &QAction::triggered, this, &NetworkEditor::selectAll);
 
-  QMainWindow* main_window = qobject_cast<QMainWindow*>(pqCoreUtilities::mainWidget());
-  QList<QAction*> actions = main_window->menuBar()->actions();
+  QMainWindow *main_window = qobject_cast<QMainWindow *>(pqCoreUtilities::mainWidget());
+  QList<QAction *> actions = main_window->menuBar()->actions();
   if (actions.size() > 4) {
     menu.addMenu(actions[3]->menu());
     menu.addMenu(actions[4]->menu());
@@ -468,14 +482,14 @@ void NetworkEditor::onSelectionChanged() {
     auto selection = selectedItems();
     bool contains_source = false;
     for (auto item : selection) {
-      if (qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+      if (qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
         contains_source = true;
         break;
       }
     }
     if (contains_source) {
       for (auto item : selection) {
-        if (!qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+        if (!qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
           item->setSelected(false);
         }
       }
@@ -483,7 +497,7 @@ void NetworkEditor::onSelectionChanged() {
   }
 }
 
-QPointF NetworkEditor::snapToGrid(const QPointF& pos) {
+QPointF NetworkEditor::snapToGrid(const QPointF &pos) {
   float ox = pos.x() > 0.0f ? 0.5f : -0.5f;
   float oy = pos.y() > 0.0f ? 0.5f : -0.5f;
   float nx = (int(pos.x() / gridSpacing_ + ox)) * gridSpacing_;
@@ -491,20 +505,20 @@ QPointF NetworkEditor::snapToGrid(const QPointF& pos) {
   return {nx, ny};
 }
 
-void NetworkEditor::mousePressEvent(QGraphicsSceneMouseEvent* e) {
+void NetworkEditor::mousePressEvent(QGraphicsSceneMouseEvent *e) {
   lastMousePos_ = e->scenePos();
   activeSourceItem_ = getGraphicsItemAt<SourceGraphicsItem>(e->scenePos());
   QGraphicsScene::mousePressEvent(e);
 }
 
-void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
+void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent *e) {
   this->onSelectionChanged();
   lastMousePos_ = e->scenePos();
 
   // snap selected sources to grid and store position in proxies
   BEGIN_UNDO_SET("Move Nodes");
   for (auto item : this->selectedItems()) {
-    if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
       source->setPos(snapToGrid(item->scenePos()));
       source->storePosition();
     }
@@ -517,25 +531,22 @@ void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent* e) {
   QGraphicsScene::mouseReleaseEvent(e);
 }
 
-void NetworkEditor::mouseMoveEvent(QGraphicsSceneMouseEvent* e) {
+void NetworkEditor::mouseMoveEvent(QGraphicsSceneMouseEvent *e) {
   /* if ((e->buttons() & Qt::LeftButton) && activeSourceItem_) {
     updateSceneSize();
   } */
   QGraphicsScene::mouseMoveEvent(e);
 }
 
-void NetworkEditor::helpEvent(QGraphicsSceneHelpEvent* e) {
-  QList<QGraphicsItem*> graphicsItems = items(e->scenePos());
+void NetworkEditor::helpEvent(QGraphicsSceneHelpEvent *e) {
+  QList<QGraphicsItem *> graphicsItems = items(e->scenePos());
   for (auto item : graphicsItems) {
     switch (item->type()) {
-      case SourceGraphicsItem::Type:
-        qgraphicsitem_cast<SourceGraphicsItem*>(item)->showToolTip(e);
+      case SourceGraphicsItem::Type:qgraphicsitem_cast<SourceGraphicsItem *>(item)->showToolTip(e);
         return;
-      case InputPortGraphicsItem::Type:
-        qgraphicsitem_cast<InputPortGraphicsItem*>(item)->showToolTip(e);
+      case InputPortGraphicsItem::Type:qgraphicsitem_cast<InputPortGraphicsItem *>(item)->showToolTip(e);
         return;
-      case OutputPortGraphicsItem::Type:
-        qgraphicsitem_cast<OutputPortGraphicsItem*>(item)->showToolTip(e);
+      case OutputPortGraphicsItem::Type:qgraphicsitem_cast<OutputPortGraphicsItem *>(item)->showToolTip(e);
         return;
     };
   }
@@ -559,7 +570,7 @@ void NetworkEditor::copy() {
 
   // add sources
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
-  std::map<std::string, std::vector<std::tuple<std::string, vtkSMProxy*>>> collections;
+  std::map<std::string, std::vector<std::tuple<std::string, vtkSMProxy *>>> collections;
   for (auto item : this->selectedItems()) {
     auto source_item = qgraphicsitem_cast<SourceGraphicsItem *>(item);
     if (!source_item)
@@ -574,7 +585,7 @@ void NetworkEditor::copy() {
       std::string helper_group = vtkSMParaViewPipelineController::GetHelperProxyGroupName(proxy);
       auto helper_proxies = source->getHelperProxies();
       for (auto helper : helper_proxies) {
-        if (auto helper_proxy = smModel->findItem<pqProxy*>(helper->GetGlobalID())) {
+        if (auto helper_proxy = smModel->findItem<pqProxy *>(helper->GetGlobalID())) {
           collections[helper_group].emplace_back(std::make_tuple(helper_proxy->getSMName().toStdString(), helper));
         } else {
           // use id is name if pqProxy not found (seems to be the case most of the time?)
@@ -586,13 +597,14 @@ void NetworkEditor::copy() {
       for (auto view : source->getViews()) {
         for (auto representation : source->getRepresentations(view)) {
           vtkSMProxy *proxy = representation->getProxy();
-          collections["representations"].emplace_back(std::make_tuple(representation->getSMName().toStdString(), proxy));
+          collections["representations"].emplace_back(std::make_tuple(representation->getSMName().toStdString(),
+                                                                      proxy));
           proxy->SaveXMLState(rootElement);
 
           std::string helper_group = vtkSMParaViewPipelineController::GetHelperProxyGroupName(proxy);
           auto helper_proxies = representation->getHelperProxies();
           for (auto helper : helper_proxies) {
-            if (auto helper_proxy = smModel->findItem<pqProxy*>(helper->GetGlobalID())) {
+            if (auto helper_proxy = smModel->findItem<pqProxy *>(helper->GetGlobalID())) {
               collections[helper_group].emplace_back(std::make_tuple(helper_proxy->getSMName().toStdString(), helper));
             } else {
               // use id is name if pqProxy not found (seems to be the case most of the time?)
@@ -606,7 +618,7 @@ void NetworkEditor::copy() {
   }
 
   // add proxy collections
-  for (const auto& kv : collections) {
+  for (const auto &kv : collections) {
     vtkNew<vtkPVXMLElement> collectionElement;
     collectionElement->SetName("ProxyCollection");
     collectionElement->AddAttribute("name", kv.first.c_str());
@@ -658,10 +670,10 @@ void NetworkEditor::paste(float x, float y) {
     if (!annotation)
       continue;
     if (std::string(annotation->GetAttribute("key")) == "Node.x") {
-      x_min = std::min(x_min, (float)std::atof(annotation->GetAttribute("value")));
+      x_min = std::min(x_min, (float) std::atof(annotation->GetAttribute("value")));
     }
     if (std::string(annotation->GetAttribute("key")) == "Node.y") {
-      y_min = std::min(y_min, (float)std::atof(annotation->GetAttribute("value")));
+      y_min = std::min(y_min, (float) std::atof(annotation->GetAttribute("value")));
     }
   }
 
@@ -675,7 +687,7 @@ void NetworkEditor::paste(float x, float y) {
     }
     if (std::string(annotation->GetAttribute("key")) == "Node.y") {
       float node_y = y - y_min + std::atof(annotation->GetAttribute("value")) + SourceGraphicsItem::size_.height() / 2.;
-      annotation->SetAttribute("value", std::to_string(node_y).c_str()) ;
+      annotation->SetAttribute("value", std::to_string(node_y).c_str());
     }
   }
 
@@ -694,8 +706,8 @@ void NetworkEditor::paste(float x, float y) {
     if (collection->GetAttributeOrEmpty("name") != std::string("sources"))
       continue;
     for (int j = 0; j < collection->GetNumberOfNestedElements(); ++j) {
-      vtkPVXMLElement* child = collection->GetNestedElement(j);
-      const char* name = child->GetAttribute("name");
+      vtkPVXMLElement *child = collection->GetNestedElement(j);
+      const char *name = child->GetAttribute("name");
       if (!name)
         continue;
       std::string new_name(name);
@@ -732,7 +744,7 @@ void NetworkEditor::paste(float x, float y) {
   auto smModel = app->getServerManagerModel();
   auto pm = server->proxyManager();
   for (auto proxy : loader->representation_proxies) {
-    auto repr = smModel->findItem<pqDataRepresentation*>(proxy->GetGlobalID());
+    auto repr = smModel->findItem<pqDataRepresentation *>(proxy->GetGlobalID());
     if (!repr)
       continue;
     DEBUG_MSG("Repr " << repr->getSMName().toStdString());
@@ -761,12 +773,12 @@ void NetworkEditor::updateSceneSize() {
   QRectF bounding = getSourcesBoundingRect().adjusted(-50, -50, 50, 50);
   QRectF extended = bounding.united(sr);
   // hack for allowing small scenes to be moved freely within the window
-  if (!views().empty() && (extended.width() <= views().front()->width() + 50 && extended.height() <= views().front()->height() + 50))
+  if (!views().empty()
+      && (extended.width() <= views().front()->width() + 50 && extended.height() <= views().front()->height() + 50))
     setSceneRect(extended);
   else
     setSceneRect(bounding);
 }
-
 
 bool NetworkEditor::empty() const {
   return sourceGraphicsItems_.empty();
@@ -774,7 +786,7 @@ bool NetworkEditor::empty() const {
 
 QRectF NetworkEditor::getSourcesBoundingRect() const {
   QRectF rect;
-  for (const auto& item : sourceGraphicsItems_) {
+  for (const auto &item : sourceGraphicsItems_) {
     if (item.second->isVisible()) {
       rect = rect.united(item.second->sceneBoundingRect());
     }
@@ -782,14 +794,14 @@ QRectF NetworkEditor::getSourcesBoundingRect() const {
   return rect;
 }
 
-void NetworkEditor::initiateConnection(OutputPortGraphicsItem* item) {
+void NetworkEditor::initiateConnection(OutputPortGraphicsItem *item) {
   const auto pos = item->mapToScene(item->rect().center());
   // const auto color = item->getPort()->getColorCode();
   const QColor color(44, 123, 182);
   connectionDragHelper_->start(item, pos, color);
 }
 
-void NetworkEditor::releaseConnection(InputPortGraphicsItem* item) {
+void NetworkEditor::releaseConnection(InputPortGraphicsItem *item) {
   if (item->getConnections().empty())
     return;
   // remove the old connection and add a new connection curve to be connected.
@@ -802,11 +814,11 @@ void NetworkEditor::releaseConnection(InputPortGraphicsItem* item) {
   connectionDragHelper_->start(port, pos, color);
 }
 
-InputPortGraphicsItem* NetworkEditor::getInputPortGraphicsItemAt(const QPointF pos) const {
+InputPortGraphicsItem *NetworkEditor::getInputPortGraphicsItemAt(const QPointF pos) const {
   return getGraphicsItemAt<InputPortGraphicsItem>(pos);
 }
 
-void NetworkEditor::removeConnection(ConnectionGraphicsItem* connection) {
+void NetworkEditor::removeConnection(ConnectionGraphicsItem *connection) {
   auto inport = connection->getInportGraphicsItem()->getPort();
   auto outport = connection->getOutportGraphicsItem()->getPort();
   utilpq::remove_connection(outport.first, outport.second, inport.first, inport.second);
@@ -815,14 +827,14 @@ void NetworkEditor::removeConnection(ConnectionGraphicsItem* connection) {
 void NetworkEditor::deleteSelected() {
   auto items = this->selectedItems();
   this->clearSelection();
-  QSet<pqPipelineSource*> delete_sources;
-  QSet<ConnectionGraphicsItem*> delete_connections;
-  for (QGraphicsItem* item : items) {
-    if (auto source = qgraphicsitem_cast<SourceGraphicsItem*>(item)) {
+  QSet<pqPipelineSource *> delete_sources;
+  QSet<ConnectionGraphicsItem *> delete_connections;
+  for (QGraphicsItem *item : items) {
+    if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
       if (source->getSource()) {
         delete_sources.insert(source->getSource());
       }
-    } else if (auto connection = qgraphicsitem_cast<ConnectionGraphicsItem*>(item)) {
+    } else if (auto connection = qgraphicsitem_cast<ConnectionGraphicsItem *>(item)) {
       delete_connections.insert(connection);
     }
   }
@@ -838,10 +850,9 @@ void NetworkEditor::deleteSelected() {
   }
 }
 
-
 void NetworkEditor::showSelected() {
   auto items = this->selectedItems();
-  for (QGraphicsItem* item : items) {
+  for (QGraphicsItem *item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
       if (source->getSource()) {
         utilpq::set_source_visiblity(source->getSource(), true);
@@ -853,7 +864,7 @@ void NetworkEditor::showSelected() {
 
 void NetworkEditor::hideSelected() {
   auto items = this->selectedItems();
-  for (QGraphicsItem* item : items) {
+  for (QGraphicsItem *item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
       if (source->getSource()) {
         utilpq::set_source_visiblity(source->getSource(), false);
@@ -865,7 +876,7 @@ void NetworkEditor::hideSelected() {
 
 void NetworkEditor::showSelectedScalarBars() {
   auto items = this->selectedItems();
-  for (QGraphicsItem* item : items) {
+  for (QGraphicsItem *item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
       if (source->getSource()) {
         utilpq::set_source_scalar_bar_visiblity(source->getSource(), true);
@@ -878,7 +889,7 @@ void NetworkEditor::showSelectedScalarBars() {
 
 void NetworkEditor::hideSelectedScalarBars() {
   auto items = this->selectedItems();
-  for (QGraphicsItem* item : items) {
+  for (QGraphicsItem *item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
       if (source->getSource()) {
         utilpq::set_source_scalar_bar_visiblity(source->getSource(), false);
@@ -892,7 +903,7 @@ void NetworkEditor::hideSelectedScalarBars() {
 void NetworkEditor::selectAll() {
   this->clearSelection();
   auto items = this->items();
-  for (QGraphicsItem* item : items) {
+  for (QGraphicsItem *item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
       source->setSelected(true);
     }
@@ -906,7 +917,7 @@ void NetworkEditor::quickLaunch() {
 }
 
 void NetworkEditor::updateSourcePositions() {
-  for (const auto& kv : sourceGraphicsItems_) {
+  for (const auto &kv : sourceGraphicsItems_) {
     kv.second->loadPosition();
   }
 }
@@ -915,9 +926,9 @@ void NetworkEditor::computeGraphLayout() {
 #ifdef ENABLE_GRAPHVIZ
   std::vector<size_t> nodes;
   std::vector<std::pair<size_t, size_t>> edges;
-  std::map<size_t, SourceGraphicsItem*> id_map;
+  std::map<size_t, SourceGraphicsItem *> id_map;
 
-  for (const auto& kv : sourceGraphicsItems_) {
+  for (const auto &kv : sourceGraphicsItems_) {
     size_t id = kv.first->getProxy()->GetGlobalID();
     id_map[id] = kv.second;
     nodes.push_back(id);
@@ -926,8 +937,8 @@ void NetworkEditor::computeGraphLayout() {
       auto output = kv.second->getOutputPortGraphicsItem(i);
       if (!output)
         continue;
-      for (ConnectionGraphicsItem* connection : output->getConnections()) {
-        pqPipelineSource* source = connection->getInportGraphicsItem()->getSourceGraphicsItem()->getSource();
+      for (ConnectionGraphicsItem *connection : output->getConnections()) {
+        pqPipelineSource *source = connection->getInportGraphicsItem()->getSourceGraphicsItem()->getSource();
         if (source) {
           size_t dest_id = source->getProxy()->GetGlobalID();
           edges.emplace_back(std::make_pair(dest_id, id));
@@ -939,7 +950,7 @@ void NetworkEditor::computeGraphLayout() {
   std::map<size_t, std::pair<float, float>> layout = compute_graph_layout(nodes, edges);
 
   BEGIN_UNDO_SET("Graph Layout");
-  for (const auto& kv : id_map) {
+  for (const auto &kv : id_map) {
     if (layout.count(kv.first) < 1)
       continue;
     QPointF pos(layout[kv.first].first, layout[kv.first].second);
@@ -948,4 +959,6 @@ void NetworkEditor::computeGraphLayout() {
   }
   END_UNDO_SET();
 #endif
+}
+
 }

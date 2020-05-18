@@ -6,10 +6,11 @@
 #include <QtMath>
 #include <QScrollBar>
 
+namespace ParaViewNetworkEditor {
+
 NetworkEditorView::NetworkEditorView(NetworkEditor *networkEditor, QWidget *parent)
-: QGraphicsView(parent),
-  editor_(networkEditor)
-{
+    : QGraphicsView(parent),
+      editor_(networkEditor) {
   QGraphicsView::setScene(editor_);
   setRenderHint(QPainter::Antialiasing, true);
   setMouseTracking(true);
@@ -28,24 +29,24 @@ NetworkEditorView::~NetworkEditorView() {
   QGraphicsView::setScene(nullptr);
 }
 
-void NetworkEditorView::keyPressEvent(QKeyEvent* keyEvent) {
+void NetworkEditorView::keyPressEvent(QKeyEvent *keyEvent) {
   if (keyEvent->modifiers() & Qt::ControlModifier) {
     setDragMode(QGraphicsView::ScrollHandDrag);
   }
   QGraphicsView::keyPressEvent(keyEvent);
 }
 
-void NetworkEditorView::keyReleaseEvent(QKeyEvent* keyEvent) {
+void NetworkEditorView::keyReleaseEvent(QKeyEvent *keyEvent) {
   setDragMode(QGraphicsView::RubberBandDrag);
   QGraphicsView::keyReleaseEvent(keyEvent);
 }
 
-void NetworkEditorView::focusOutEvent(QFocusEvent* e) {
+void NetworkEditorView::focusOutEvent(QFocusEvent *e) {
   setDragMode(QGraphicsView::RubberBandDrag);
   QGraphicsView::focusOutEvent(e);
 }
 
-void NetworkEditorView::wheelEvent(QWheelEvent* e) {
+void NetworkEditorView::wheelEvent(QWheelEvent *e) {
   QPointF numPixels = e->pixelDelta() / 5.0;
   QPointF numDegrees = e->angleDelta() / 8.0 / 15;
 
@@ -75,7 +76,7 @@ void NetworkEditorView::zoom(double dz) {
   setTransform(QTransform::fromScale(dz, dz), true);
 }
 
-void NetworkEditorView::mouseDoubleClickEvent(QMouseEvent* e) {
+void NetworkEditorView::mouseDoubleClickEvent(QMouseEvent *e) {
   QGraphicsView::mouseDoubleClickEvent(e);
 
   if (!e->isAccepted()) {
@@ -100,4 +101,6 @@ void NetworkEditorView::fitNetwork() {
   if (matrix().m11() > scale) {
     setTransform(QTransform::fromScale(scale, scale), false);
   }
+}
+
 }
