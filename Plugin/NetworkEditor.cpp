@@ -5,13 +5,13 @@
 #include "ConnectionDragHelper.h"
 #include "vtkPVNetworkEditorSettings.h"
 #include "utilpq.h"
-#include "debug_message.h"
 #include "vtkPasteStateLoader.h"
 
 #ifdef ENABLE_GRAPHVIZ
 # include "graph_layout.h"
 #endif
 
+#include <vtkLogger.h>
 #include <vtkSMProxy.h>
 #include <vtkSMSourceProxy.h>
 #include <vtkSMPropertyIterator.h>
@@ -121,12 +121,12 @@ NetworkEditor::NetworkEditor()
 
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
   connect(smModel, &pqServerManagerModel::sourceAdded, this, [this](pqPipelineSource *source) {
-    DEBUG_MSG("added source " << source->getSMName().toStdString());
+    vtkLog(5,   "added source " << source->getSMName().toStdString());
     addSourceRepresentation(source);
   });
 
   connect(smModel, &pqServerManagerModel::preSourceRemoved, this, [this](pqPipelineSource *source) {
-    DEBUG_MSG("preSourceRemoved " << source->getSMName().toStdString());
+    vtkLog(5,  "preSourceRemoved " << source->getSMName().toStdString());
     auto it = sourceGraphicsItems_.find(source);
     if (it != sourceGraphicsItems_.end()) {
       it->second->aboutToRemoveSource();
@@ -134,7 +134,7 @@ NetworkEditor::NetworkEditor()
   });
 
   connect(smModel, &pqServerManagerModel::sourceRemoved, this, [this](pqPipelineSource *source) {
-    DEBUG_MSG("removed source " << source->getSMName().toStdString());
+    vtkLog(5,  "removed source " << source->getSMName().toStdString());
     removeSourceRepresentation(source);
   });
 
@@ -142,7 +142,7 @@ NetworkEditor::NetworkEditor()
           &pqServerManagerModel::connectionAdded,
           this,
           [this](pqPipelineSource *source, pqPipelineSource *dest, int sourcePort) {
-            DEBUG_MSG("added connection "
+            vtkLog(5,  "added connection "
                           << source->getSMName().toStdString() << " (" << sourcePort << ") -> "
                           << dest->getSMName().toStdString());
             updateConnectionRepresentations(source, dest);
@@ -152,24 +152,24 @@ NetworkEditor::NetworkEditor()
           &pqServerManagerModel::connectionRemoved,
           this,
           [this](pqPipelineSource *source, pqPipelineSource *dest, int sourcePort) {
-            DEBUG_MSG("removed connection "
+            vtkLog(5,  "removed connection "
                           << source->getSMName().toStdString() << " (" << sourcePort << ") -> "
                           << dest->getSMName().toStdString());
             updateConnectionRepresentations(source, dest);
           });
 
   connect(smModel, &pqServerManagerModel::representationAdded, this, [this](pqRepresentation *rep) {
-    DEBUG_MSG("added representation " << rep->getSMName().toStdString());
+    vtkLog(5,   "added representation " << rep->getSMName().toStdString());
     if (auto data_repr = dynamic_cast<pqDataRepresentation *>(rep)) {
       if (data_repr->getInput())
-        DEBUG_MSG("input " << data_repr->getInput()->getSMName().toStdString());
+        vtkLog(5,   "input " << data_repr->getInput()->getSMName().toStdString());
       if (data_repr->getOutputPortFromInput())
-        DEBUG_MSG("port " << data_repr->getOutputPortFromInput()->getPortNumber());
+        vtkLog(5,   "port " << data_repr->getOutputPortFromInput()->getPortNumber());
     }
   });
 
   connect(smModel, &pqServerManagerModel::representationRemoved, this, [this](pqRepresentation *rep) {
-    DEBUG_MSG("removed representation " << rep->getSMName().toStdString());
+    vtkLog(5,   "removed representation " << rep->getSMName().toStdString());
   });
 
   connect(smModel, &pqServerManagerModel::modifiedStateChanged, this, [this](pqServerManagerModelItem *item) {
@@ -344,13 +344,13 @@ void NetworkEditor::updateConnectionRepresentations(pqPipelineSource *source, pq
     }
   }
 
-  DEBUG_MSG("Known: ");
+  vtkLog(5,   "Known: ");
   for (const auto &conn : connections) {
-    DEBUG_MSG(std::get<0>(conn) << "->" << std::get<1>(conn) << "; ");
+    vtkLog(5,   "" << std::get<0>(conn) << "->" << std::get<1>(conn) << "; ");
   }
-  DEBUG_MSG("SM: ");
+  vtkLog(5,   "SM: ");
   for (const auto &conn : sm_connections) {
-    DEBUG_MSG(std::get<0>(conn) << "->" << std::get<1>(conn) << "; ");
+    vtkLog(5,   "" << std::get<0>(conn) << "->" << std::get<1>(conn) << "; ");
   }
 
   std::set<std::tuple<int, int>> added, removed;
@@ -734,7 +734,7 @@ void NetworkEditor::paste(float x, float y) {
   vtkNew<vtkPasteStateLoader> loader;
   loader->SetSessionProxyManager(server->proxyManager());
   server->proxyManager()->LoadXMLState(parser->GetRootElement(), loader, false);
-  DEBUG_MSG("done pasting");
+  vtkLog(5,   "done pasting");
 
   // TODO: lookup tables are not pasted properly (use vtkSMTransferFunctionManager)
   // TODO: currently, all representations from all views are pasted into the active view
@@ -747,9 +747,9 @@ void NetworkEditor::paste(float x, float y) {
     auto repr = smModel->findItem<pqDataRepresentation *>(proxy->GetGlobalID());
     if (!repr)
       continue;
-    DEBUG_MSG("Repr " << repr->getSMName().toStdString());
+    vtkLog(5,   "Repr " << repr->getSMName().toStdString());
     if (auto input = repr->getInput())
-      DEBUG_MSG("Input " << input->getSMName().toStdString());
+      vtkLog(5,   "Input " << input->getSMName().toStdString());
 
     auto view = pqActiveObjects::instance().activeView();
     auto view_proxy = view->getViewProxy();

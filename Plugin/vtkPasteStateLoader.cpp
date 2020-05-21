@@ -11,9 +11,10 @@
 #include <vtkCollection.h>
 #include <vtkSMViewProxy.h>
 #include <vtkSMProxyProperty.h>
+#include <vtkPVXMLElement.h>
 
-#include "debug_message.h"
-
+#include <vtkLogger.h>
+#include <string>
 
 namespace ParaViewNetworkEditor {
 
@@ -26,7 +27,7 @@ vtkPasteStateLoader::~vtkPasteStateLoader() = default;
 vtkSMProxy *vtkPasteStateLoader::NewProxy(vtkTypeUInt32 id, vtkSMProxyLocator *locator) {
   vtkSMProxy *result = this->Superclass::NewProxy(id, locator);
   if (result) {
-    DEBUG_MSG(result->GetXMLName() << " " << result->GetXMLGroup() << " " << result->GetGlobalID());
+    vtkLog(5,   "" << result->GetXMLName() << " " << result->GetXMLGroup() << " " << result->GetGlobalID());
     if (result->GetXMLGroup() == std::string("representations")) {
       representation_proxies.push_back(result);
     }
