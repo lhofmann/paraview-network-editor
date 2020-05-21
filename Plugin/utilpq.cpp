@@ -145,6 +145,27 @@ std::vector<pqPipelineSource *> get_sources() {
   return result;
 }
 
+std::vector<pqView*> get_views() {
+  auto session = vtkSMProxyManager::GetProxyManager()->GetActiveSession();
+  if (!session)
+    return {};
+  auto iter = vtkSmartPointer<vtkSMProxyIterator>::New();
+  iter->SetSession(session);
+  iter->SetModeToOneGroup();
+  std::vector<pqView *> result;
+  auto smModel = pqApplicationCore::instance()->getServerManagerModel();
+  for (iter->Begin("views"); !iter->IsAtEnd(); iter->Next()) {
+    auto proxy = vtkSMViewProxy::SafeDownCast(iter->GetProxy());
+    if (!proxy)
+      continue;
+
+    auto view = smModel->findItem<pqView *>(proxy);
+    if (view)
+      result.emplace_back(view);
+  }
+  return result;
+}
+
 std::pair<bool, bool> output_visibiility(pqPipelineSource *source, int out_port) {
   bool visible = false;
   bool scalar_bar = false;

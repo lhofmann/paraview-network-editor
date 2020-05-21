@@ -40,6 +40,7 @@ class NetworkEditor : public QGraphicsScene {
   void copy();
   void paste(float x, float y);
   void paste();
+  void setPasteMode(int);
   void quickLaunch();
 
   void computeGraphLayout();
@@ -79,6 +80,13 @@ class NetworkEditor : public QGraphicsScene {
   std::map<std::tuple<pqPipelineSource *, pqPipelineSource *>, std::map<std::tuple<int, int>, ConnectionGraphicsItem *>>
       connectionGraphicsItems_;
 
+  enum PasteMode {
+    PASTEMODE_NO_VIEWS,
+    PASTEMODE_ACTIVE_VIEW,
+    PASTEMODE_ALL_VIEWS,
+  };
+
+  PasteMode pasteMode_ = PASTEMODE_NO_VIEWS;
   bool selectionDirty_ = false;
   bool updateSelection_ = false;
   static const int gridSpacing_;

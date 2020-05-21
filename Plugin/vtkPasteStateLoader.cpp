@@ -25,11 +25,38 @@ vtkPasteStateLoader::vtkPasteStateLoader() = default;
 vtkPasteStateLoader::~vtkPasteStateLoader() = default;
 
 vtkSMProxy *vtkPasteStateLoader::NewProxy(vtkTypeUInt32 id, vtkSMProxyLocator *locator) {
+  vtkPVXMLElement* elem = this->LocateProxyElement(id);
+  if (!elem) {
+    return nullptr;
+  }
+  auto annotations = vtkSmartPointer<vtkCollection>::New();
+  elem->GetElementsByName("Annotation", annotations);
+  std::string view_name;
+  for (int i = 0; i < annotations->GetNumberOfItems(); ++i) {
+    auto annotation = vtkPVXMLElement::SafeDownCast(annotations->GetItemAsObject(i));
+    if (accept_active_view) {
+      if (std::string(annotation->GetAttributeOrEmpty("key")) == "ActiveView") {
+        std::string is_active_view = annotation->GetAttributeOrEmpty("value");
+        if (is_active_view != "1") {
+          return nullptr;
+        }
+      }
+    }
+    if (std::string(annotation->GetAttributeOrEmpty("key")) == "View") {
+      view_name = annotation->GetAttributeOrEmpty("value");
+      if (!accept_active_view) {
+        if (accept_views.empty())
+          return nullptr;
+        if (std::find(accept_views.begin(), accept_views.end(), view_name) == accept_views.end())
+          return nullptr;
+      }
+    }
+  }
+
   vtkSMProxy *result = this->Superclass::NewProxy(id, locator);
   if (result) {
-    vtkLog(5,   "" << result->GetXMLName() << " " << result->GetXMLGroup() << " " << result->GetGlobalID());
     if (result->GetXMLGroup() == std::string("representations")) {
-      representation_proxies.push_back(result);
+      representation_proxies.emplace_back(std::make_tuple(view_name, result));
     }
   }
   return result;

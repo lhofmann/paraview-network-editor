@@ -568,6 +568,15 @@ void NetworkEditor::copy() {
                  << vtkSMProxyManager::GetVersionPatch();
   rootElement->AddAttribute("version", version_string.str().c_str());
 
+  auto active_view = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* active_view_proxy = nullptr;
+  if (active_view) {
+    active_view_proxy = active_view->getViewProxy();
+  }
+  vtkIdType active_view_id = 0;
+  if (active_view_proxy)
+    active_view_id = active_view_proxy->GetGlobalID();
+
   // add sources
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
   std::map<std::string, std::vector<std::tuple<std::string, vtkSMProxy *>>> collections;
@@ -595,8 +604,14 @@ void NetworkEditor::copy() {
       }
 
       for (auto view : source->getViews()) {
+        auto view_proxy = view->getViewProxy();
+        vtkIdType view_id = 0;
+        if (view_proxy)
+          view_id = view_proxy->GetGlobalID();
         for (auto representation : source->getRepresentations(view)) {
           vtkSMProxy *proxy = representation->getProxy();
+          proxy->SetAnnotation("ActiveView", (view_id == active_view_id) ? "1" : "0");
+          proxy->SetAnnotation("View", view->getSMName().toStdString().c_str());
           collections["representations"].emplace_back(std::make_tuple(representation->getSMName().toStdString(),
                                                                       proxy));
           proxy->SaveXMLState(rootElement);
@@ -610,6 +625,7 @@ void NetworkEditor::copy() {
               // use id is name if pqProxy not found (seems to be the case most of the time?)
               collections[helper_group].emplace_back(std::make_tuple(std::to_string(helper->GetGlobalID()), helper));
             }
+            helper->SetAnnotation("View", view->getSMName().toStdString().c_str());
             helper->SaveXMLState(rootElement);
           }
         }
@@ -647,6 +663,20 @@ void NetworkEditor::copy() {
   auto mimedata = std::make_unique<QMimeData>();
   mimedata->setData(QString("text/plain"), data);
   QApplication::clipboard()->setMimeData(mimedata.release());
+}
+
+void NetworkEditor::setPasteMode(int mode_index) {
+  switch (mode_index) {
+    case 1:
+      pasteMode_ = PASTEMODE_ACTIVE_VIEW;
+      break;
+    case 2:
+      pasteMode_ = PASTEMODE_ALL_VIEWS;
+      break;
+    case 0:
+    default:
+      pasteMode_ = PASTEMODE_NO_VIEWS;
+  }
 }
 
 void NetworkEditor::paste(float x, float y) {
@@ -731,32 +761,55 @@ void NetworkEditor::paste(float x, float y) {
   updateSelection_ = true;
   auto app = pqApplicationCore::instance();
   auto server = app->getActiveServer();
+
+  auto active_view = pqActiveObjects::instance().activeView();
+  vtkSMViewProxy* active_view_proxy = nullptr;
+  if (active_view) {
+    active_view_proxy = active_view->getViewProxy();
+  }
+  auto views = utilpq::get_views();
+
   vtkNew<vtkPasteStateLoader> loader;
+  loader->accept_active_view = (pasteMode_ == PASTEMODE_ACTIVE_VIEW);
+  if (pasteMode_ == PASTEMODE_ALL_VIEWS) {
+    for (auto view : views) {
+      loader->accept_views.push_back(view->getSMName().toStdString());
+    }
+  }
+
   loader->SetSessionProxyManager(server->proxyManager());
   server->proxyManager()->LoadXMLState(parser->GetRootElement(), loader, false);
   vtkLog(5,   "done pasting");
 
   // TODO: lookup tables are not pasted properly (use vtkSMTransferFunctionManager)
-  // TODO: currently, all representations from all views are pasted into the active view
-  // TODO: implement two modes:
-  //   - copy representation from active to active view
-  //   - copy all representations within their respective views
-  auto smModel = app->getServerManagerModel();
-  auto pm = server->proxyManager();
-  for (auto proxy : loader->representation_proxies) {
-    auto repr = smModel->findItem<pqDataRepresentation *>(proxy->GetGlobalID());
-    if (!repr)
-      continue;
-    vtkLog(5,   "Repr " << repr->getSMName().toStdString());
-    if (auto input = repr->getInput())
-      vtkLog(5,   "Input " << input->getSMName().toStdString());
 
-    auto view = pqActiveObjects::instance().activeView();
-    auto view_proxy = view->getViewProxy();
+  if (pasteMode_ != PASTEMODE_NO_VIEWS) {
+    auto smModel = app->getServerManagerModel();
+    auto pm = server->proxyManager();
+    for (auto view_rep : loader->representation_proxies) {
+      std::string parent_view = std::get<0>(view_rep);
+      auto proxy = std::get<1>(view_rep);
+      auto repr = smModel->findItem<pqDataRepresentation *>(proxy->GetGlobalID());
+      if (!repr)
+        continue;
 
-    vtkSMPropertyHelper(view_proxy, "Representations").Add(proxy);
-    view_proxy->UpdateVTKObjects();
-    repr->setVisible(vtkSMPropertyHelper(proxy, "Visibility").GetAsInt());
+      vtkSMViewProxy* view_proxy = nullptr;
+      if (pasteMode_ == PASTEMODE_ACTIVE_VIEW) {
+        view_proxy = active_view_proxy;
+      } else if (pasteMode_ == PASTEMODE_ALL_VIEWS) {
+        auto it = std::find_if(views.begin(), views.end(), [parent_view](pqView* view) {
+          return view->getSMName().toStdString() == parent_view;
+        });
+        if (it != views.end()) {
+          view_proxy = (*it)->getViewProxy();
+        }
+      }
+      if (view_proxy) {
+        vtkSMPropertyHelper(view_proxy, "Representations").Add(proxy);
+        view_proxy->UpdateVTKObjects();
+        repr->setVisible(vtkSMPropertyHelper(proxy, "Visibility").GetAsInt());
+      }
+    }
   }
 
   addSourceToSelection_ = false;

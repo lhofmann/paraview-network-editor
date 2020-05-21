@@ -11,10 +11,12 @@ namespace ParaViewNetworkEditor {
 class vtkPasteStateLoader : public vtkSMStateLoader {
  public:
   static vtkPasteStateLoader *New();
- vtkTypeMacro(vtkPasteStateLoader, vtkSMStateLoader);
+  vtkTypeMacro(vtkPasteStateLoader, vtkSMStateLoader);
   void PrintSelf(ostream &os, vtkIndent indent) override;
 
-  std::vector<vtkSMProxy *> representation_proxies;
+  bool accept_active_view = false;
+  std::vector<std::string> accept_views;
+  std::vector<std::tuple<std::string, vtkSMProxy *>> representation_proxies;
  protected:
   vtkPasteStateLoader();
   ~vtkPasteStateLoader() override;

@@ -7,6 +7,7 @@
 class pqPipelineSource;
 class pqPipelineFilter;
 class vtkSMParaViewPipelineControllerWithRendering;
+class pqView;
 
 namespace ParaViewNetworkEditor {
 namespace utilpq {
@@ -24,6 +25,8 @@ void remove_connection(pqPipelineSource *source, int out_port, pqPipelineFilter 
 void clear_connections(pqPipelineFilter *filter, int port);
 
 std::vector<pqPipelineSource *> get_sources();
+
+std::vector<pqView*> get_views();
 
 std::pair<bool, bool> output_visibiility(pqPipelineSource *source, int out_port);
 

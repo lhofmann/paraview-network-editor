@@ -16,6 +16,7 @@
 
 #include <QAction>
 #include <QApplication>
+#include <QComboBox>
 #include <QFile>
 #include <QMainWindow>
 #include <QVBoxLayout>
@@ -86,6 +87,15 @@ void NetworkEditorWidget::constructor()
   btnGraphLayout->setDefaultAction(graphLayout);
   hLayout->addWidget(btnGraphLayout);
 #endif
+
+  auto paste_cb = new QComboBox();
+  paste_cb->setToolTip("Behavior for pasting representations of copied sources.");
+  paste_cb->addItem(QIcon(":/pqWidgets/Icons/pqPaste.svg"), "No view");
+  paste_cb->addItem(QIcon(":/pqWidgets/Icons/pqPaste.svg"), "Active view");
+  paste_cb->addItem(QIcon(":/pqWidgets/Icons/pqPaste.svg"), "All views");
+  connect(paste_cb, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
+          networkEditor_.get(), &NetworkEditor::setPasteMode);
+  hLayout->addWidget(paste_cb);
 
   hLayout->addStretch();
 
