@@ -1,5 +1,7 @@
 # ParaView Network Editor Plugin
 
+![CI](https://github.com/lhofmann/paraview-network-editor/workflows/CI/badge.svg)
+
 This is an attempt to create a 2D network editor for ParaView, that replaces the built-in tree view pipeline editor.
 In its current state, this is a prototype at best, so **use at your own risk**!
 
@@ -9,10 +11,15 @@ This project is in large parts based on inviwo (https://github.com/inviwo/inviwo
 
 ## Usage
 
-CMake &ge; 3.8, ParaView, and optionally graphviz are required.
+[GitHub Actions ](https://github.com/lhofmann/paraview-network-editor/actions) (Github login required) is set up to automatically build Linux binaries without graphviz (no graph layout feature).
+
+Download [ParaView-5.8.0-MPI-Linux-Python3.7-64bit](https://www.paraview.org/files/v5.8/ParaView-5.8.0-MPI-Linux-Python3.7-64bit.tar.gz) and the [build artifacts](https://github.com/lhofmann/paraview-network-editor/suites/711213037/artifacts/6934209), and extract both in the same location.
+
+### Building from Source
+
+CMake &ge; 3.8, ParaView &ge; 5.8.0, and optionally graphviz are required.
 
 ParaView needs to be build from source, with `BUILD_SHARED_LIBS`, `PARAVIEW_BUILD_QT_GUI` and `PARAVIEW_INSTALL_DEVELOPMENT_FILES` enabled.
-Tested with v5.6.3 and v5.7.0 on Linux, but earlier versions might also work.
 
 Clone and build the plugin
 ```bash
@@ -27,7 +34,7 @@ Run paraview with
 paraview-network-editor-build/paraview.sh
 ```
 This script runs paraview and automatically loads the plugin.
-You can also manually load the file `paraview-network-editor-build/lib/NNetworkEditor.so` as plugin.
+You can also manually load the file `paraview-network-editor-build/lib/NetworkEditor.so` as plugin.
 
 By default, the network editor plugin swaps places with the render view on load. 
 This behavior can be changed in ParaView settings (menu `Edit > Settings... > Network Editor`). 
