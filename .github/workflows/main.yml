@@ -1,0 +1,41 @@
+name: CI
+on: push
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      paraview_version: 5.8.0
+      paraview_name: ParaView-5.8.0-MPI-Linux-Python3.7-64bit
+    steps:
+    - uses: actions/checkout@v2
+    - name: Docker
+      run: |
+        docker pull lhofmann/paraview-superbuild:${paraview_version}
+        docker run -itd \
+                   --user "$(id -u ${USER}):$(id -g ${USER})" \
+                   --name build \
+                   --volume="${GITHUB_WORKSPACE}:/mnt/shared:ro" \
+                   lhofmann/paraview-superbuild:${paraview_version}
+    - name: Configure
+      run: |
+        docker exec build /usr/bin/scl enable devtoolset-8 -- cmake \
+          -B/tmp/superbuild \
+          -H/mnt/shared/ \
+          -DMili_INCLUDE_DIR=/home/paraview/buildbuildbuildbuildbuildbuildbuildbuildbuildbuildbuildbuildbuildbuild/install/include \
+          -DCMAKE_INSTALL_PREFIX=/tmp/package/${paraview_name} \
+          -DCMAKE_INSTALL_LIBDIR=lib
+    - name: Build
+      run: docker exec build cmake --build /tmp/superbuild --target install
+    - name: Package
+      run: |
+        docker exec build /bin/bash -c "cd /tmp/package; tar czf ${paraview_name}.tar.gz ${paraview_name}/"
+        mkdir package
+        pushd package
+        docker cp "build:/tmp/package/${paraview_name}.tar.gz" .
+        tar xf ${paraview_name}.tar.gz
+        rm ${paraview_name}.tar.gz
+        popd
+    - uses: actions/upload-artifact@v2
+      with:
+        name: ParaView-5.8.0-MPI-Linux-Python3.7-64bit
+        path: ./package/
