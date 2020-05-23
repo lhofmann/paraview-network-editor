@@ -57,6 +57,7 @@
 
 #include <algorithm>
 #include <set>
+#include <cassert>
 
 namespace ParaViewNetworkEditor {
 
