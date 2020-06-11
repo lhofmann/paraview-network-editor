@@ -83,10 +83,7 @@ NetworkEditor::NetworkEditor()
   installEventFilter(connectionDragHelper_);
 
   // only synchronize selection on mouse leave event for peformance
-  // connect(this, &QGraphicsScene::selectionChanged, this, &NetworkEditor::onSelectionChanged);
-  connect(this, &QGraphicsScene::selectionChanged, this, [this]() {
-    selectionDirty_ = true;
-  });
+  connect(this, &QGraphicsScene::selectionChanged, this, &NetworkEditor::onSelectionChanged);
 
   // observe ParaView's pipeline
   connect(&pqActiveObjects::instance(),
@@ -452,11 +449,11 @@ void NetworkEditor::onSelectionChanged() {
   if (updateSelection_)
     return;
 
-  if (!selectionDirty_)
+  if (mouseDown_ || !this->views().first()->rubberBandRect().isEmpty())
     return;
-  selectionDirty_ = false;
 
   {
+    pqPipelineSource* current_active_source = pqActiveObjects::instance().activeSource();
     pqProxySelection selection;
     pqPipelineSource *active_source = nullptr;
     int num_selected = 0;
@@ -466,7 +463,7 @@ void NetworkEditor::onSelectionChanged() {
         continue;
       if (auto source = source_item->getSource()) {
         selection.push_back(source);
-        if (!active_source)
+        if ((source == current_active_source) || !active_source)
           active_source = source;
         ++num_selected;
       }
@@ -507,12 +504,14 @@ QPointF NetworkEditor::snapToGrid(const QPointF &pos) {
 }
 
 void NetworkEditor::mousePressEvent(QGraphicsSceneMouseEvent *e) {
+  mouseDown_ = true;
   lastMousePos_ = e->scenePos();
   activeSourceItem_ = getGraphicsItemAt<SourceGraphicsItem>(e->scenePos());
   QGraphicsScene::mousePressEvent(e);
 }
 
 void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent *e) {
+  mouseDown_ = false;
   this->onSelectionChanged();
   lastMousePos_ = e->scenePos();
 
@@ -736,7 +735,7 @@ void NetworkEditor::paste(float x, float y) {
       continue;
     if (collection->GetAttributeOrEmpty("name") != std::string("sources"))
       continue;
-    for (int j = 0; j < collection->GetNumberOfNestedElements(); ++j) {
+    for (unsigned int j = 0; j < collection->GetNumberOfNestedElements(); ++j) {
       vtkPVXMLElement *child = collection->GetNestedElement(j);
       const char *name = child->GetAttribute("name");
       if (!name)
@@ -786,7 +785,6 @@ void NetworkEditor::paste(float x, float y) {
 
   if (pasteMode_ != PASTEMODE_NO_VIEWS) {
     auto smModel = app->getServerManagerModel();
-    auto pm = server->proxyManager();
     for (auto view_rep : loader->representation_proxies) {
       std::string parent_view = std::get<0>(view_rep);
       auto proxy = std::get<1>(view_rep);

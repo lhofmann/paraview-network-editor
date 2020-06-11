@@ -87,10 +87,10 @@ class NetworkEditor : public QGraphicsScene {
   };
 
   PasteMode pasteMode_ = PASTEMODE_NO_VIEWS;
-  bool selectionDirty_ = false;
   bool updateSelection_ = false;
   static const int gridSpacing_;
   QPointF snapToGrid(const QPointF &pos);
+  bool mouseDown_ = false;
 
   QPointF lastMousePos_ = QPointF(0., 0.);
   bool addSourceAtMousePos_ = false;
