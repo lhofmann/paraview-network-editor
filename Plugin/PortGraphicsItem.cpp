@@ -29,8 +29,6 @@
 
 namespace ParaViewNetworkEditor {
 
-const QColor dummy_color(44, 123, 182);
-
 PortGraphicsItem::PortGraphicsItem(SourceGraphicsItem *parent, const QPointF &pos, bool up, QColor color)
     : EditorGraphicsItem(parent), source_(parent), size_(9.0f), lineWidth_(1.0f) {
   setRect(-(0.5f * size_ + lineWidth_), -(0.5f * size_ + lineWidth_), size_ + 2.0 * lineWidth_,
@@ -73,7 +71,7 @@ SourceGraphicsItem *PortGraphicsItem::getSourceGraphicsItem() const { return sou
 PortGraphicsItem::~PortGraphicsItem() = default;
 
 InputPortGraphicsItem::InputPortGraphicsItem(SourceGraphicsItem *parent, const QPointF &pos, int port_id)
-    : PortGraphicsItem(parent, pos, true, dummy_color),
+    : PortGraphicsItem(parent, pos, true, utilpq::default_color),
       portID_(port_id) {}
 
 std::pair<pqPipelineFilter *, int> InputPortGraphicsItem::getPort() const {
@@ -109,8 +107,22 @@ void InputPortGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *,
 
   QColor borderColor(40, 40, 40);
 
-  // uvec3 color = inport_->getColorCode();
-  QColor color = dummy_color;
+  QColor color = utilpq::default_color;
+  if (!this->getConnections().empty()) {
+    QColor in_color = this->getConnections().front()->getColor();
+    bool consistent_color = true;
+    for (auto connection : this->getConnections()) {
+      if (in_color != connection->getColor()) {
+        consistent_color = false;
+        break;
+      }
+    }
+    if (consistent_color) {
+      color = in_color;
+    } else {
+      color = utilpq::default_color;
+    }
+  }
 
   QRectF portRect(QPointF(-size_, size_) / 2.0f, QPointF(size_, -size_) / 2.0f);
   p->setBrush(color);
@@ -147,7 +159,7 @@ void InputPortGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *,
 }
 
 OutputPortGraphicsItem::OutputPortGraphicsItem(SourceGraphicsItem *parent, const QPointF &pos, int port_id)
-    : PortGraphicsItem(parent, pos, false, dummy_color), portID_(port_id) {}
+    : PortGraphicsItem(parent, pos, false, utilpq::default_color), portID_(port_id) {}
 
 std::pair<pqPipelineSource *, int> OutputPortGraphicsItem::getPort() const {
   pqPipelineSource *source = this->getSourceGraphicsItem()->getSource();
@@ -207,8 +219,8 @@ void OutputPortGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
     }
   }
 
-  // uvec3 color = outport_->getColorCode();
-  QColor color = dummy_color;
+  auto source_port = this->getPort();
+  QColor color = utilpq::output_dataset_color(std::get<0>(source_port), std::get<1>(source_port));
 
   QRectF portRect(QPointF(-size_, size_) / 2.0f, QPointF(size_, -size_) / 2.0f);
   p->setBrush(color);
@@ -232,6 +244,23 @@ void PortConnectionIndicator::paint(QPainter *p, const QStyleOptionGraphicsItem 
   const bool selected = std::accumulate(connections.begin(), connections.end(), false,
                                         [](bool acc, auto &connection) { return acc || connection->isSelected(); });
 
+  QColor color = color_;
+  if (!connections.empty()) {
+    QColor in_color = connections.front()->getColor();
+    bool consistent_color = true;
+    for (auto connection : connections) {
+      if (in_color != connection->getColor()) {
+        consistent_color = false;
+        break;
+      }
+    }
+    if (consistent_color) {
+      color = in_color;
+    } else {
+      color = utilpq::default_color;
+    }
+  }
+
   const float width{selected ? (4.0f - 1.0f) / 2.0f : (3.0f - 0.5f) / 2.0f};
   const float length = 7.0f;
 
@@ -251,9 +280,9 @@ void PortConnectionIndicator::paint(QPainter *p, const QStyleOptionGraphicsItem 
   closedPath.closeSubpath();
 
   QLinearGradient gradBrush(QPointF(0.0f, 0.0f), QPointF(0.0, up_ ? -length : length));
-  gradBrush.setColorAt(0.0f, color_);
-  gradBrush.setColorAt(0.75f, color_);
-  gradBrush.setColorAt(1.0f, QColor(color_.red(), color_.green(), color_.blue(), 0));
+  gradBrush.setColorAt(0.0f, color);
+  gradBrush.setColorAt(0.75f, color);
+  gradBrush.setColorAt(1.0f, QColor(color.red(), color.green(), color.blue(), 0));
 
   QLinearGradient gradPen(QPointF(0.0f, 0.0f), QPointF(0.0, up_ ? -length : length));
   QColor lineColor = selected ? Qt::darkRed : Qt::black;
@@ -262,7 +291,7 @@ void PortConnectionIndicator::paint(QPainter *p, const QStyleOptionGraphicsItem 
   gradPen.setColorAt(1.0f, QColor(lineColor.red(), lineColor.green(), lineColor.blue(), 0));
 
   p->setPen(Qt::NoPen);
-  p->setBrush(color_);
+  p->setBrush(color);
   p->drawPath(closedPath);
 
   p->setBrush(Qt::NoBrush);

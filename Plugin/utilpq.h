@@ -1,6 +1,7 @@
 #ifndef PARAVIEWNETWORKEDITOR_PLUGIN_UTILPQ_H_
 #define PARAVIEWNETWORKEDITOR_PLUGIN_UTILPQ_H_
 
+#include <QColor>
 #include <string>
 #include <vector>
 
@@ -39,6 +40,10 @@ void set_source_visiblity(pqPipelineSource *source, bool visible);
 void set_source_scalar_bar_visiblity(pqPipelineSource *source, bool visible);
 
 std::vector<std::string> input_datatypes(pqPipelineFilter *filter, int in_port);
+
+const QColor default_color(188, 188, 188);
+
+QColor output_dataset_color(pqPipelineSource *filter, int port);
 
 }
 }

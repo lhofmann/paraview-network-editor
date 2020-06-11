@@ -11,8 +11,6 @@
 
 namespace ParaViewNetworkEditor {
 
-const QColor dummy_color(44, 123, 182);
-
 CurveGraphicsItem::CurveGraphicsItem(QColor color, QColor borderColor, QColor selectedBorderColor)
     : color_(color), borderColor_(borderColor), selectedBorderColor_(selectedBorderColor) {
   setZValue(DRAGING_ITEM_DEPTH);
@@ -132,9 +130,16 @@ void ConnectionDragGraphicsItem::reactToPortHover(InputPortGraphicsItem *inport)
   }
 }
 
+QColor ConnectionDragGraphicsItem::getColor() const {
+  if (!outport_)
+    return color_;
+  auto source_port = outport_->getPort();
+  return utilpq::output_dataset_color(std::get<0>(source_port), std::get<1>(source_port));
+}
+
 ConnectionGraphicsItem::ConnectionGraphicsItem(OutputPortGraphicsItem *outport,
                                                InputPortGraphicsItem *inport)
-    : CurveGraphicsItem(dummy_color) // (utilqt::toQColor(connection.getInport()->getColorCode()))
+    : CurveGraphicsItem(utilpq::default_color)
     , outport_(outport), inport_(inport) {
   setFlags(ItemIsSelectable | ItemIsFocusable);
   setZValue(CONNECTIONGRAPHICSITEM_DEPTH);
@@ -175,6 +180,13 @@ InputPortGraphicsItem *ConnectionGraphicsItem::getInportGraphicsItem() const {
 
 OutputPortGraphicsItem *ConnectionGraphicsItem::getOutportGraphicsItem() const {
   return outport_;
+}
+
+QColor ConnectionGraphicsItem::getColor() const {
+  if (!outport_)
+    return color_;
+  auto source_port = outport_->getPort();
+  return utilpq::output_dataset_color(std::get<0>(source_port), std::get<1>(source_port));
 }
 
 }

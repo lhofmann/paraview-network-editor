@@ -12,6 +12,11 @@
 #include <vtkSMPVRepresentationProxy.h>
 #include <vtkSMViewProxy.h>
 #include <vtkSMDataTypeDomain.h>
+#include <vtkPVDataInformation.h>
+#include <vtkDataObject.h>
+#include <vtkDataSet.h>
+#include <vtkSmartPointer.h>
+#include <vtkDataObjectTypes.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -250,6 +255,37 @@ std::vector<std::string> input_datatypes(pqPipelineFilter *filter, int in_port) 
     }
   }
   return result;
+}
+
+QColor output_dataset_color(pqPipelineSource *filter, int port_index) {
+  if (!filter)
+    return default_color;
+  auto port = filter->getOutputPort(port_index);
+  if (!port)
+    return default_color;
+  auto info = port->getDataInformation();
+  if (!info)
+    return default_color;
+
+  if (info->GetCompositeDataSetType() > 0)
+    return QColor(128, 64, 196);
+
+  auto type = info->GetDataClassName();
+  if (vtkDataSet::IsTypeOf(type))
+    return default_color;
+
+  auto prototype = vtkSmartPointer<vtkDataObject>::Take(vtkDataObjectTypes::NewDataObject(info->GetDataSetType()));
+  if (!prototype)
+    return default_color;
+
+  if (prototype->IsA("vtkImageData") || prototype->IsA("vtkRectilinearGrid") || prototype->IsA("vtkStructuredGrid"))
+    return QColor(44, 123, 182);
+  if (prototype->IsA("vtkUnstructuredGridBase"))
+    return QColor(188, 101, 101);
+  if (prototype->IsA("vtkPointSet"))
+    return QColor(188, 188, 101);
+
+  return default_color;
 }
 
 }

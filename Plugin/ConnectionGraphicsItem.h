@@ -74,6 +74,8 @@ class ConnectionDragGraphicsItem : public CurveGraphicsItem {
   enum { Type = UserType + ConnectionDragGraphicsType };
   virtual int type() const override { return Type; }
 
+  QColor getColor() const override;
+
  protected:
   QPointF endPoint_;
   OutputPortGraphicsItem *outport_;
@@ -100,6 +102,8 @@ class ConnectionGraphicsItem : public CurveGraphicsItem {
   virtual void showToolTip(QGraphicsSceneHelpEvent *e) override;
 
   virtual QVariant itemChange(GraphicsItemChange change, const QVariant &value) override;
+
+  QColor getColor() const override;
 
  private:
   OutputPortGraphicsItem *outport_;
