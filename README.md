@@ -49,6 +49,7 @@ This behavior can be changed in ParaView settings (menu `Edit > Settings... > Ne
 * Valid/invalid connections are indicated during drag/drop by color (can be overridden by holding Shift key) 
 * Hide/show selected sources and color legends (context menu or double click)
 * Copy/paste parts of the pipeline (context menu or Ctrl+C/Ctrl+V)
+  * including representations (except color maps)
 * Automatic graph layout using optional dependency graphviz
 * Use context menu or press Ctrl+Space to place a new source or filter at the last mouse click position
 * Node positions are saved/loaded in state files
@@ -59,7 +60,6 @@ This behavior can be changed in ParaView settings (menu `Edit > Settings... > Ne
 * There are random crashes (could be related to adding/removing connections)
 * Add search, that selects pipeline items by name, type, ...
 * Add a dock widget, that contains a filterable list of sources/filters, that can be drag/dropped into the network editor
-* Color connections by data type
 * Display and edit property links
 * Add support for grouping/ungrouping parts of the pipeline (custom filters / vtkSMCompoundSourceProxy)
 * Add tooltips, that show information about sources and their output ports
