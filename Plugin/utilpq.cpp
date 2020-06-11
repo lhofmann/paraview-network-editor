@@ -271,7 +271,7 @@ QColor output_dataset_color(pqPipelineSource *filter, int port_index) {
     return QColor(128, 64, 196);
 
   auto type = info->GetDataClassName();
-  if (vtkDataSet::IsTypeOf(type))
+  if (!type || vtkDataSet::IsTypeOf(type))
     return default_color;
 
   auto prototype = vtkSmartPointer<vtkDataObject>::Take(vtkDataObjectTypes::NewDataObject(info->GetDataSetType()));

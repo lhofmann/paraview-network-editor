@@ -9,6 +9,7 @@
 #include <pqServerManagerModelItem.h>
 #include <vtkSMPropertyIterator.h>
 #include <vtkSMInputProperty.h>
+#include <vtkSMCompoundSourceProxy.h>
 #include <vtkSMDomain.h>
 #include <vtkSMDomainIterator.h>
 #include <vtkSMDataTypeDomain.h>
@@ -56,7 +57,12 @@ SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
     typeLabel_->setFont(classFont);
 
     auto smproxy = source->getSourceProxy();
-    std::string vtk_class = smproxy->GetVTKClassName();
+    std::string vtk_class = "UNKNOWN";
+    if (auto compound = vtkSMCompoundSourceProxy::SafeDownCast(source->getSourceProxy())) {
+      vtk_class = std::string(compound->GetXMLLabel());
+    } else if (smproxy->GetVTKClassName()) {
+      vtk_class = smproxy->GetVTKClassName();
+    }
     // stip python module paths
     size_t pos = vtk_class.rfind('.');
     if (pos != std::string::npos) {
