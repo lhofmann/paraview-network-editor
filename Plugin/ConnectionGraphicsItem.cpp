@@ -1,5 +1,6 @@
 #include "ConnectionGraphicsItem.h"
 #include "utilpq.h"
+#include "NetworkEditor.h"
 
 #include <QGraphicsDropShadowEffect>
 #include <QGraphicsSceneHoverEvent>
@@ -187,6 +188,14 @@ QColor ConnectionGraphicsItem::getColor() const {
     return color_;
   auto source_port = outport_->getPort();
   return utilpq::output_dataset_color(std::get<0>(source_port), std::get<1>(source_port));
+}
+
+void ConnectionGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent *e) {
+  if (e->buttons() == Qt::LeftButton) {
+    if (this->outport_)
+      getNetworkEditor()->initiateConnection(this->outport_);
+  }
+  e->accept();
 }
 
 }

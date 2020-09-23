@@ -105,6 +105,9 @@ class ConnectionGraphicsItem : public CurveGraphicsItem {
 
   QColor getColor() const override;
 
+ protected:
+  virtual void mousePressEvent(QGraphicsSceneMouseEvent *e) override;
+
  private:
   OutputPortGraphicsItem *outport_;
   InputPortGraphicsItem *inport_;
