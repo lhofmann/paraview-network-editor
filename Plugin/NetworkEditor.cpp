@@ -493,8 +493,9 @@ void NetworkEditor::onSelectionChanged() {
         if (source == current_active_port_source) {
           selection.push_back(current_active_port);
           has_active_port_source = true;
+        } else {
+          selection.push_back(source);
         }
-        selection.push_back(source);
         if ((source == current_active_source) || !active_source)
           active_source = source;
         ++num_selected;
