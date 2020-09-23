@@ -179,7 +179,7 @@ void NetworkEditorWidget::constructor()
 
   auto paste_with_connections_action = new QAction("Paste with Connections", this);
   paste_with_connections_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
-  paste_with_connections_action->setShortcut(Qt::SHIFT + QKeySequence::Paste);
+  paste_with_connections_action->setShortcut(Qt::ShiftModifier + Qt::ControlModifier + Qt::Key_V);
   connect(paste_with_connections_action, &QAction::triggered, this, [this]() {
     this->networkEditor_.get()->paste(true);
   });
