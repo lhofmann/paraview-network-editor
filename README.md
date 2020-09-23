@@ -13,7 +13,7 @@ This project is in large parts based on inviwo (https://github.com/inviwo/inviwo
 
 [GitHub Actions ](https://github.com/lhofmann/paraview-network-editor/actions) (Github login required) is set up to automatically build Linux binaries without graphviz (no graph layout feature).
 
-Download [ParaView-5.8.0-MPI-Linux-Python3.7-64bit](https://www.paraview.org/files/v5.8/ParaView-5.8.0-MPI-Linux-Python3.7-64bit.tar.gz) and the [build artifacts](https://github.com/lhofmann/paraview-network-editor/suites/711213037/artifacts/6934209), and extract both in the same location.
+Download [ParaView-5.8.0-MPI-Linux-Python3.7-64bit](https://www.paraview.org/files/v5.8/ParaView-5.8.0-MPI-Linux-Python3.7-64bit.tar.gz) and the [build artifacts](https://github.com/lhofmann/paraview-network-editor/suites/1232931077/artifacts/18580152), and extract both in the same location.
 
 ### Building from Source
 
@@ -45,15 +45,21 @@ This behavior can be changed in ParaView settings (menu `Edit > Settings... > Ne
 * Indicators for visibility of output ports and color legends for active view
 * Indicator for modified pipeline items
 * Synchronize selection of sources and output ports
-* Add/remove connections (drag/drop, press delete to remove selected connections)
+* Add/remove connections
+  * drag new connections from output ports
+  * drag existing connections from input port to change them
+  * drag an existing connection to duplicate it
+  * select connections and press delete to remove connections
 * Valid/invalid connections are indicated during drag/drop by color (can be overridden by holding Shift key) 
 * Hide/show selected sources and color legends (context menu or double click)
 * Copy/paste parts of the pipeline (context menu or Ctrl+C/Ctrl+V)
   * including representations (except color maps)
+  * Crtl+Shift+V to preserve connections
 * Automatic graph layout using optional dependency graphviz
 * Use context menu or press Ctrl+Space to place a new source or filter at the last mouse click position
 * Node positions are saved/loaded in state files
 * All actions can be undone/redone, including moving nodes and graph layout 
+* Automatically save an image of the pipeline when state files are saved or loaded (default off)
 
 ## TODO / Known Issues
 
