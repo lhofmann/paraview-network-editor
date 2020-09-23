@@ -6,6 +6,7 @@
 #include "vtkPVNetworkEditorSettings.h"
 #include "utilpq.h"
 #include "vtkPasteStateLoader.h"
+#include "vtkPasteProxyLocator.h"
 
 #ifdef ENABLE_GRAPHVIZ
 # include "graph_layout.h"
@@ -26,6 +27,7 @@
 #include <vtkSMParaViewPipelineController.h>
 #include <vtkSMViewProxy.h>
 #include <vtkSMPropertyHelper.h>
+#include <vtkSMProxyLocator.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -442,7 +444,13 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent *e) {
   auto paste = menu.addAction(tr("Paste"));
   connect(paste, &QAction::triggered, [this, e]() {
     QPointF pos = e->scenePos();
-    this->paste(pos.x(), pos.y());
+    this->paste(pos.x(), pos.y(), false);
+  });
+
+  auto paste_with_connections = menu.addAction(tr("Paste with Connections"));
+  connect(paste_with_connections, &QAction::triggered, [this, e]() {
+    QPointF pos = e->scenePos();
+    this->paste(pos.x(), pos.y(), true);
   });
 
   if (!menu.isEmpty()) {
@@ -687,7 +695,7 @@ void NetworkEditor::setPasteMode(int mode_index) {
   }
 }
 
-void NetworkEditor::paste(float x, float y) {
+void NetworkEditor::paste(float x, float y, bool keep_connections) {
   auto clipboard = QApplication::clipboard();
   auto mimeData = clipboard->mimeData();
   if (!mimeData->formats().contains("text/plain"))
@@ -786,6 +794,9 @@ void NetworkEditor::paste(float x, float y) {
   }
 
   loader->SetSessionProxyManager(server->proxyManager());
+  vtkNew<vtkPasteProxyLocator> locator;
+  locator->SetFindExistingSources(keep_connections);
+  loader->SetProxyLocator(locator);
   server->proxyManager()->LoadXMLState(parser->GetRootElement(), loader, false);
   vtkLog(5,   "done pasting");
 
@@ -824,8 +835,8 @@ void NetworkEditor::paste(float x, float y) {
   this->onSelectionChanged();
 }
 
-void NetworkEditor::paste() {
-  paste(lastMousePos_.x(), lastMousePos_.y());
+void NetworkEditor::paste(bool keep_connections) {
+  paste(lastMousePos_.x(), lastMousePos_.y(), keep_connections);
 }
 
 void NetworkEditor::updateSceneSize() {

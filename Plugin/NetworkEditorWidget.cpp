@@ -123,6 +123,10 @@ void NetworkEditorWidget::constructor()
       <td>Paste sources</td>
     </tr>
     <tr>
+      <th align="left">Ctrl+Shift+V</th>
+      <td>Paste sources with connections</td>
+    </tr>
+    <tr>
       <th align="left">Delete</th>
       <td>Delete selected</td>
     </tr>
@@ -168,8 +172,19 @@ void NetworkEditorWidget::constructor()
   auto paste_action = new QAction("Paste", this);
   paste_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
   paste_action->setShortcut(QKeySequence::Paste);
-  connect(paste_action, &QAction::triggered, networkEditor_.get(), static_cast<void (NetworkEditor::*)()>(&NetworkEditor::paste));
+  connect(paste_action, &QAction::triggered, this, [this]() {
+    this->networkEditor_.get()->paste(false);
+  });
   networkEditorView_->addAction(paste_action);
+
+  auto paste_with_connections_action = new QAction("Paste with Connections", this);
+  paste_with_connections_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
+  paste_with_connections_action->setShortcut(Qt::SHIFT + QKeySequence::Paste);
+  connect(paste_with_connections_action, &QAction::triggered, this, [this]() {
+    this->networkEditor_.get()->paste(true);
+  });
+  networkEditorView_->addAction(paste_with_connections_action);
+
 
   vLayout->addWidget(titleBar);
   vLayout->addWidget(networkEditorView_);

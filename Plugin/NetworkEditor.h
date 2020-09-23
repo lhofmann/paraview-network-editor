@@ -38,8 +38,8 @@ class NetworkEditor : public QGraphicsScene {
   void selectAll();
   void deleteSelected();
   void copy();
-  void paste(float x, float y);
-  void paste();
+  void paste(float x, float y, bool keep_connections);
+  void paste(bool keep_connections);
   void setPasteMode(int);
   void quickLaunch();
 

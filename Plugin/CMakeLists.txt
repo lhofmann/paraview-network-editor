@@ -17,6 +17,7 @@ set(sources
     utilqt.cpp
     utilpq.cpp
     observer.cpp
+    vtkPasteProxyLocator.cpp
     vtkPasteStateLoader.cpp)
 
 
