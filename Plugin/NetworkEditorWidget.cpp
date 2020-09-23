@@ -2,7 +2,7 @@
 
 #include "NetworkEditor.h"
 #include "NetworkEditorView.h"
-
+#include "utilqt.h"
 #include "vtkPVNetworkEditorSettings.h"
 
 #include <pqPVApplicationCore.h>
@@ -11,8 +11,10 @@
 #include <pqOutputPort.h>
 #include <pqServerManagerModel.h>
 #include <pqCoreUtilities.h>
-
+#include <pqRecentlyUsedResourcesList.h>
+#include <vtkPVXMLElement.h>
 #include <vtkSMSourceProxy.h>
+#include <vtkLogger.h>
 
 #include <QAction>
 #include <QApplication>
@@ -182,6 +184,30 @@ void NetworkEditorWidget::constructor()
 
   auto main_window = qobject_cast<QMainWindow*>(pqCoreUtilities::mainWidget());
   main_window->installEventFilter(new MainWindowEventFilter(networkEditorView_));
+
+  connect(&pqApplicationCore::instance()->recentlyUsedResources(), &pqRecentlyUsedResourcesList::changed, this, [this]() {
+    if (!vtkPVNetworkEditorSettings::GetInstance()->GetAutoSavePipelineScreenshot())
+      return;
+    if (pqApplicationCore::instance()->recentlyUsedResources().list().isEmpty())
+      return;
+    const auto& item = pqApplicationCore::instance()->recentlyUsedResources().list().front();
+    if (item.data("PARAVIEW_STATE", "0") == "1") {
+      this->savePipelineScreenshot(item.path());
+    }
+  });
+}
+
+void NetworkEditorWidget::savePipelineScreenshot(const QString& path) const {
+  const auto br = this->networkEditor_->getSourcesBoundingRect().adjusted(-50, -50, 50, 50);
+  QRectF source = br;
+  QRectF target(QPointF(0, 0), br.size() * 2);
+  QImage image(target.size().toSize(), QImage::Format_ARGB32);
+  image.fill(Qt::transparent);
+  QPainter painter(&image);
+  this->networkEditor_->setBackgroundTransparent(true);
+  this->networkEditorView_->scene()->render(&painter, target, source);
+  this->networkEditor_->setBackgroundTransparent(false);
+  image.save(path + ".pipeline.png");
 }
 
 void NetworkEditorWidget::swapWithCentralWidget() {

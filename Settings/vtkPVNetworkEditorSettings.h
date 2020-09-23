@@ -21,10 +21,14 @@ class NETWORKEDITORSETTINGS_EXPORT vtkPVNetworkEditorSettings : public vtkObject
   vtkSetMacro(TooltipWakeupDelay, int);
   vtkGetMacro(TooltipWakeupDelay, int);
 
+  vtkSetMacro(AutoSavePipelineScreenshot, bool);
+  vtkGetMacro(AutoSavePipelineScreenshot, bool);
+
  protected:
-  bool SwapOnStartup {true};
+  bool SwapOnStartup {false};
   bool UpdateActiveObject {true};
   int TooltipWakeupDelay {700};
+  bool AutoSavePipelineScreenshot {true};
 
   vtkPVNetworkEditorSettings();
   ~vtkPVNetworkEditorSettings() override;

@@ -42,6 +42,16 @@
                 <IntRangeDomain name="range" min="0" max="2000" />
             </IntVectorProperty>
 
+            <IntVectorProperty name="AutoSavePipelineScreenshot"
+                               command="SetAutoSavePipelineScreenshot"
+                               number_of_elements="1"
+                               default_values="0">
+                <Documentation>
+                    Automatically save pipeline screenshot when state file is saved or loaded alongside the state file (suffix .pipeline.png).
+                </Documentation>
+                <BooleanDomain name="bool" />
+            </IntVectorProperty>
+
             <Hints>
                 <UseDocumentationForLabels />
             </Hints>

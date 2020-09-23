@@ -50,6 +50,8 @@ class NetworkEditor : public QGraphicsScene {
   bool empty() const;
   QRectF getSourcesBoundingRect() const;
 
+  void setBackgroundTransparent(bool);
+
   // Called from ProcessorPortGraphicsItems mouse events.
   void initiateConnection(OutputPortGraphicsItem *item);
   void releaseConnection(InputPortGraphicsItem *item);
@@ -73,6 +75,8 @@ class NetworkEditor : public QGraphicsScene {
 
   void drawBackground(QPainter *painter, const QRectF &rect) override;
   void drawForeground(QPainter *painter, const QRectF &rect) override;
+
+  bool backgroundTransparent_ {false};
 
   std::map<pqPipelineSource *, SourceGraphicsItem *> sourceGraphicsItems_;
 

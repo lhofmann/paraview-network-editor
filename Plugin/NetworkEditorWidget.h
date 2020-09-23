@@ -28,6 +28,7 @@ class NetworkEditorWidget : public QDockWidget {
   ParaViewNetworkEditor::NetworkEditorView *networkEditorView_ {nullptr};
   QWidget *networkEditorWidget_ {nullptr};
   QWidget *renderView_ {nullptr};
+  void savePipelineScreenshot(const QString& path) const;
 
   void constructor();
 };
