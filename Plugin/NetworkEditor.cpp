@@ -92,6 +92,7 @@ NetworkEditor::NetworkEditor()
           &pqActiveObjects::selectionChanged,
           this,
           [this](const pqProxySelection &selection) {
+            vtkLogScopeF(8, "pqActiveObjects::selectionChanged");
             if (updateSelection_)
               return;
             updateSelection_ = true;
@@ -464,6 +465,7 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent *e) {
 }
 
 void NetworkEditor::onSelectionChanged() {
+  vtkLogScopeFunction(8);
   if (updateSelection_)
     return;
 
@@ -471,6 +473,8 @@ void NetworkEditor::onSelectionChanged() {
     return;
 
   {
+    vtkLogScopeF(8, "Synchronize with ParaView selection");
+
     pqOutputPort* current_active_port = pqActiveObjects::instance().activePort();
     pqPipelineSource* current_active_port_source = nullptr;
     if (current_active_port) {
@@ -489,9 +493,8 @@ void NetworkEditor::onSelectionChanged() {
         if (source == current_active_port_source) {
           selection.push_back(current_active_port);
           has_active_port_source = true;
-        } else {
-          selection.push_back(source);
         }
+        selection.push_back(source);
         if ((source == current_active_source) || !active_source)
           active_source = source;
         ++num_selected;
@@ -502,17 +505,26 @@ void NetworkEditor::onSelectionChanged() {
     }
 
     updateSelection_ = true;
-    if (vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject()) {
-      pqActiveObjects::instance().setSelection(selection, active_source);
-      pqActiveObjects::instance().setActiveSource(active_source);
-      if (current_active_port)
-        pqActiveObjects::instance().setActivePort(current_active_port);
-    } else {
-      pqActiveObjects::instance().setSelection(selection, nullptr);
+    {
+      vtkLogScopeF(8, "Update pqActiveObjects selection");
+      if (vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject()) {
+        vtkLogScopeF(8, "pqActiveObjects::setSelection");
+        if (current_active_port) {
+          pqActiveObjects::instance().setSelection(selection, current_active_port);
+        } else {
+          pqActiveObjects::instance().setSelection(selection, active_source);
+        }
+        if (selection.isEmpty()) {
+          pqActiveObjects::instance().setActiveSource(nullptr);
+        }
+      } else {
+        pqActiveObjects::instance().setSelection(selection, nullptr);
+      }
     }
     updateSelection_ = false;
   }
   {
+    vtkLogScopeF(8, "Remove non-source selections");
     auto selection = selectedItems();
     bool contains_source = false;
     for (auto item : selection) {
@@ -547,6 +559,7 @@ void NetworkEditor::mousePressEvent(QGraphicsSceneMouseEvent *e) {
 }
 
 void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent *e) {
+  vtkLogScopeFunction(8);
   mouseDown_ = false;
   this->onSelectionChanged();
   lastMousePos_ = e->scenePos();
