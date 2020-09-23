@@ -12,22 +12,22 @@ class NetworkEditorWidget : public QDockWidget {
   typedef QDockWidget Superclass;
 
  public:
-  NetworkEditorWidget(const QString &t, QWidget *p = 0, Qt::WindowFlags f = 0)
+  NetworkEditorWidget(const QString &t, QWidget *p = nullptr, Qt::WindowFlags f = Qt::WindowFlags())
       : Superclass(t, p, f) {
     this->constructor();
   }
-  NetworkEditorWidget(QWidget *p = 0, Qt::WindowFlags f = 0)
+  NetworkEditorWidget(QWidget *p = nullptr, Qt::WindowFlags f = Qt::WindowFlags())
       : Superclass(p, f) {
     this->constructor();
   }
 
   void swapWithCentralWidget();
  private:
-  bool isCentralWidget_;
+  bool isCentralWidget_ {false};
   std::unique_ptr<ParaViewNetworkEditor::NetworkEditor> networkEditor_;
-  ParaViewNetworkEditor::NetworkEditorView *networkEditorView_;
-  QWidget *networkEditorWidget_;
-  QWidget *renderView_;
+  ParaViewNetworkEditor::NetworkEditorView *networkEditorView_ {nullptr};
+  QWidget *networkEditorWidget_ {nullptr};
+  QWidget *renderView_ {nullptr};
 
   void constructor();
 };

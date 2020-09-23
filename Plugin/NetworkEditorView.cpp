@@ -71,7 +71,7 @@ void NetworkEditorView::wheelEvent(QWheelEvent *e) {
 }
 
 void NetworkEditorView::zoom(double dz) {
-  if ((dz > 1.0 && matrix().m11() > 8.0) || (dz < 1.0 && matrix().m11() < 0.125)) return;
+  if ((dz > 1.0 && transform().m11() > 8.0) || (dz < 1.0 && transform().m11() < 0.125)) return;
 
   setTransform(QTransform::fromScale(dz, dz), true);
 }
@@ -98,7 +98,7 @@ void NetworkEditorView::fitNetwork() {
     editor_->setSceneRect(rect());
     fitInView(rect(), Qt::KeepAspectRatio);
   }
-  if (matrix().m11() > scale) {
+  if (transform().m11() > scale) {
     setTransform(QTransform::fromScale(scale, scale), false);
   }
 }
