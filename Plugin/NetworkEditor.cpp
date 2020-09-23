@@ -92,16 +92,18 @@ NetworkEditor::NetworkEditor()
           &pqActiveObjects::selectionChanged,
           this,
           [this](const pqProxySelection &selection) {
+            if (updateSelection_)
+              return;
             updateSelection_ = true;
+            pqProxySelection selection_all = selection;
+            for (pqServerManagerModelItem *proxy : selection) {
+              auto port = qobject_cast<pqOutputPort *>(proxy);
+              if (!port)
+                continue;
+              selection_all.push_back(port->getSource());
+            }
             for (auto const &item : sourceGraphicsItems_) {
-              bool selected = selection.contains(item.first);
-              for (pqServerManagerModelItem *proxy : selection) {
-                auto port = qobject_cast<pqOutputPort *>(proxy);
-                if (!port)
-                  continue;
-                selected = selected || (item.first == port->getSource());
-              }
-              item.second->setSelected(selected);
+              item.second->setSelected(selection_all.contains(item.first));
             }
             updateSelection_ = false;
           });
@@ -469,28 +471,46 @@ void NetworkEditor::onSelectionChanged() {
     return;
 
   {
+    pqOutputPort* current_active_port = pqActiveObjects::instance().activePort();
+    pqPipelineSource* current_active_port_source = nullptr;
+    if (current_active_port) {
+      current_active_port_source = current_active_port->getSource();
+    }
     pqPipelineSource* current_active_source = pqActiveObjects::instance().activeSource();
     pqProxySelection selection;
     pqPipelineSource *active_source = nullptr;
     int num_selected = 0;
+    bool has_active_port_source = false;
     for (auto item : this->selectedItems()) {
       auto source_item = qgraphicsitem_cast<SourceGraphicsItem *>(item);
       if (!source_item)
         continue;
       if (auto source = source_item->getSource()) {
-        selection.push_back(source);
+        if (source == current_active_port_source) {
+          selection.push_back(current_active_port);
+          has_active_port_source = true;
+        } else {
+          selection.push_back(source);
+        }
         if ((source == current_active_source) || !active_source)
           active_source = source;
         ++num_selected;
       }
     }
+    if (!has_active_port_source) {
+      current_active_port = nullptr;
+    }
 
+    updateSelection_ = true;
     if (vtkPVNetworkEditorSettings::GetInstance()->GetUpdateActiveObject()) {
-      pqActiveObjects::instance().setActiveSource(active_source);
       pqActiveObjects::instance().setSelection(selection, active_source);
+      pqActiveObjects::instance().setActiveSource(active_source);
+      if (current_active_port)
+        pqActiveObjects::instance().setActivePort(current_active_port);
     } else {
       pqActiveObjects::instance().setSelection(selection, nullptr);
     }
+    updateSelection_ = false;
   }
   {
     auto selection = selectedItems();
