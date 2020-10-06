@@ -16,6 +16,10 @@ jobs:
                    --name build \
                    --volume="${GITHUB_WORKSPACE}:/mnt/shared:ro" \
                    lhofmann/paraview-superbuild:${paraview_version}
+    - name: Install GraphViz
+      run: |
+        docker exec --user=root:root build \
+          /bin/bash /mnt/shared/.github/workflows/install_graphviz.sh
     - name: Configure
       run: |
         docker exec build /usr/bin/scl enable devtoolset-8 -- cmake \
