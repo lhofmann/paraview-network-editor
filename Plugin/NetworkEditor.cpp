@@ -587,6 +587,7 @@ void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent *e) {
 }
 
 void NetworkEditor::mouseMoveEvent(QGraphicsSceneMouseEvent *e) {
+  lastMouseMovePos_ = e->scenePos();
   /* if ((e->buttons() & Qt::LeftButton) && activeSourceItem_) {
     updateSceneSize();
   } */
@@ -1170,6 +1171,7 @@ void NetworkEditor::quickLaunch() {
   dialog.addActions(actions);
 
   addSourceAtMousePos_ = true;
+  lastMousePos_ = lastMouseMovePos_;
   dialog.exec();
   addSourceAtMousePos_ = false;
   qDeleteAll(actions);

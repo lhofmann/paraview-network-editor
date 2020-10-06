@@ -99,7 +99,7 @@ pqPipelineSource *SourceGraphicsItem::getSource() const {
 
 QPointF SourceGraphicsItem::portOffset(PortType type, size_t index) {
   const QPointF offset = {12.5f, (type == PortType::In ? 1.0f : -1.0f) * 4.5f};
-  const QPointF delta = {22.5f, 0.0f};
+  const QPointF delta = {25.0f, 0.0f};
   const QPointF rowDelta = {0.0f, (type == PortType::In ? -1.0f : 1.0f) * 12.5f};
   const size_t portsPerRow = 10;
 

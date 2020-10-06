@@ -97,6 +97,7 @@ class NetworkEditor : public QGraphicsScene {
   bool mouseDown_ = false;
 
   QPointF lastMousePos_ = QPointF(0., 0.);
+  QPointF lastMouseMovePos_ = QPointF(0., 0.);
   bool addSourceAtMousePos_ = false;
   bool addSourceToSelection_ = false;
 
