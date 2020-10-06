@@ -1,8 +1,11 @@
 #include "graph_layout.h"
 
+#include <graphviz/gvplugin.h>
 #include <graphviz/cgraph.h>
 #include <graphviz/gvc.h>
 #include <string>
+
+extern gvplugin_library_t gvplugin_dot_layout_LTX_library;
 
 namespace ParaViewNetworkEditor {
 
@@ -29,6 +32,7 @@ std::map<size_t, std::pair<float, float>> compute_graph_layout(
 
   Agraph_t *G = agmemread(dot.data());
   GVC_t *gvc = gvContext();
+  gvAddLibrary(gvc, &gvplugin_dot_layout_LTX_library);
   gvLayout(gvc, G, "dot");
 
   std::map<size_t, std::pair<float, float>> result;
