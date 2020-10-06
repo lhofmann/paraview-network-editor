@@ -28,6 +28,9 @@
 #include <vtkSMViewProxy.h>
 #include <vtkSMPropertyHelper.h>
 #include <vtkSMProxyLocator.h>
+#include <vtkSMProxySelectionModel.h>
+#include <vtkSMProxyDefinitionManager.h>
+#include <vtkPVProxyDefinitionIterator.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -46,6 +49,8 @@
 #include <pqUndoStack.h>
 #include <pqRepresentation.h>
 #include <pqDataRepresentation.h>
+#include <pqQuickLaunchDialog.h>
+#include <pqObjectBuilder.h>
 
 #include <QGraphicsView>
 #include <QPainter>
@@ -1016,9 +1021,158 @@ void NetworkEditor::selectAll() {
 }
 
 void NetworkEditor::quickLaunch() {
+  // pqPVApplicationCore::instance()->quickLaunch();
+  // we build our own dialog instead
+  pqQuickLaunchDialog dialog(pqCoreUtilities::mainWidget());
+  QList<QAction*> actions;
+
+  // based on pqProxyGroupMenuManager::lookForNewDefinitions
+  // and pqProxyGroupMenuManager::getAction
+
+  vtkSMSessionProxyManager* pxm =
+      vtkSMProxyManager::GetProxyManager()->GetActiveSessionProxyManager();
+  if (!pxm) {
+    return;
+  }
+  vtkSMProxyDefinitionManager* pdmgr = pxm->GetProxyDefinitionManager();
+  if (!pdmgr) {
+    return;
+  }
+
+  vtkSmartPointer<vtkPVProxyDefinitionIterator> iter;
+  iter.TakeReference(pdmgr->NewIterator());
+  iter->AddTraversalGroupName("sources");
+  iter->AddTraversalGroupName("filters");
+  for (iter->InitTraversal(); !iter->IsDoneWithTraversal(); iter->GoToNextItem()) {
+    QString xmlname = iter->GetProxyName();
+    QString xmlgroup = iter->GetGroupName();
+    QString icon;
+
+    if (vtkPVXMLElement* hints = iter->GetProxyHints()) {
+      if (hints->FindNestedElementByName("ReaderFactory") != NULL) {
+        continue;
+      }
+      for (unsigned int cc = 0; cc < hints->GetNumberOfNestedElements(); cc++) {
+        vtkPVXMLElement *showInMenu = hints->GetNestedElement(cc);
+        if (showInMenu == NULL || showInMenu->GetName() == NULL ||
+            strcmp(showInMenu->GetName(), "ShowInMenu") != 0) {
+          continue;
+        }
+        icon = showInMenu->GetAttribute("icon");
+      }
+    }
+
+    vtkSMProxy *prototype =
+        pxm->GetPrototypeProxy(xmlgroup.toLocal8Bit().data(), xmlname.toLocal8Bit().data());
+    if (!prototype) {
+      continue;
+    }
+    QString label = prototype->GetXMLLabel() ? prototype->GetXMLLabel() : xmlname;
+
+    auto action = new QAction(label, this);
+    action->setObjectName(xmlgroup + xmlname);  // important: pqQuickLaunchDialog uses this as key!
+    if (icon.isEmpty() && prototype->IsA("vtkSMCompoundSourceProxy")) {
+      icon = ":/pqWidgets/Icons/pqBundle32.png";
+    }
+    if (!icon.isEmpty()) {
+      action->setIcon(QIcon(icon));
+    }
+    connect(action, &QAction::triggered, [xmlgroup, xmlname]() {
+      vtkLog(5, "Creating " << xmlgroup.toStdString() << "; " << xmlname.toStdString());
+      pqServer *server = pqActiveObjects::instance().activeServer();
+      pqApplicationCore *core = pqApplicationCore::instance();
+      pqObjectBuilder *builder = core->getObjectBuilder();
+      pqServerManagerModel *smmodel = core->getServerManagerModel();
+      vtkSMSessionProxyManager *pxm = server->proxyManager();
+      vtkSMProxy *prototype =
+          pxm->GetPrototypeProxy(xmlgroup.toLocal8Bit().data(), xmlname.toLocal8Bit().data());
+      if (!prototype) {
+        vtkLog(ERROR, "Unknown proxy type: " << xmlname.toStdString());
+        return;
+      }
+      BEGIN_UNDO_SET(QString("Create '%1'").arg(xmlname));
+      if (xmlgroup == "filters") {
+        // Get the list of selected sources.
+        QList<pqOutputPort *> selectedOutputPorts;
+
+        vtkSMProxySelectionModel *selModel = pqActiveObjects::instance().activeSourcesSelectionModel();
+        // Determine the list of selected output ports.
+        for (unsigned int cc = 0; cc < selModel->GetNumberOfSelectedProxies(); cc++) {
+          pqServerManagerModelItem *item =
+              smmodel->findItem<pqServerManagerModelItem *>(selModel->GetSelectedProxy(cc));
+
+          pqOutputPort *opPort = qobject_cast<pqOutputPort *>(item);
+          pqPipelineSource *source = qobject_cast<pqPipelineSource *>(item);
+          if (opPort) {
+            selectedOutputPorts.push_back(opPort);
+          } else if (source) {
+            selectedOutputPorts.push_back(source->getOutputPort(0));
+          }
+        }
+
+        QList<const char *> inputPortNames = pqPipelineFilter::getInputPorts(prototype);
+
+        auto assign_connections =
+            [&](QList<pqOutputPort *> selectedOutputPorts, auto begin, auto end)
+            -> QMap<QString, QList<pqOutputPort*>> {
+          QMap<QString, QList<pqOutputPort *> > namedInputs;
+          for (auto it = begin; it != end; ++it) {
+            const char* input_name = *it;
+            if (selectedOutputPorts.empty())
+              break;
+            vtkSMInputProperty *input = vtkSMInputProperty::SafeDownCast(prototype->GetProperty(input_name));
+            if (!input)
+              continue;
+            QList<pqOutputPort *> ports;
+            for (pqOutputPort* port : selectedOutputPorts) {
+              input->RemoveAllUncheckedProxies();
+              input->AddUncheckedInputConnection(port->getSourceProxy(), port->getPortNumber());
+              if (input->IsInDomains() > 0) {
+                ports.append(port);
+                if (!input->GetMultipleInput()) {
+                  break;
+                }
+              }
+              input->RemoveAllUncheckedProxies();
+            }
+            if (!ports.empty()) {
+              namedInputs[input_name] = ports;
+              for (pqOutputPort* selected_port : ports) {
+                selectedOutputPorts.removeAll(selected_port);
+              }
+            }
+          }
+          return namedInputs;
+        };
+
+        // quick way to find a good assignment between inputs and outpus
+        // TODO: find optimal assignment
+        auto assignment_forward = assign_connections(selectedOutputPorts, inputPortNames.cbegin(), inputPortNames.cend());
+        auto assignment_backward = assign_connections(selectedOutputPorts, inputPortNames.crbegin(), inputPortNames.crend());
+        auto count = [](const QMap<QString, QList<pqOutputPort*>>& map) -> int {
+          return std::accumulate(
+              map.begin(), map.end(), (int)0,
+              [](int sum, const QList<pqOutputPort *>& list) -> int {
+                return sum + list.size();
+              });
+        };
+        auto named_inputs = count(assignment_forward) >= count(assignment_backward) ? assignment_forward : assignment_backward;
+
+        builder->createFilter(xmlgroup, xmlname, named_inputs, server);
+      } else {
+        builder->createSource(xmlgroup, xmlname, server);
+      }
+      END_UNDO_SET();
+    });
+    actions.append(action);
+  }
+
+  dialog.addActions(actions);
+
   addSourceAtMousePos_ = true;
-  pqPVApplicationCore::instance()->quickLaunch();
+  dialog.exec();
   addSourceAtMousePos_ = false;
+  qDeleteAll(actions);
 }
 
 void NetworkEditor::updateSourcePositions() {
