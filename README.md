@@ -11,9 +11,9 @@ This project is in large parts based on inviwo (https://github.com/inviwo/inviwo
 
 ## Usage
 
-[GitHub Actions ](https://github.com/lhofmann/paraview-network-editor/actions) (Github login required) is set up to automatically build Linux binaries without graphviz (no graph layout feature).
+[GitHub Actions ](https://github.com/lhofmann/paraview-network-editor/actions) (Github login required) is set up to automatically build Linux binaries.
 
-Download [ParaView-5.8.0-MPI-Linux-Python3.7-64bit](https://www.paraview.org/files/v5.8/ParaView-5.8.0-MPI-Linux-Python3.7-64bit.tar.gz) and the [build artifacts](https://github.com/lhofmann/paraview-network-editor/suites/1232931077/artifacts/18580152), and extract both in the same location.
+Download [ParaView-5.8.0-MPI-Linux-Python3.7-64bit](https://www.paraview.org/files/v5.8/ParaView-5.8.0-MPI-Linux-Python3.7-64bit.tar.gz) and the [build artifacts](https://github.com/lhofmann/paraview-network-editor/suites/1298343006/artifacts/20336238), and extract both in the same location.
 
 ### Building from Source
 
@@ -60,6 +60,10 @@ This behavior can be changed in ParaView settings (menu `Edit > Settings... > Ne
 * Node positions are saved/loaded in state files
 * All actions can be undone/redone, including moving nodes and graph layout 
 * Automatically save an image of the pipeline when state files are saved or loaded (default off)
+* Custom quick launch menu (Ctrl+Space while network editor in focus)
+  * automatically assigns selected sources to multiple input ports
+  * skips dialog for filters with multiple inputs
+* CI builds static graphviz libraries
 
 ## TODO / Known Issues
 
