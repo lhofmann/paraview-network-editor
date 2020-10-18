@@ -588,6 +588,13 @@ void NetworkEditor::mouseReleaseEvent(QGraphicsSceneMouseEvent *e) {
 
 void NetworkEditor::mouseMoveEvent(QGraphicsSceneMouseEvent *e) {
   lastMouseMovePos_ = e->scenePos();
+  Qt::KeyboardModifiers modifiers = QGuiApplication::queryKeyboardModifiers();
+  if ((modifiers & Qt::ShiftModifier) && (modifiers & Qt::MetaModifier)) {
+    QGraphicsSceneHelpEvent help_event;
+    help_event.setScenePos(e->scenePos());
+    help_event.setScreenPos(e->screenPos());
+    this->helpEvent(&help_event);
+  }
   /* if ((e->buttons() & Qt::LeftButton) && activeSourceItem_) {
     updateSceneSize();
   } */
