@@ -13,7 +13,7 @@ This project is in large parts based on inviwo (https://github.com/inviwo/inviwo
 
 [GitHub Actions ](https://github.com/lhofmann/paraview-network-editor/actions) (Github login required) is set up to automatically build Linux binaries.
 
-Download [ParaView-5.8.0-MPI-Linux-Python3.7-64bit](https://www.paraview.org/files/v5.8/ParaView-5.8.0-MPI-Linux-Python3.7-64bit.tar.gz) and the [build artifacts](https://github.com/lhofmann/paraview-network-editor/suites/1298343006/artifacts/20336238), and extract both in the same location.
+Download [ParaView-5.8.0-MPI-Linux-Python3.7-64bit](https://www.paraview.org/files/v5.8/ParaView-5.8.0-MPI-Linux-Python3.7-64bit.tar.gz) and the [build artifacts](https://github.com/lhofmann/paraview-network-editor/suites/1358473689/artifacts/22120907), and extract both in the same location.
 
 ### Building from Source
 
@@ -64,6 +64,7 @@ This behavior can be changed in ParaView settings (menu `Edit > Settings... > Ne
   * automatically assigns selected sources to multiple input ports
   * skips dialog for filters with multiple inputs
 * CI builds static graphviz libraries
+* Editor viewport and scroll position are stored and loaded from state files
 
 ## TODO / Known Issues
 
