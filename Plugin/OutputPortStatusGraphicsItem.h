@@ -19,6 +19,8 @@ class OutputPortStatusGraphicsItem : public EditorGraphicsItem {
   enum { Type = UserType + OutputPortStatusGraphicsType };
   int type() const override { return Type; }
 
+  void showToolTip(QGraphicsSceneHelpEvent *e) override;
+
  protected:
   void paint(QPainter *p, const QStyleOptionGraphicsItem *options, QWidget *widget) override;
   void mousePressEvent(QGraphicsSceneMouseEvent *e) override;

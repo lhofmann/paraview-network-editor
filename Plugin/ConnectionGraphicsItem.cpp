@@ -162,7 +162,10 @@ QPointF ConnectionGraphicsItem::getEndPoint() const {
 }
 
 void ConnectionGraphicsItem::showToolTip(QGraphicsSceneHelpEvent *e) {
-  // showPortInfo(e, getOutport());
+  auto inport = this->outport_->getPort();
+  auto outport = this->inport_->getPort();
+  this->showConnectionInfo(e, std::get<0>(inport), std::get<1>(inport),
+                           std::get<0>(outport), std::get<1>(outport));
 }
 
 QVariant ConnectionGraphicsItem::itemChange(GraphicsItemChange change, const QVariant &value) {
@@ -197,5 +200,6 @@ void ConnectionGraphicsItem::mousePressEvent(QGraphicsSceneMouseEvent *e) {
   }
   e->accept();
 }
+
 
 }

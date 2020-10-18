@@ -32,6 +32,8 @@ int pointSizeToPixelSize(const int pointSize) {
 
 SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
     : source_(source) {
+  setZValue(SOURCEGRAPHICSITEM_DEPTH);
+
   static constexpr int labelHeight = 8;
   auto width = static_cast<int>(size_.width());
 
@@ -249,6 +251,10 @@ void SourceGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *e) {
 
 void SourceGraphicsItem::aboutToRemoveSource() {
   this->source_ = nullptr;
+}
+
+void SourceGraphicsItem::showToolTip(QGraphicsSceneHelpEvent *e) {
+  this->showSourceInfo(e, this->source_);
 }
 
 }

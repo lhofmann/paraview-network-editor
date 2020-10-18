@@ -97,7 +97,7 @@ void InputPortGraphicsItem::updateConnectionPositions() {
 }
 
 void InputPortGraphicsItem::showToolTip(QGraphicsSceneHelpEvent *e) {
-  // showPortInfo(e, inport_);
+  this->showInportInfo(e, static_cast<pqPipelineFilter*>(this->source_->getSource()), this->portID_);
 }
 
 void InputPortGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *) {
@@ -199,7 +199,7 @@ void OutputPortGraphicsItem::updateConnectionPositions() {
 }
 
 void OutputPortGraphicsItem::showToolTip(QGraphicsSceneHelpEvent *e) {
-  showToolTipHelper(e, "Hello <b>World</b>!");
+  this->showOutportInfo(e, this->source_->getSource(), this->portID_);
 }
 
 void OutputPortGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *, QWidget *) {

@@ -5,6 +5,9 @@
 #include <QGraphicsRectItem>
 #include <QGraphicsSceneHelpEvent>
 
+class pqPipelineSource;
+class pqPipelineFilter;
+
 namespace ParaViewNetworkEditor {
 
 enum NetworkEditorGraphicsItemType {
@@ -40,6 +43,14 @@ class EditorGraphicsItem : public QGraphicsRectItem {
   QPoint mapPosToSceen(QPointF pos) const;
 
   virtual void showToolTip(QGraphicsSceneHelpEvent *event);
+
+  void showSourceInfo(QGraphicsSceneHelpEvent *event, pqPipelineSource* source) const;
+  void showInportInfo(QGraphicsSceneHelpEvent *event, pqPipelineFilter* source, int port) const;
+  void showOutportInfo(QGraphicsSceneHelpEvent *event, pqPipelineSource* source, int port) const;
+  void showConnectionInfo(QGraphicsSceneHelpEvent *event,
+                          pqPipelineSource* source, int output_port,
+                          pqPipelineFilter* dest, int input_port) const;
+
  protected:
   void showToolTipHelper(QGraphicsSceneHelpEvent *event, QString string) const;
   NetworkEditor *getNetworkEditor() const;

@@ -2,6 +2,7 @@
 #include "SourceGraphicsItem.h"
 #include "PortGraphicsItem.h"
 #include "ConnectionGraphicsItem.h"
+#include "OutputPortStatusGraphicsItem.h"
 #include "ConnectionDragHelper.h"
 #include "vtkPVNetworkEditorSettings.h"
 #include "utilpq.h"
@@ -675,16 +676,12 @@ void NetworkEditor::mouseMoveEvent(QGraphicsSceneMouseEvent *e) {
 }
 
 void NetworkEditor::helpEvent(QGraphicsSceneHelpEvent *e) {
-  QList<QGraphicsItem *> graphicsItems = items(e->scenePos());
+  QList<QGraphicsItem *> graphicsItems = items(e->scenePos(), Qt::IntersectsItemShape, Qt::DescendingOrder);
   for (auto item : graphicsItems) {
-    switch (item->type()) {
-      case SourceGraphicsItem::Type:qgraphicsitem_cast<SourceGraphicsItem *>(item)->showToolTip(e);
-        return;
-      case InputPortGraphicsItem::Type:qgraphicsitem_cast<InputPortGraphicsItem *>(item)->showToolTip(e);
-        return;
-      case OutputPortGraphicsItem::Type:qgraphicsitem_cast<OutputPortGraphicsItem *>(item)->showToolTip(e);
-        return;
-    };
+    if (auto editor_item = dynamic_cast<EditorGraphicsItem*>(item)) {
+      editor_item->showToolTip(e);
+      return;
+    }
   }
   QGraphicsScene::helpEvent(e);
 }

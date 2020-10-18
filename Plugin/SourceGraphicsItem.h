@@ -36,6 +36,8 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
   void storePosition();
   void loadPosition();
 
+  void showToolTip(QGraphicsSceneHelpEvent *e) override;
+
  protected:
   void paint(QPainter *p, const QStyleOptionGraphicsItem *options, QWidget *widget) override;
 

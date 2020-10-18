@@ -111,4 +111,11 @@ void OutputPortStatusGraphicsItem::mouseDoubleClickEvent(QGraphicsSceneMouseEven
   }
 }
 
+void OutputPortStatusGraphicsItem::showToolTip(QGraphicsSceneHelpEvent *e) {
+  auto source_graphicsitem = qgraphicsitem_cast<SourceGraphicsItem *>(this->parentItem());
+  if (source_graphicsitem && source_graphicsitem->getSource()) {
+    this->showOutportInfo(e, source_graphicsitem->getSource(), this->portID_);
+  }
+}
+
 }
