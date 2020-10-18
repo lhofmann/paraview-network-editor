@@ -61,6 +61,7 @@
 #include <QClipboard>
 #include <QMenuBar>
 #include <QMainWindow>
+#include <QScrollBar>
 
 #include <algorithm>
 #include <set>
@@ -190,6 +191,26 @@ NetworkEditor::NetworkEditor()
     }
   });
 
+  connect(
+      pqApplicationCore::instance(), &pqApplicationCore::stateLoaded,
+      this, [this](vtkPVXMLElement* root, vtkSMProxyLocator* locator) {
+        auto settings = this->getGlobalOptions();
+        if (!settings)
+          return;
+        std::vector<double> M = vtkSMPropertyHelper(settings, "Transform").GetDoubleArray();
+        int sx = vtkSMPropertyHelper(settings, "Scroll").GetAsInt(0);
+        int sy = vtkSMPropertyHelper(settings, "Scroll").GetAsInt(1);
+        if (M.size() == 9) {
+          QTransform transform(M[0], M[1], M[2], M[3], M[4], M[5], M[6], M[7], M[8]);
+          this->views().front()->setTransform(transform);
+          this->views().front()->verticalScrollBar()->setValue(sx);
+          this->views().front()->horizontalScrollBar()->setValue(sy);
+        }
+      }
+  );
+
+
+
   // undo/redo may change node positions
   pqUndoStack *undo_stack = pqApplicationCore::instance()->getUndoStack();
   connect(undo_stack, &pqUndoStack::undone, this, &NetworkEditor::updateSourcePositions);
@@ -205,6 +226,58 @@ NetworkEditor::NetworkEditor()
 }
 
 NetworkEditor::~NetworkEditor() = default;
+
+vtkSMProxy* NetworkEditor::getGlobalOptions() {
+  vtkSMProxyManager* proxyManager = vtkSMProxyManager::GetProxyManager();
+  if (!proxyManager)
+    return nullptr;
+  vtkSMSessionProxyManager *sessionProxyManager = proxyManager->GetActiveSessionProxyManager();
+  if (!sessionProxyManager)
+    return nullptr;
+  vtkSMProxy* settings = nullptr;
+  // settings = sessionProxyManager->FindProxy("networkeditor_global", "networkeditor", "NetworkEditorViewSettings");
+  
+  // get all settings proxies, in case multiple were instantiated only keep the latest
+  vtkNew<vtkCollection> coll;
+  sessionProxyManager->GetProxies("networkeditor", "NetworkEditorViewSettings", coll);
+  coll->InitTraversal();
+  vtkObject* obj = coll->GetNextItemAsObject();
+  while (obj != nullptr) {
+    settings = vtkSMProxy::SafeDownCast(obj);
+    obj = coll->GetNextItemAsObject();
+    if (obj) {
+      // remove old proxy
+      sessionProxyManager->UnRegisterProxy(settings);
+    }
+  }
+  if (!settings) {
+    settings = sessionProxyManager->NewProxy("networkeditor", "NetworkEditorViewSettings");
+    vtkNew<vtkSMParaViewPipelineController> controller;
+    controller->PreInitializeProxy(settings);
+    controller->PostInitializeProxy(settings);
+    sessionProxyManager->RegisterProxy("networkeditor", "NetworkEditorViewSettings", settings);
+    settings->FastDelete();
+  }
+  return settings;
+}
+
+void NetworkEditor::storeTransform(const QTransform& transform, int sx, int sy) {
+  std::vector<double> M {
+      transform.m11(), transform.m12(), transform.m13(),
+      transform.m21(), transform.m22(), transform.m23(),
+      transform.m31(), transform.m32(), transform.m33(),
+  };
+  std::vector<int> s {sx, sy};
+  if (M_ == M && s_ == s)
+    return;
+  M_ = M;
+  s_ = s;
+  auto settings = this->getGlobalOptions();
+  if (!settings)
+    return;
+  vtkSMPropertyHelper(settings, "Transform").Set(M.data(), 9);
+  vtkSMPropertyHelper(settings, "Scroll").Set(s.data(), 2);
+}
 
 void NetworkEditor::setBackgroundTransparent(bool transparent) {
   backgroundTransparent_ = transparent;

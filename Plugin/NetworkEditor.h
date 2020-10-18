@@ -9,6 +9,7 @@
 class pqPipelineSource;
 class QGraphicsSceneContextMenuEvent;
 class pqDeleteReaction;
+class vtkSMProxy;
 
 namespace ParaViewNetworkEditor {
 
@@ -58,6 +59,8 @@ class NetworkEditor : public QGraphicsScene {
 
   InputPortGraphicsItem *getInputPortGraphicsItemAt(const QPointF pos) const;
 
+  void storeTransform(const QTransform&, int, int);
+
  protected:
   virtual void contextMenuEvent(QGraphicsSceneContextMenuEvent *e) override;
   void onSelectionChanged();
@@ -67,6 +70,8 @@ class NetworkEditor : public QGraphicsScene {
   void mouseMoveEvent(QGraphicsSceneMouseEvent *) override;
 
   void helpEvent(QGraphicsSceneHelpEvent *helpEvent) override;
+
+  vtkSMProxy* getGlobalOptions();
 
  private:
   // Get QGraphicsItems
@@ -105,6 +110,9 @@ class NetworkEditor : public QGraphicsScene {
 
   ConnectionDragHelper *connectionDragHelper_;
   pqDeleteReaction *deleteReaction_;
+
+  std::vector<double> M_ {1., 0., 0., 0., 1., 0., 0., 0., 1.};
+  std::vector<int> s_ {0, 0};
 };
 
 template <typename T>

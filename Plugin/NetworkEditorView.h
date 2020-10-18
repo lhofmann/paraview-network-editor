@@ -15,8 +15,8 @@ class NetworkEditorView : public QGraphicsView {
   void fitNetwork();
 
  protected:
+  bool viewportEvent(QEvent *event) override;
   void wheelEvent(QWheelEvent *e) override;
-
   virtual void keyPressEvent(QKeyEvent *keyEvent) override;
   virtual void keyReleaseEvent(QKeyEvent *keyEvent) override;
   virtual void focusOutEvent(QFocusEvent *) override;

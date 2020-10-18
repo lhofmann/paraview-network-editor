@@ -57,4 +57,16 @@
             </Hints>
         </SettingsProxy>
     </ProxyGroup>
+    <ProxyGroup name="networkeditor">
+        <Proxy name="NetworkEditorViewSettings">
+            <DoubleVectorProperty name="Transform"
+                                  label="Transform"
+                                  default_values="1 0 0 0 1 0 0 0 1"
+                                  number_of_elements="9" />
+            <IntVectorProperty name="Scroll"
+                               label="Scroll"
+                               default_values="0 0"
+                               number_of_elements="2" />
+        </Proxy>
+    </ProxyGroup>
 </ServerManagerConfiguration>

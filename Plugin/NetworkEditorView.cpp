@@ -6,6 +6,8 @@
 #include <QtMath>
 #include <QScrollBar>
 
+#include <vtkLogger.h>
+
 namespace ParaViewNetworkEditor {
 
 NetworkEditorView::NetworkEditorView(NetworkEditor *networkEditor, QWidget *parent)
@@ -27,6 +29,11 @@ NetworkEditorView::NetworkEditorView(NetworkEditor *networkEditor, QWidget *pare
 
 NetworkEditorView::~NetworkEditorView() {
   QGraphicsView::setScene(nullptr);
+}
+
+bool NetworkEditorView::viewportEvent(QEvent *event) {
+  editor_->storeTransform(this->transform(), this->verticalScrollBar()->value(), this->horizontalScrollBar()->value());
+  return QGraphicsView::viewportEvent(event);
 }
 
 void NetworkEditorView::keyPressEvent(QKeyEvent *keyEvent) {
