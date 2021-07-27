@@ -149,7 +149,8 @@ NetworkEditor::NetworkEditor()
   connect(smModel, &pqServerManagerModel::sourceRemoved, this, [this](pqPipelineSource *source) {
     vtkLog(5,  "removed source " << source->getSMName().toStdString());
     removeSourceRepresentation(source);
-    utilpq::collect_dummy_source();
+    // there is an assumption in ParaView that sources are not added or deleted during this event!
+    // utilpq::collect_dummy_source();
   });
 
   connect(smModel,
