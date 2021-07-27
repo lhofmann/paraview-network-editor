@@ -81,6 +81,13 @@
                     <Widget type="multi_line" />
                 </Hints>
             </StringVectorProperty>
+            <IntVectorProperty
+                    name="EnableHTML"
+                    label="Enable HTML"
+                    number_of_elements="1"
+                    default_values="0">
+                <BooleanDomain name="bool"/>
+            </IntVectorProperty>
             <DoubleVectorProperty default_values="1 0.85 0"
                                   name="BackgroundColor"
                                   label="Background Color"
@@ -89,6 +96,21 @@
                 <DoubleRangeDomain max="1 1 1"
                                    min="0 0 0"
                                    name="range" />
+            </DoubleVectorProperty>
+            <DoubleVectorProperty default_values="0 0 0"
+                                  name="TextColor"
+                                  label="Text Color"
+                                  number_of_elements="3"
+                                  panel_widget="color_selector">
+                <DoubleRangeDomain max="1 1 1"
+                                   min="0 0 0"
+                                   name="range" />
+            </DoubleVectorProperty>
+            <DoubleVectorProperty default_values="0.25"
+                                  name="Opacity"
+                                  label="Opacity"
+                                  number_of_elements="1">
+                <DoubleRangeDomain max="1" min="0" name="range" />
             </DoubleVectorProperty>
             <Hints>
                 <View type="None" />

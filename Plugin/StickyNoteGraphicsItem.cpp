@@ -5,8 +5,10 @@
 #include <vtkSMProxy.h>
 #include <vtkSMPropertyHelper.h>
 
+#include <QAbstractTextDocumentLayout>
 #include <QPainter>
 #include <QStyleOptionGraphicsItem>
+#include <QTextDocument>
 #include <QWidget>
 
 namespace ParaViewNetworkEditor {
@@ -25,21 +27,29 @@ void StickyNoteGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
   if (!source_)
     return;
   bool modified = source_->modifiedState() != pqProxy::UNMODIFIED;
-  p->save();
-  p->setRenderHint(QPainter::Antialiasing, true);
-
-  p->fillRect(this->rect(), QColor(255, 255, 255, 128));
-
-  p->restore();
-  p->save();
-
   QColor backgroundColor("#3b3d3d");
+  QColor textColor(0, 0, 0);
+  float opacity = 1.;
   if (auto proxy = source_->getProxy()) {
     double r = vtkSMPropertyHelper(proxy, "BackgroundColor").GetAsDouble(0);
     double g = vtkSMPropertyHelper(proxy, "BackgroundColor").GetAsDouble(1);
     double b = vtkSMPropertyHelper(proxy, "BackgroundColor").GetAsDouble(2);
     backgroundColor.setRgbF(r, g, b);
+    r = vtkSMPropertyHelper(proxy, "TextColor").GetAsDouble(0);
+    g = vtkSMPropertyHelper(proxy, "TextColor").GetAsDouble(1);
+    b = vtkSMPropertyHelper(proxy, "TextColor").GetAsDouble(2);
+    textColor.setRgbF(r, g, b);
+    opacity = vtkSMPropertyHelper(proxy, "Opacity").GetAsDouble();
   }
+  backgroundColor.setAlphaF(opacity);
+
+  p->save();
+  p->setRenderHint(QPainter::Antialiasing, true);
+
+  p->fillRect(this->rect(), QColor(255, 255, 255, int(opacity * 255)));
+
+  p->restore();
+  p->save();
 
   QRectF rect = this->rect();
   rect.adjust(0, 25, 0, 0);
@@ -57,20 +67,70 @@ void StickyNoteGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
     p->drawRect(this->rect());
   }
   p->restore();
+
+  QString caption, text;
+  bool html = false;
+  if (auto proxy = source_->getProxy()) {
+    caption = vtkSMPropertyHelper(proxy, "Caption").GetAsString();
+    text = vtkSMPropertyHelper(proxy, "Text").GetAsString();
+    html = vtkSMPropertyHelper(proxy, "EnableHTML").GetAsInt();
+  }
+  p->save();
+  QFont nameFont("Noto Sans", 13, /*QFont::Black*/ QFont::Normal, false);
+  nameFont.setPixelSize(13 * 4. / 3.);
+  p->setFont(nameFont);
+  p->setPen(QColor(0, 0, 0));
+  QFontMetrics fm = QFontMetrics(nameFont);
+
+  rect = this->rect();
+  rect.adjust(4, 0, 4, 0);
+  rect.setHeight(25 - 2);
+
+  QString caption_short = fm.elidedText(caption, Qt::ElideMiddle, rect.width());
+  p->drawText(rect, caption_short);
+
+  QTextDocument td;
+  QTextOption textOption;
+  textOption.setAlignment(Qt::AlignLeft);
+  textOption.setWrapMode(QTextOption::WordWrap);
+  td.setDefaultTextOption(textOption);
+  if (html) {
+    td.setHtml(text);
+  } else {
+    td.setPlainText(text);
+  }
+  rect = this->rect();
+  rect.adjust(4, 25 + 2, 4, 4);
+  p->translate(rect.topLeft());
+  td.setTextWidth(rect.width() * 4. / 3.);
+
+  QAbstractTextDocumentLayout::PaintContext ctx;
+  ctx.palette.setColor(QPalette::Text, textColor);
+  if (rect.isValid())
+  {
+    p->setClipRect(rect);
+    ctx.clip = rect;
+  }
+  // td.drawContents(p, rect);
+  td.documentLayout()->draw(p, ctx);
+
+  p->restore();
 }
 
 void StickyNoteGraphicsItem::showToolTip(QGraphicsSceneHelpEvent *e) {
   if (!source_)
     return;
   QString caption, text;
+  bool html = false;
   if (auto proxy = source_->getProxy()) {
     caption = vtkSMPropertyHelper(proxy, "Caption").GetAsString();
     text = vtkSMPropertyHelper(proxy, "Text").GetAsString();
+    html = vtkSMPropertyHelper(proxy, "EnableHTML").GetAsInt();
   }
   QString s;
-  s += "<html><body><table style=\"white-space: nowrap;\">";
+  s += "<html><body><table width=\"300px\">";
   s += "<tr><td>" + caption + "</td></tr>";
-  s += "<tr><td>" + text + "</td></tr>";
+  s += "<tr><td>" + (html ? text : text.toHtmlEscaped()) + "</td></tr>";
   s += "</table></body></html>";
   this->showToolTipHelper(e, s);
 }
