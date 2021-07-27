@@ -2,6 +2,8 @@
 #define PARAVIEWNETWORKEDITOR_PLUGIN_VTKPASTEPROXYLOCATOR_H
 
 #include <vtkSMProxyLocator.h>
+#include <vtkType.h>
+#include <map>
 
 class vtkSMProxy;
 
@@ -16,10 +18,13 @@ class vtkPasteProxyLocator : public vtkSMProxyLocator {
   vtkSMProxy* LocateProxy(vtkTypeUInt32 globalID) override;
 
   void SetFindExistingSources(bool);
+  void SetProxyMap(const std::map<vtkTypeUInt32, vtkSMProxy*>&);
 
  protected:
   vtkPasteProxyLocator();
   ~vtkPasteProxyLocator() override;
+
+  std::map<vtkTypeUInt32, vtkSMProxy*> proxy_map;
 
   bool FindExistingSources {false};
 

@@ -31,20 +31,31 @@ void vtkPasteProxyLocator::PrintSelf(ostream &os, vtkIndent indent) {
 }
 
 vtkSMProxy* vtkPasteProxyLocator::LocateProxy(vtkTypeUInt32 globalID) {
-  vtkSMProxy* result = this->Superclass::LocateProxy(globalID);
-  if (!result) {
-    if (FindExistingSources) {
-      if (auto
-          source = pqApplicationCore::instance()->getServerManagerModel()->findItem<pqPipelineSource *>(globalID)) {
-        result = source->getProxy();
-      }
+  vtkSMProxy* result = nullptr;
+  if (!proxy_map.empty()) {
+    auto it = proxy_map.find(globalID);
+    if (it != proxy_map.end()) {
+      vtkLog(5, "Found proxy from map: " << globalID);
+      result = it->second;
     }
   }
-  return result;
+  if (!result && FindExistingSources) {
+    if (auto
+        source = pqApplicationCore::instance()->getServerManagerModel()->findItem<pqPipelineSource *>(globalID)) {
+      vtkLog(5, "Found proxy from pipeline: " << globalID);
+      result = source->getProxy();
+    }
+  }
+
+  return result ? result : this->Superclass::LocateProxy(globalID);
 }
 
 void vtkPasteProxyLocator::SetFindExistingSources(bool find_existing) {
   this->FindExistingSources = find_existing;
+}
+
+void vtkPasteProxyLocator::SetProxyMap(const std::map<vtkTypeUInt32, vtkSMProxy*>& map) {
+  this->proxy_map = map;
 }
 
 }

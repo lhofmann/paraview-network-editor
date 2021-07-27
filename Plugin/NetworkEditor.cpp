@@ -33,6 +33,7 @@
 #include <vtkSMProxySelectionModel.h>
 #include <vtkSMProxyDefinitionManager.h>
 #include <vtkPVProxyDefinitionIterator.h>
+#include <vtkSMParaViewPipelineControllerWithRendering.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -729,6 +730,8 @@ void NetworkEditor::copy() {
   // add sources
   auto smModel = pqApplicationCore::instance()->getServerManagerModel();
   std::map<std::string, std::vector<std::tuple<std::string, vtkSMProxy *>>> collections;
+  std::set<vtkTypeUInt32> input_proxy_ids;  // list of proxy ids that are inputs
+  std::set<vtkTypeUInt32> proxy_ids;  // list of stored proxy ids
   for (auto item : this->selectedItems()) {
     auto source_item = qgraphicsitem_cast<SourceGraphicsItem *>(item);
     if (!source_item)
@@ -739,6 +742,14 @@ void NetworkEditor::copy() {
       collections["sources"].emplace_back(std::make_tuple(source->getSMName().toStdString(), proxy));
       proxy->SaveXMLState(rootElement);
 
+      // collect input proxies
+      if (auto filter = qobject_cast<pqPipelineFilter*>(source)) {
+        QList<pqOutputPort*> inputs = filter->getInputs();
+        for (pqOutputPort* output_port : inputs) {
+          input_proxy_ids.insert(output_port->getSourceProxy()->GetGlobalID());
+        }
+      }
+
       // each pqProxy may have several "helper proxies" that do not appear elsewhere in the pipeline
       std::string helper_group = vtkSMParaViewPipelineController::GetHelperProxyGroupName(proxy);
       auto helper_proxies = source->getHelperProxies();
@@ -747,9 +758,10 @@ void NetworkEditor::copy() {
           collections[helper_group].emplace_back(std::make_tuple(helper_proxy->getSMName().toStdString(), helper));
         } else {
           // use id is name if pqProxy not found (seems to be the case most of the time?)
-          collections[helper_group].emplace_back(std::make_tuple(std::to_string(helper->GetGlobalID()), helper));
+          collections[helper_group].emplace_back(std::make_tuple("proxy_" + std::to_string(helper->GetGlobalID()), helper));
         }
         helper->SaveXMLState(rootElement);
+        proxy_ids.insert(helper->GetGlobalID());
       }
 
       for (auto view : source->getViews()) {
@@ -764,6 +776,7 @@ void NetworkEditor::copy() {
           collections["representations"].emplace_back(std::make_tuple(representation->getSMName().toStdString(),
                                                                       proxy));
           proxy->SaveXMLState(rootElement);
+          proxy_ids.insert(proxy->GetGlobalID());
 
           std::string helper_group = vtkSMParaViewPipelineController::GetHelperProxyGroupName(proxy);
           auto helper_proxies = representation->getHelperProxies();
@@ -776,6 +789,7 @@ void NetworkEditor::copy() {
             }
             helper->SetAnnotation("View", view->getSMName().toStdString().c_str());
             helper->SaveXMLState(rootElement);
+            proxy_ids.insert(helper->GetGlobalID());
           }
         }
       }
@@ -801,6 +815,28 @@ void NetworkEditor::copy() {
     }
     rootElement->AddNestedElement(collectionElement);
   }
+
+  // collect references to non-selected proxies
+  std::set<vtkTypeUInt32> proxy_references;
+  std::set_difference(input_proxy_ids.begin(), input_proxy_ids.end(), proxy_ids.begin(), proxy_ids.end(),
+                      std::inserter(proxy_references, proxy_references.end()));
+  vtkNew<vtkPVXMLElement> referencesElement;
+  referencesElement->SetName("ProxyReferences");
+  for (vtkTypeUInt32 id : proxy_references) {
+    vtkLog(5, "Referenced proxy: " << id);
+    pqPipelineSource* source = smModel->findItem<pqPipelineSource*>(id);
+    if (!source) {
+      vtkLog(5, "Could not find item.");
+      continue;
+    }
+    vtkNew<vtkPVXMLElement> itemElement;
+    itemElement->SetName("Item");
+    itemElement->AddAttribute("id", id);
+    itemElement->AddAttribute("name", source->getSMName().toStdString().c_str());
+    itemElement->AddAttribute("xmlname", source->getProxy()->GetXMLName());
+    referencesElement->AddNestedElement(itemElement);
+  }
+  rootElement->AddNestedElement(referencesElement);
 
   state->AddNestedElement(rootElement);
 
@@ -836,6 +872,105 @@ void NetworkEditor::paste(float x, float y, bool keep_connections) {
     vtkLog(ERROR, "Encountered exception during parsing clipboard contents:\n" + text);
     return;
   }
+
+  auto paraview_element = parser->GetRootElement();
+  if (!paraview_element || std::string(paraview_element->GetName()) != "ParaView") {
+    vtkLog(ERROR, "No <ParaView> element.");
+    return;
+  }
+  auto smstate_element = paraview_element->FindNestedElementByName("ServerManagerState");
+  if (!smstate_element) {
+    vtkLog(ERROR, "No <ServerManagerState> element.");
+    return;
+  }
+  auto references_element = smstate_element->FindNestedElementByName("ProxyReferences");
+  if (!references_element) {
+    vtkLog(ERROR, "No <ProxyReferences> element.");
+    return;
+  }
+
+  pqServerManagerModel* smModel = pqApplicationCore::instance()->getServerManagerModel();
+  std::vector<pqPipelineSource*> pipeline_sources = utilpq::get_sources();
+  // build a mapping between IDs in the state and sources in the pipeline
+  std::map<vtkTypeUInt32, vtkSMProxy*> proxy_map;
+  pqPipelineSource* dummy_source = utilpq::get_dummy_source();
+  vtkNew<vtkCollection> proxy_references;
+  references_element->GetElementsByName("Item", proxy_references);
+
+  // get elements that reference a proxy
+  auto proxy_elements = vtkSmartPointer<vtkCollection>::New();
+  parser->GetRootElement()->GetElementsByName("Proxy", proxy_elements);
+
+  for (int i = 0; i < proxy_references->GetNumberOfItems(); ++i) {
+    auto proxy_reference = vtkPVXMLElement::SafeDownCast(proxy_references->GetItemAsObject(i));
+    if (!proxy_reference)
+      continue;
+    vtkTypeUInt32 id = std::atoi(proxy_reference->GetAttributeOrEmpty("id"));
+    std::string name = proxy_reference->GetAttributeOrEmpty("name");
+    std::string xmlname = proxy_reference->GetAttributeOrEmpty("xmlname");
+    vtkLog(5, "Referenced proxy id " << id << ": " << name << " (" << xmlname << ")");
+
+    vtkSMProxy* proxy = nullptr;
+    if (keep_connections) {
+      // find by id
+      if (pqPipelineSource *source = smModel->findItem<pqPipelineSource *>(id)) {
+        // ensure that types are matching
+        if (xmlname == source->getProxy()->GetXMLName()) {
+          proxy = source->getProxy();
+          vtkLog(5, "Located proxy by ID.");
+        } else {
+          vtkLog(5, "Located proxy but types differ.");
+        }
+      } else {
+        vtkLog(5, "Unable to locate proxy by ID.");
+      }
+      if (!proxy) {
+        // find by name
+        if (pqPipelineSource *source = smModel->findItem<pqPipelineSource *>(name.c_str())) {
+          // ensure that types are matching
+          if (xmlname == source->getProxy()->GetXMLName()) {
+            proxy = source->getProxy();
+            vtkLog(5, "Located proxy by name.");
+          } else {
+            vtkLog(5, "Located proxy but types differ.");
+          }
+        } else {
+          vtkLog(5, "Unable to locate proxy by name.");
+        }
+      }
+      if (!proxy) {
+        // find by type
+        for (pqPipelineSource *source : pipeline_sources) {
+          if (xmlname == source->getProxy()->GetXMLName()) {
+            proxy = source->getProxy();
+            vtkLog(5,
+                   "Guessed proxy by type: " << source->getSMName().toStdString() << " (" << proxy->GetGlobalID() << ").");
+            break;
+          }
+        }
+      }
+    }
+
+    if (proxy) {
+      proxy_map[id] = proxy;
+    } else if (dummy_source) {
+      // if no proxy found, connect to dummy
+      proxy_map[id] = dummy_source->getProxy();
+      // set output port to 0 in state
+      for (int j = 0; j < proxy_elements->GetNumberOfItems(); ++j) {
+        auto proxy_element = vtkPVXMLElement::SafeDownCast(proxy_elements->GetItemAsObject(j));
+        if (!proxy_element)
+          continue;
+        if (!proxy_element->GetAttribute("output_port"))
+          continue;
+        vtkTypeUInt32 proxy_id = std::atoi(proxy_element->GetAttributeOrEmpty("value"));
+        if (proxy_id == id) {
+          proxy_element->SetAttribute("output_port", "0");
+        }
+      }
+    }
+  }
+
 
   auto annotations = vtkSmartPointer<vtkCollection>::New();
   parser->GetRootElement()->GetElementsByName("Annotation", annotations);
@@ -925,9 +1060,12 @@ void NetworkEditor::paste(float x, float y, bool keep_connections) {
 
   loader->SetSessionProxyManager(server->proxyManager());
   vtkNew<vtkPasteProxyLocator> locator;
-  locator->SetFindExistingSources(keep_connections);
+  // locator->SetFindExistingSources(keep_connections);
+  locator->SetFindExistingSources(false);
+  locator->SetProxyMap(proxy_map);
   loader->SetProxyLocator(locator);
   server->proxyManager()->LoadXMLState(parser->GetRootElement(), loader, false);
+  utilpq::collect_dummy_source();
   vtkLog(5,   "done pasting");
 
   // TODO: lookup tables are not pasted properly (use vtkSMTransferFunctionManager)
