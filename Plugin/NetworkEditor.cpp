@@ -822,15 +822,12 @@ void NetworkEditor::setPasteMode(int mode_index) {
 
 void NetworkEditor::paste(float x, float y, bool keep_connections) {
   auto clipboard = QApplication::clipboard();
-  auto mimeData = clipboard->mimeData();
-  if (!mimeData->formats().contains("text/plain"))
-    return;
-  QByteArray data = mimeData->data(QString("text/plain"));
-  std::string str(data.constData(), data.length());
-
+  std::string text = clipboard->text().toStdString();
   auto parser = vtkSmartPointer<vtkPVXMLParser>::New();
-  if (!parser->Parse(data.constData()))
+  if (!parser->Parse(text.c_str())) {
+    vtkLog(ERROR, "Encountered exception during parsing clipboard contents:\n" + text);
     return;
+  }
 
   auto annotations = vtkSmartPointer<vtkCollection>::New();
   parser->GetRootElement()->GetElementsByName("Annotation", annotations);
