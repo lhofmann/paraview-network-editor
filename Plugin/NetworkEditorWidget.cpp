@@ -5,6 +5,8 @@
 #include "utilqt.h"
 #include "vtkPVNetworkEditorSettings.h"
 
+#include <pqSettings.h>
+#include <pqFileDialog.h>
 #include <pqPVApplicationCore.h>
 #include <pqApplicationCore.h>
 #include <pqPipelineSource.h>
@@ -29,6 +31,9 @@
 #include <QToolTip>
 #include <QMenuBar>
 #include <QKeyEvent>
+#ifdef QT_HAS_SVG
+# include <QSvgGenerator>
+#endif
 
 #include <iostream>
 
@@ -98,6 +103,18 @@ void NetworkEditorWidget::constructor()
   connect(paste_cb, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),
           networkEditor_.get(), &NetworkEditor::setPasteMode);
   hLayout->addWidget(paste_cb);
+
+  QIcon saveIcon(
+      (vtkSMProxyManager::GetVersionMajor() == 5 && vtkSMProxyManager::GetVersionMinor() == 7)
+      ? ":/pqWidgets/Icons/pqCaptureScreenshot24.png" : ":/pqWidgets/Icons/pqCaptureScreenshot.svg");
+  QAction* saveAction = new QAction(saveIcon, "Save network as image.", this);
+  connect(saveAction, &QAction::triggered, this, [this]() {
+    this->savePipelineScreenshot("");
+  });
+  auto btnSave = new QToolButton(titleBar);
+
+  btnSave->setDefaultAction(saveAction);
+  hLayout->addWidget(btnSave);
 
   hLayout->addStretch();
 
@@ -207,22 +224,71 @@ void NetworkEditorWidget::constructor()
       return;
     const auto& item = pqApplicationCore::instance()->recentlyUsedResources().list().front();
     if (item.data("PARAVIEW_STATE", "0") == "1") {
-      this->savePipelineScreenshot(item.path());
+      QString path = item.path();
+      QFileInfo fileInfo(path);
+      path = fileInfo.dir().path() + QDir::separator() + fileInfo.baseName()
+             + QString::fromStdString(vtkPVNetworkEditorSettings::GetInstance()->GetAutoSavePipelineSuffix());
+      this->savePipelineScreenshot(path);
     }
   });
 }
 
-void NetworkEditorWidget::savePipelineScreenshot(const QString& path) const {
+void NetworkEditorWidget::savePipelineScreenshot(QString path) const {
+  if (path.isEmpty()) {
+    const QString skey = QString("extensions/networkeditor/NetworkEditor");
+    // Load the most recently used file extensions from QSettings, if available.
+    pqSettings* settings = pqApplicationCore::instance()->settings();
+    const QString lastUsedExt = settings->value(skey, ".png").toString();
+    pqFileDialog file_dialog(nullptr, pqCoreUtilities::mainWidget(), "Save Network Screenshot", QString(), "PNG (*.png);;SVG (*.svg)");
+    file_dialog.setRecentlyUsedExtension(lastUsedExt);
+    file_dialog.setObjectName("NetworkEditorFileDialog");
+    file_dialog.setFileMode(pqFileDialog::AnyFile);
+    if (file_dialog.exec() != QDialog::Accepted) {
+      return;
+    }
+    QString file = file_dialog.getSelectedFiles()[0];
+    QFileInfo fileInfo(file);
+    settings->setValue(skey, fileInfo.suffix().prepend("*."));
+    path = file;
+  }
+
+  QFileInfo fileInfo(path);
+  bool write_png = (fileInfo.suffix().toLower() != "svg");
+
   const auto br = this->networkEditor_->getSourcesBoundingRect().adjusted(-50, -50, 50, 50);
   QRectF source = br;
   QRectF target(QPointF(0, 0), br.size() * 2);
-  QImage image(target.size().toSize(), QImage::Format_ARGB32);
-  image.fill(Qt::transparent);
-  QPainter painter(&image);
-  this->networkEditor_->setBackgroundTransparent(true);
-  this->networkEditorView_->scene()->render(&painter, target, source);
-  this->networkEditor_->setBackgroundTransparent(false);
-  image.save(path + ".pipeline.png");
+
+  bool transparency = vtkPVNetworkEditorSettings::GetInstance()->GetPipelineScreenshotTransparency();
+
+  if (write_png) {
+    QImage image(target.size().toSize(), QImage::Format_ARGB32);
+    if (transparency) {
+      image.fill(Qt::transparent);
+    }
+    QPainter painter(&image);
+    this->networkEditor_->setBackgroundTransparent(transparency);
+    this->networkEditorView_->scene()->render(&painter, target, source);
+    this->networkEditor_->setBackgroundTransparent(false);
+    image.save(path);
+  } else {
+#ifdef QT_HAS_SVG
+    QSvgGenerator generator;
+    generator.setFileName(path);
+    generator.setSize(target.size().toSize());
+    generator.setViewBox(target);
+    generator.setDescription("");
+    generator.setTitle("");
+    QPainter painter;
+    painter.begin(&generator);
+    this->networkEditor_->setBackgroundTransparent(transparency);
+    this->networkEditorView_->scene()->render(&painter, target, source);
+    this->networkEditor_->setBackgroundTransparent(false);
+    painter.end();
+#else
+    vtkLog(ERROR, "Qt SVG support not available.");
+#endif
+  }
 }
 
 void NetworkEditorWidget::swapWithCentralWidget() {

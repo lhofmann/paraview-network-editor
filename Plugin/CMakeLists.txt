@@ -79,6 +79,11 @@ else ()
     )
 endif ()
 
+if (TARGET Qt5::Svg)
+    target_link_libraries(NetworkEditor PRIVATE Qt5::Svg)
+    target_compile_definitions(NetworkEditor PRIVATE "QT_HAS_SVG")
+endif ()
+
 if (ENABLE_GRAPHVIZ)
     target_sources(NetworkEditor PRIVATE graph_layout.cpp)
     target_compile_definitions(NetworkEditor PRIVATE ENABLE_GRAPHVIZ)

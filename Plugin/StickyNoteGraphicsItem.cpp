@@ -100,7 +100,7 @@ void StickyNoteGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
   p->save();
 
   rect = this->rect();
-  rect.adjust(2, header_height + 4, 0, 0);
+  rect.adjust(0, header_height + 4, 0, 0);
   p->fillRect(rect, backgroundColor);
 
   QColor borderColor("#282828");

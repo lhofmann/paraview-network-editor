@@ -47,10 +47,36 @@
                                number_of_elements="1"
                                default_values="0">
                 <Documentation>
-                    Automatically save pipeline screenshot when state file is saved or loaded alongside the state file (suffix .pipeline.png).
+                    Automatically save pipeline screenshot when state file is saved or loaded alongside the state file.
                 </Documentation>
                 <BooleanDomain name="bool" />
             </IntVectorProperty>
+
+            <StringVectorProperty name="AutoSavePipelineSuffix"
+                                  command="SetAutoSavePipelineSuffix"
+                                  number_of_elements="1"
+                                  default_values=".pipeline.png">
+                <Documentation>
+                    Suffix to be appended to state filename for automatically saved pipeline screenshots.
+                </Documentation>
+                <Hints>
+                    <PropertyWidgetDecorator type="GenericDecorator"
+                                             mode="visibility"
+                                             property="AutoSavePipelineScreenshot"
+                                             value="1" />
+                </Hints>
+            </StringVectorProperty>
+
+            <IntVectorProperty name="PipelineScreenshotTransparency"
+                               command="SetPipelineScreenshotTransparency"
+                               number_of_elements="1"
+                               default_values="1">
+                <Documentation>
+                    Save pipeline screenshots with transparent background.
+                </Documentation>
+                <BooleanDomain name="bool" />
+            </IntVectorProperty>
+
 
             <Hints>
                 <UseDocumentationForLabels />

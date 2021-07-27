@@ -4,6 +4,7 @@
 #include "NetworkEditorSettingsModule.h"
 #include <vtkObject.h>
 #include <vtkSmartPointer.h>
+#include <string>
 
 class NETWORKEDITORSETTINGS_EXPORT vtkPVNetworkEditorSettings : public vtkObject {
  public:
@@ -24,11 +25,19 @@ class NETWORKEDITORSETTINGS_EXPORT vtkPVNetworkEditorSettings : public vtkObject
   vtkSetMacro(AutoSavePipelineScreenshot, bool);
   vtkGetMacro(AutoSavePipelineScreenshot, bool);
 
+  vtkSetMacro(AutoSavePipelineSuffix, std::string);
+  vtkGetMacro(AutoSavePipelineSuffix, std::string);
+
+  vtkSetMacro(PipelineScreenshotTransparency, bool);
+  vtkGetMacro(PipelineScreenshotTransparency, bool);
+
  protected:
   bool SwapOnStartup {false};
   bool UpdateActiveObject {true};
   int TooltipWakeupDelay {700};
   bool AutoSavePipelineScreenshot {true};
+  bool PipelineScreenshotTransparency {true};
+  std::string AutoSavePipelineSuffix {".pipeline.png"};
 
   vtkPVNetworkEditorSettings();
   ~vtkPVNetworkEditorSettings() override;
