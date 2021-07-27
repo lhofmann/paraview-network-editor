@@ -16,6 +16,7 @@
 #include <pqRecentlyUsedResourcesList.h>
 #include <vtkPVXMLElement.h>
 #include <vtkSMSourceProxy.h>
+#include <vtkSMProxyManager.h>
 #include <vtkLogger.h>
 
 #include <QAction>
