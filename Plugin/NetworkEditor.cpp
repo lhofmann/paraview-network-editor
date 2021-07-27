@@ -746,7 +746,7 @@ void NetworkEditor::copy() {
 
       // collect input proxies
       if (auto filter = qobject_cast<pqPipelineFilter*>(source)) {
-        QList<pqOutputPort*> inputs = filter->getInputs();
+        QList<pqOutputPort*> inputs = filter->getAllInputs();
         for (pqOutputPort* output_port : inputs) {
           input_proxy_ids.insert(output_port->getSourceProxy()->GetGlobalID());
         }
