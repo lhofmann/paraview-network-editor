@@ -27,7 +27,7 @@ class StickyNoteGraphicsItem : public SourceGraphicsItem {
   QPointF mouse_press_pos_;
   QRectF mouse_press_rect_;
   QRectF handles_[3];
-  static const QCursor handle_cursors_[4];
+  std::vector<QCursor> handle_cursors_;
 
   void updateHandles();
   Handle handleAt(const QPointF& pos);

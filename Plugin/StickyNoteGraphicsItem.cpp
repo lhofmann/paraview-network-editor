@@ -14,6 +14,13 @@
 namespace ParaViewNetworkEditor {
 
 StickyNoteGraphicsItem::StickyNoteGraphicsItem(pqPipelineSource* source) {
+  this->handle_cursors_ = {
+    Qt::SizeVerCursor,   // BOTTOM
+    Qt::SizeHorCursor,   // HANDLE_RIGHT
+    Qt::SizeFDiagCursor, // HANDLE_BOTTOM_RIGHT
+    Qt::ArrowCursor
+  };
+
   this->source_ = source;
   setZValue(STICKYNOTEGRAPHICSITEM_DEPTH);
   this->setAcceptHoverEvents(true);
@@ -207,13 +214,6 @@ StickyNoteGraphicsItem::Handle StickyNoteGraphicsItem::handleAt(const QPointF& p
     return HANDLE_NONE;
   }
 }
-
-const QCursor StickyNoteGraphicsItem::handle_cursors_[4] {
-  Qt::SizeVerCursor,   // BOTTOM
-  Qt::SizeHorCursor,   // HANDLE_RIGHT
-  Qt::SizeFDiagCursor, // HANDLE_BOTTOM_RIGHT
-  Qt::ArrowCursor
-};
 
 void StickyNoteGraphicsItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
   if (this->handle_selected_ != HANDLE_NONE) {
