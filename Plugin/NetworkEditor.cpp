@@ -741,6 +741,7 @@ void NetworkEditor::copy() {
       vtkSMProxy *proxy = source->getProxy();
       collections["sources"].emplace_back(std::make_tuple(source->getSMName().toStdString(), proxy));
       proxy->SaveXMLState(rootElement);
+      proxy_ids.insert(proxy->GetGlobalID());
 
       // collect input proxies
       if (auto filter = qobject_cast<pqPipelineFilter*>(source)) {
@@ -1191,6 +1192,7 @@ void NetworkEditor::deleteSelected() {
   if (!delete_sources.empty()) {
     deleteReaction_->deleteSources(delete_sources);
   }
+  utilpq::collect_dummy_source();
 }
 
 void NetworkEditor::showSelected() {
