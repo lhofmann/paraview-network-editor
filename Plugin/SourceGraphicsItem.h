@@ -34,8 +34,8 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
   InputPortGraphicsItem *getInputPortGraphicsItem(int) const;
   OutputPortGraphicsItem *getOutputPortGraphicsItem(int) const;
 
-  void storePosition();
-  void loadPosition();
+  virtual void storePosition();
+  virtual void loadPosition();
 
   void showToolTip(QGraphicsSceneHelpEvent *e) override;
 
