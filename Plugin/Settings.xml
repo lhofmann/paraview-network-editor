@@ -69,4 +69,30 @@
                                number_of_elements="2" />
         </Proxy>
     </ProxyGroup>
+    <ProxyGroup name="sources">
+        <SourceProxy name="NetworkEditorStickyNote" label="Network Editor Sticky Note" class="vtkPVTrivialProducer">
+            <StringVectorProperty default_values="Note"
+                                  name="Caption"
+                                  number_of_elements="1" />
+            <StringVectorProperty default_values="Text"
+                                  name="Text"
+                                  number_of_elements="1">
+                <Hints>
+                    <Widget type="multi_line" />
+                </Hints>
+            </StringVectorProperty>
+            <DoubleVectorProperty default_values="1 0.85 0"
+                                  name="BackgroundColor"
+                                  label="Background Color"
+                                  number_of_elements="3"
+                                  panel_widget="color_selector">
+                <DoubleRangeDomain max="1 1 1"
+                                   min="0 0 0"
+                                   name="range" />
+            </DoubleVectorProperty>
+            <Hints>
+                <View type="None" />
+            </Hints>
+        </SourceProxy>
+    </ProxyGroup>
 </ServerManagerConfiguration>

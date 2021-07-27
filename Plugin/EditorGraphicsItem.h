@@ -26,11 +26,12 @@ enum NetworkEditorGraphicsItemType {
 };
 
 // Z value for various graphics items.
-static const qreal DRAGING_ITEM_DEPTH = 4.0f;
-static const qreal SELECTED_SOURCEGRAPHICSITEM_DEPTH = 3.0f;
-static const qreal SOURCEGRAPHICSITEM_DEPTH = 2.0f;
-static const qreal CONNECTIONGRAPHICSITEM_DEPTH = 1.0f;
-static const qreal LINKGRAPHICSITEM_DEPTH = 0.0f;
+static const qreal DRAGING_ITEM_DEPTH = 5.0f;
+static const qreal SELECTED_SOURCEGRAPHICSITEM_DEPTH = 4.0f;
+static const qreal SOURCEGRAPHICSITEM_DEPTH = 3.0f;
+static const qreal CONNECTIONGRAPHICSITEM_DEPTH = 2.0f;
+static const qreal LINKGRAPHICSITEM_DEPTH = 1.0f;
+static const qreal STICKYNOTEGRAPHICSITEM_DEPTH = 0.0f;
 
 class Port;
 class NetworkEditor;

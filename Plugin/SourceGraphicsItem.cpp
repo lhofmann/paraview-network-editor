@@ -30,6 +30,14 @@ int pointSizeToPixelSize(const int pointSize) {
   return ((pointSize * 4) / 3);
 }
 
+SourceGraphicsItem::SourceGraphicsItem() {
+  auto width = static_cast<int>(size_.width());
+
+  setZValue(SOURCEGRAPHICSITEM_DEPTH);
+  setFlags(ItemIsMovable | ItemIsSelectable | ItemIsFocusable | ItemSendsGeometryChanges);
+  setRect(-size_.width() / 2, -size_.height() / 2, size_.width(), size_.height());
+}
+
 SourceGraphicsItem::SourceGraphicsItem(pqPipelineSource *source)
     : source_(source) {
   setZValue(SOURCEGRAPHICSITEM_DEPTH);
@@ -132,6 +140,9 @@ void SourceGraphicsItem::addOutport(int port) {
 }
 
 void SourceGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *options, QWidget *widget) {
+  if (!source_)
+    return;
+
   bool visible = false;
   for (int i = 0; i < source_->getNumberOfOutputPorts(); ++i) {
     visible = visible || utilpq::output_visibiility(source_, i).first;

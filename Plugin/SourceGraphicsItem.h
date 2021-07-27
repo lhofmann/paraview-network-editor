@@ -16,6 +16,7 @@ class OutputPortGraphicsItem;
 class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public LabelGraphicsItemObserver {
  Q_OBJECT
  public:
+  SourceGraphicsItem();
   SourceGraphicsItem(pqPipelineSource *source);
   virtual ~SourceGraphicsItem();
 
@@ -54,7 +55,6 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
   void addInport(int);
   void addOutport(int);
 
- private:
   void positionLablels();
 
   pqPipelineSource *source_;

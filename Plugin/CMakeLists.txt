@@ -14,6 +14,7 @@ set(sources
     ConnectionGraphicsItem.cpp
     ConnectionDragHelper.cpp
     OutputPortStatusGraphicsItem.cpp
+    StickyNoteGraphicsItem.cpp
     utilqt.cpp
     utilpq.cpp
     observer.cpp

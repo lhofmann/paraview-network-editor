@@ -8,6 +8,7 @@
 #include "utilpq.h"
 #include "vtkPasteStateLoader.h"
 #include "vtkPasteProxyLocator.h"
+#include "StickyNoteGraphicsItem.h"
 
 #ifdef ENABLE_GRAPHVIZ
 # include "graph_layout.h"
@@ -325,7 +326,12 @@ void NetworkEditor::drawForeground(QPainter *painter, const QRectF &rect) {
 }
 
 void NetworkEditor::addSourceRepresentation(pqPipelineSource *source) {
-  auto sourceGraphicsItem = new SourceGraphicsItem(source);
+  SourceGraphicsItem* sourceGraphicsItem;
+  if (std::string(source->getProxy()->GetXMLName()) == "NetworkEditorStickyNote") {
+    sourceGraphicsItem = new StickyNoteGraphicsItem(source);
+  } else {
+    sourceGraphicsItem = new SourceGraphicsItem(source);
+  }
 
   QPointF pos;
   auto proxy = source->getProxy();
