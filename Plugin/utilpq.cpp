@@ -24,6 +24,7 @@
 #include <pqApplicationCore.h>
 #include <pqServerManagerModel.h>
 #include <pqActiveObjects.h>
+#include <vtkPVConfig.h>
 
 namespace ParaViewNetworkEditor {
 namespace utilpq {
@@ -250,7 +251,11 @@ std::vector<std::string> input_datatypes(pqPipelineFilter *filter, int in_port) 
     if (domain->IsA("vtkSMDataTypeDomain")) {
       auto dtd = static_cast<vtkSMDataTypeDomain *>(domain);
       for (unsigned int cc = 0; cc < dtd->GetNumberOfDataTypes(); cc++) {
+#if     (PARAVIEW_VERSION_MAJOR > 5) || (PARAVIEW_VERSION_MAJOR == 5 && PARAVIEW_VERSION_MINOR >= 9)
+        result.push_back(dtd->GetDataTypeName(cc));
+#else
         result.push_back(dtd->GetDataType(cc));
+#endif
       }
     }
   }

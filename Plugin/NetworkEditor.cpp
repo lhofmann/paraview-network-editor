@@ -53,6 +53,7 @@
 #include <pqDataRepresentation.h>
 #include <pqQuickLaunchDialog.h>
 #include <pqObjectBuilder.h>
+#include <vtkPVConfig.h>
 
 #include <QGraphicsView>
 #include <QPainter>
@@ -150,7 +151,7 @@ NetworkEditor::NetworkEditor()
   });
 
   connect(smModel,
-          &pqServerManagerModel::connectionAdded,
+          static_cast<void (pqServerManagerModel::*)(pqPipelineSource*, pqPipelineSource*, int)>(&pqServerManagerModel::connectionAdded),
           this,
           [this](pqPipelineSource *source, pqPipelineSource *dest, int sourcePort) {
             vtkLog(5,  "added connection "
@@ -160,7 +161,7 @@ NetworkEditor::NetworkEditor()
           });
 
   connect(smModel,
-          &pqServerManagerModel::connectionRemoved,
+          static_cast<void (pqServerManagerModel::*)(pqPipelineSource*, pqPipelineSource*, int)>(&pqServerManagerModel::connectionRemoved),
           this,
           [this](pqPipelineSource *source, pqPipelineSource *dest, int sourcePort) {
             vtkLog(5,  "removed connection "
@@ -784,7 +785,7 @@ void NetworkEditor::copy() {
       itemElement->SetName("Item");
       itemElement->AddAttribute("id", std::get<1>(kv)->GetGlobalID());
       itemElement->AddAttribute("name", std::get<0>(kv).c_str());
-#if   VTK_MAJOR_VERSION > 8 || VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 90
+#if   VTK_MAJOR_VERSION > 8 || (VTK_MAJOR_VERSION == 8 && VTK_MINOR_VERSION >= 90)
       if (std::get<1>(kv)->GetLogName() != nullptr) {
         itemElement->AddAttribute("logname", std::get<1>(kv)->GetLogName());
       }
@@ -1020,7 +1021,11 @@ void NetworkEditor::removeConnection(ConnectionGraphicsItem *connection) {
 void NetworkEditor::deleteSelected() {
   auto items = this->selectedItems();
   this->clearSelection();
+#if (PARAVIEW_VERSION_MAJOR > 5) || (PARAVIEW_VERSION_MAJOR == 5 && PARAVIEW_VERSION_MINOR >= 9)
+  QSet<pqProxy *> delete_sources;
+#else
   QSet<pqPipelineSource *> delete_sources;
+#endif
   QSet<ConnectionGraphicsItem *> delete_connections;
   for (QGraphicsItem *item : items) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
