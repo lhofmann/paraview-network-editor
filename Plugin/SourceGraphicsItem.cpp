@@ -31,8 +31,6 @@ int pointSizeToPixelSize(const int pointSize) {
 }
 
 SourceGraphicsItem::SourceGraphicsItem() {
-  auto width = static_cast<int>(size_.width());
-
   setZValue(SOURCEGRAPHICSITEM_DEPTH);
   setFlags(ItemIsMovable | ItemIsSelectable | ItemIsFocusable | ItemSendsGeometryChanges);
   setRect(-size_.width() / 2, -size_.height() / 2, size_.width(), size_.height());

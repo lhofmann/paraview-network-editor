@@ -82,6 +82,7 @@ void StickyNoteGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
   }
 
   QFont caption_font(caption_font_family, caption_font_size, caption_bold ? QFont::Bold : QFont::Normal, caption_italic);
+  caption_font.setPixelSize(((caption_font_size * 4.) / 3.));
   QFontMetrics fm = QFontMetrics(caption_font);
   QString caption_short = fm.elidedText(caption, Qt::ElideMiddle, this->rect().width() - 8);
   QSize caption_size = fm.size(Qt::TextSingleLine, caption_short);
@@ -140,6 +141,7 @@ void StickyNoteGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
     td.setDefaultTextOption(textOption);
 
     QFont contentFont(font_family, font_size, bold ? QFont::Bold : QFont::Normal, italic);
+    contentFont.setPixelSize(((font_size * 4.) / 3.));
     td.setDefaultFont(contentFont);
     if (html) {
       td.setHtml(text);
@@ -147,7 +149,7 @@ void StickyNoteGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
       td.setPlainText(text);
     }
     rect = this->rect();
-    rect.adjust(2, header_height, 2, 2);
+    rect.adjust(2, header_height + 4, 2, 2);
     rect.setHeight(rect.height() - 2);
     rect.setWidth(rect.width() - 2);
     p->translate(rect.topLeft());
