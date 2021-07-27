@@ -1,6 +1,7 @@
 #ifndef PARAVIEWNETWORKEDITOR_PLUGIN_GRAPH_LAYOUT_H_
 #define PARAVIEWNETWORKEDITOR_PLUGIN_GRAPH_LAYOUT_H_
 
+#include <cstddef>
 #include <vector>
 #include <map>
 
