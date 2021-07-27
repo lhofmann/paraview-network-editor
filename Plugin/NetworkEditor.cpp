@@ -148,6 +148,7 @@ NetworkEditor::NetworkEditor()
   connect(smModel, &pqServerManagerModel::sourceRemoved, this, [this](pqPipelineSource *source) {
     vtkLog(5,  "removed source " << source->getSMName().toStdString());
     removeSourceRepresentation(source);
+    utilpq::collect_dummy_source();
   });
 
   connect(smModel,
@@ -327,6 +328,9 @@ void NetworkEditor::drawForeground(QPainter *painter, const QRectF &rect) {
 }
 
 void NetworkEditor::addSourceRepresentation(pqPipelineSource *source) {
+  if (std::string(source->getProxy()->GetXMLName()) == "NetworkEditorDummySource")
+    return;
+
   SourceGraphicsItem* sourceGraphicsItem;
   if (std::string(source->getProxy()->GetXMLName()) == "NetworkEditorStickyNote") {
     sourceGraphicsItem = new StickyNoteGraphicsItem(source);
@@ -404,6 +408,9 @@ void NetworkEditor::removeSourceRepresentation(pqPipelineSource *source) {
 }
 
 void NetworkEditor::updateConnectionRepresentations(pqPipelineSource *source, pqPipelineSource *dest) {
+  if ((this->sourceGraphicsItems_.count(source) <= 0) || (this->sourceGraphicsItems_.count(dest) <= 0))
+    return;
+
   std::tuple<pqPipelineSource *, pqPipelineSource *> key(source, dest);
   std::set<std::tuple<int, int>> sm_connections, connections;
 
@@ -1204,7 +1211,6 @@ void NetworkEditor::quickLaunch() {
       pqServer *server = pqActiveObjects::instance().activeServer();
       pqApplicationCore *core = pqApplicationCore::instance();
       pqObjectBuilder *builder = core->getObjectBuilder();
-      pqServerManagerModel *smmodel = core->getServerManagerModel();
       vtkSMSessionProxyManager *pxm = server->proxyManager();
       vtkSMProxy *prototype =
           pxm->GetPrototypeProxy(xmlgroup.toLocal8Bit().data(), xmlname.toLocal8Bit().data());
@@ -1261,6 +1267,13 @@ void NetworkEditor::quickLaunch() {
               });
         };
         auto named_inputs = count(assignment_forward) >= count(assignment_backward) ? assignment_forward : assignment_backward;
+
+        // ensure first input is non-empty
+        if (!inputPortNames.empty() && named_inputs[inputPortNames.first()].empty()) {
+          if (pqPipelineSource* dummy_source = utilpq::get_dummy_source()) {
+            named_inputs[inputPortNames.first()].push_back(dummy_source->getOutputPort(0));
+          }
+        }
 
         builder->createFilter(xmlgroup, xmlname, named_inputs, server);
       } else {

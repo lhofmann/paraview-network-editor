@@ -96,6 +96,7 @@
         </Proxy>
     </ProxyGroup>
     <ProxyGroup name="sources">
+        <SourceProxy name="NetworkEditorDummySource" class="vtkPVTrivialProducer"/>
         <SourceProxy name="NetworkEditorStickyNote" label="Network Editor Sticky Note" class="vtkPVTrivialProducer">
             <StringVectorProperty default_values="Note"
                                   name="Caption"

@@ -32,9 +32,6 @@ bool ConnectionDragHelper::eventFilter(QObject *, QEvent *event) {
       auto inport = endItem->getPort();
       bool force_accept = QApplication::keyboardModifiers() & Qt::ShiftModifier;
       if (force_accept || utilpq::can_connect(outport.first, outport.second, inport.first, inport.second)) {
-        if (!utilpq::multiple_inputs(inport.first, inport.second)) {
-          utilpq::clear_connections(inport.first, inport.second);
-        }
         utilpq::add_connection(outport.first, outport.second, inport.first, inport.second);
       }
     }

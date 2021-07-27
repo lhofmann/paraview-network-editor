@@ -25,8 +25,6 @@ void add_connection(pqPipelineSource *source, int out_port, pqPipelineFilter *de
 
 void remove_connection(pqPipelineSource *source, int out_port, pqPipelineFilter *dest, int in_port);
 
-void clear_connections(pqPipelineFilter *filter, int port);
-
 std::vector<pqPipelineSource *> get_sources();
 
 std::vector<pqView*> get_views();
@@ -46,6 +44,10 @@ std::vector<std::string> input_datatypes(pqPipelineFilter *filter, int in_port);
 const QColor default_color(188, 188, 188);
 
 QColor output_dataset_color(pqPipelineSource *filter, int port);
+
+pqPipelineSource* get_dummy_source();
+
+void collect_dummy_source();
 
 }
 }

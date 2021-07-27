@@ -19,6 +19,7 @@
 #include <vtkDataSet.h>
 #include <vtkSmartPointer.h>
 #include <vtkDataObjectTypes.h>
+#include <vtkCollection.h>
 
 #include <pqPipelineFilter.h>
 #include <pqPipelineSource.h>
@@ -27,6 +28,9 @@
 #include <pqServerManagerModel.h>
 #include <pqActiveObjects.h>
 #include <vtkPVConfig.h>
+#include <pqObjectBuilder.h>
+
+#include <set>
 
 namespace ParaViewNetworkEditor {
 namespace utilpq {
@@ -107,18 +111,23 @@ void add_connection(pqPipelineSource *source, int out_port, pqPipelineFilter *de
   QString input_name = dest->getInputPortName(in_port);
   std::vector<vtkSMProxy *> inputPtrs;
   std::vector<unsigned int> inputPorts;
-  vtkSMPropertyHelper helper(dest->getProxy(), input_name.toLocal8Bit().data());
-  unsigned int numProxies = helper.GetNumberOfElements();
-  for (unsigned int cc = 0; cc < numProxies; cc++) {
-    inputPtrs.push_back(helper.GetAsProxy(cc));
-    inputPorts.push_back(helper.GetOutputPort(cc));
+
+  vtkSMInputProperty *ip = vtkSMInputProperty::SafeDownCast(
+      dest->getProxy()->GetProperty(input_name.toLocal8Bit().data()));
+  if (ip->GetMultipleInput()) {
+    vtkSMPropertyHelper helper(dest->getProxy(), input_name.toLocal8Bit().data());
+    unsigned int numProxies = helper.GetNumberOfElements();
+    for (unsigned int cc = 0; cc < numProxies; cc++) {
+      inputPtrs.push_back(helper.GetAsProxy(cc));
+      inputPorts.push_back(helper.GetOutputPort(cc));
+    }
   }
   inputPtrs.push_back(source->getProxy());
   inputPorts.push_back(out_port);
 
-  vtkSMInputProperty *ip = vtkSMInputProperty::SafeDownCast(
-      dest->getProxy()->GetProperty(input_name.toLocal8Bit().data()));
   ip->SetProxies(static_cast<unsigned int>(inputPtrs.size()), &inputPtrs[0], &inputPorts[0]);
+
+  collect_dummy_source();
 
   dest->getProxy()->UpdateVTKObjects();
   pqApplicationCore::instance()->render();
@@ -140,19 +149,20 @@ void remove_connection(pqPipelineSource *source, int out_port, pqPipelineFilter 
     inputPorts.push_back(helper.GetOutputPort(cc));
   }
 
+  // ensure that first input always has an input
+  if (in_port == 0 && inputPtrs.empty()) {
+    if (pqPipelineSource* dummy_source = get_dummy_source()) {
+      inputPtrs.push_back(dummy_source->getProxy());
+      inputPorts.push_back(0);
+    }
+  }
+
   vtkSMInputProperty *ip = vtkSMInputProperty::SafeDownCast(
       dest->getProxy()->GetProperty(input_name.toLocal8Bit().data()));
   ip->SetProxies(static_cast<unsigned int>(inputPtrs.size()), &inputPtrs[0], &inputPorts[0]);
 
   dest->getProxy()->UpdateVTKObjects();
   pqApplicationCore::instance()->render();
-}
-
-void clear_connections(pqPipelineFilter *filter, int port) {
-  QString input_name = filter->getInputPortName(port);
-  vtkSMInputProperty *ip = vtkSMInputProperty::SafeDownCast(
-      filter->getProxy()->GetProperty(input_name.toLocal8Bit().data()));
-  ip->RemoveAllProxies();
 }
 
 std::vector<pqPipelineSource *> get_sources() {
@@ -319,6 +329,121 @@ QColor output_dataset_color(pqPipelineSource *filter, int port_index) {
     return QColor(188, 188, 101);
 
   return default_color;
+}
+
+pqPipelineSource* get_dummy_source() {
+  vtkSMProxyManager* proxyManager = vtkSMProxyManager::GetProxyManager();
+  if (!proxyManager)
+    return nullptr;
+  vtkSMSessionProxyManager *sessionProxyManager = proxyManager->GetActiveSessionProxyManager();
+  if (!sessionProxyManager)
+    return nullptr;
+  auto smModel = pqApplicationCore::instance()->getServerManagerModel();
+
+  pqPipelineSource* dummy = nullptr;
+
+  // find NetworkEditorDummySource
+  vtkNew<vtkCollection> coll;
+  sessionProxyManager->GetProxies("sources", "NetworkEditorDummySource", coll);
+  coll->InitTraversal();
+  vtkObject* obj = coll->GetNextItemAsObject();
+  while (obj != nullptr) {
+    vtkSMProxy* proxy = vtkSMProxy::SafeDownCast(obj);
+    if (proxy) {
+      auto pipeline_source = smModel->findItem<pqPipelineSource *>(proxy);
+      if (pipeline_source && (pipeline_source->getSMName() == "NetworkEditorDummySource")) {
+        dummy = pipeline_source;
+        break;
+      }
+    }
+    obj = coll->GetNextItemAsObject();
+  }
+
+  // not found, create new one
+  if (!dummy) {
+    pqObjectBuilder* builder = pqApplicationCore::instance()->getObjectBuilder();
+    dummy = builder->createSource("sources", "NetworkEditorDummySource", pqActiveObjects::instance().activeServer());
+    if (dummy) {
+      dummy->rename("NetworkEditorDummySource");
+    }
+  }
+
+  return dummy;
+}
+
+void collect_dummy_source() {
+  vtkSMProxyManager* proxyManager = vtkSMProxyManager::GetProxyManager();
+  if (!proxyManager)
+    return;
+  vtkSMSessionProxyManager *sessionProxyManager = proxyManager->GetActiveSessionProxyManager();
+  if (!sessionProxyManager)
+    return;
+  auto smModel = pqApplicationCore::instance()->getServerManagerModel();
+
+  // find NetworkEditorDummySource
+  std::set<pqPipelineSource*> dummies;
+  vtkNew<vtkCollection> coll;
+  sessionProxyManager->GetProxies("sources", "NetworkEditorDummySource", coll);
+  coll->InitTraversal();
+  vtkObject* obj = coll->GetNextItemAsObject();
+  while (obj != nullptr) {
+    vtkSMProxy* proxy = vtkSMProxy::SafeDownCast(obj);
+    if (proxy) {
+      auto pipeline_source = smModel->findItem<pqPipelineSource *>(proxy);
+      if (pipeline_source && (pipeline_source->getSMName() == "NetworkEditorDummySource")) {
+        dummies.insert(pipeline_source);
+        break;
+      }
+    }
+    obj = coll->GetNextItemAsObject();
+  }
+
+  std::set<pqPipelineFilter*> consumers;
+  for (pqPipelineSource* dummy : dummies) {
+    for (pqPipelineSource* consumer : dummy->getAllConsumers()) {
+      pqPipelineFilter* filter = qobject_cast<pqPipelineFilter *>(consumer);
+      if (filter) {
+        consumers.insert(filter);
+      }
+    }
+  }
+
+  for (pqPipelineFilter* consumer : consumers) {
+    for (int input_id = 0; input_id < consumer->getNumberOfInputPorts(); ++input_id) {
+      const char *input_name = consumer->getInputPortName(input_id).toLocal8Bit().constData();
+      auto prop = vtkSMInputProperty::SafeDownCast(consumer->getProxy()->GetProperty(input_name));
+      if (!prop)
+        continue;
+
+      vtkSMPropertyHelper helper(prop);
+      unsigned int num_proxies = helper.GetNumberOfElements();
+      std::set<pqPipelineSource*> dummy_connections;
+      int num_non_dummy = 0;
+      for (unsigned int i = 0; i < num_proxies; ++i) {
+        auto proxy_source = smModel->findItem<pqPipelineSource *>(helper.GetAsProxy(i));
+        if (proxy_source) {
+          if (dummies.count(proxy_source) > 0) {
+            dummy_connections.insert(proxy_source);
+          } else {
+            ++num_non_dummy;
+          }
+        }
+      }
+
+      if (num_non_dummy > 0 && !dummy_connections.empty()) {
+        for (pqPipelineSource* dummy : dummy_connections) {
+          remove_connection(dummy, 0, consumer, input_id);
+        }
+      }
+    }
+  }
+
+  vtkNew<vtkSMParaViewPipelineController> controller;
+  for (pqPipelineSource* dummy : dummies) {
+    if (dummy->getNumberOfConsumers() <= 0) {
+      controller->UnRegisterProxy(dummy->getProxy());
+    }
+  }
 }
 
 }
