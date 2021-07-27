@@ -168,6 +168,14 @@ void NetworkEditorWidget::constructor()
     networkEditor_->quickLaunch();
   });
 
+  auto search_global = new QAction("Search", this);
+  search_global->setShortcutContext(Qt::ShortcutContext::ApplicationShortcut);
+  search_global->setShortcut(QKeySequence(Qt::MetaModifier + Qt::Key_Space));
+  networkEditorView_->addAction(search_global);
+  connect(search_global, &QAction::triggered, this, [this]() {
+      networkEditor_->quickLaunch();
+    });
+
   auto select_all_action = new QAction("Select All", this);
   select_all_action->setShortcutContext(Qt::ShortcutContext::WidgetShortcut);
   select_all_action->setShortcut(QKeySequence(Qt::ControlModifier + Qt::Key_A));
