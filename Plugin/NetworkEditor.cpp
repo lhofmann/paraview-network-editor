@@ -488,12 +488,14 @@ void NetworkEditor::contextMenuEvent(QGraphicsSceneContextMenuEvent *e) {
   for (auto &item : items(e->scenePos())) {
     if (auto source = qgraphicsitem_cast<SourceGraphicsItem *>(item)) {
       source->setSelected(true);
-      auto editName = menu.addAction(tr("Edit Name"));
-      connect(editName, &QAction::triggered, [this, source]() {
-        clearSelection();
-        source->setSelected(true);
-        source->editIdentifier();
-      });
+      if (!qgraphicsitem_cast<StickyNoteGraphicsItem*>(source)) {
+        auto editName = menu.addAction(tr("Edit Name"));
+        connect(editName, &QAction::triggered, [this, source]() {
+          clearSelection();
+          source->setSelected(true);
+          source->editIdentifier();
+        });
+      }
       break;
     }
   }

@@ -175,6 +175,9 @@ void SourceGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *opti
 }
 
 void SourceGraphicsItem::editIdentifier() {
+  if (!identifierLabel_)
+    return;
+
   setFocus();
   identifierLabel_->setFlags(QGraphicsItem::ItemIsSelectable | QGraphicsItem::ItemIsFocusable);
 

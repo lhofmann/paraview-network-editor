@@ -22,7 +22,7 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
 
   static const QSizeF size_;
 
-  void editIdentifier();
+  virtual void editIdentifier();
 
   pqPipelineSource *getSource() const;
   void aboutToRemoveSource();
@@ -57,9 +57,9 @@ class SourceGraphicsItem : public QObject, public EditorGraphicsItem, public Lab
 
   void positionLablels();
 
-  pqPipelineSource *source_;
-  LabelGraphicsItem *identifierLabel_;
-  LabelGraphicsItem *typeLabel_;
+  pqPipelineSource *source_ {nullptr};
+  LabelGraphicsItem *identifierLabel_ {nullptr};
+  LabelGraphicsItem *typeLabel_ {nullptr};
 
   std::vector<InputPortGraphicsItem *> inportItems_;
   std::vector<OutputPortGraphicsItem *> outportItems_;

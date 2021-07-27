@@ -235,6 +235,7 @@
             </DoubleVectorProperty>
             <Hints>
                 <View type="None" />
+                <ShowInMenu category="Network Editor" />
             </Hints>
         </SourceProxy>
     </ProxyGroup>
