@@ -30,6 +30,19 @@ void StickyNoteGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
   QColor backgroundColor("#3b3d3d");
   QColor textColor(0, 0, 0);
   float opacity = 1.;
+  QString font_family = "Noto Sans";
+  bool bold {false}, italic {false};
+  int font_size = 10;
+  int justification = 0;
+  QColor captionBackgroundColor("#3b3d3d");
+  QColor captionTextColor(0, 0, 0);
+  float captionOpacity = 1.;
+  QString caption_font_family = "Noto Sans";
+  bool caption_bold {false}, caption_italic {false};
+  int caption_font_size = 13;
+  int caption_justification = 0;
+  QString caption, text;
+  bool html = false;
   if (auto proxy = source_->getProxy()) {
     double r = vtkSMPropertyHelper(proxy, "BackgroundColor").GetAsDouble(0);
     double g = vtkSMPropertyHelper(proxy, "BackgroundColor").GetAsDouble(1);
@@ -40,19 +53,53 @@ void StickyNoteGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
     b = vtkSMPropertyHelper(proxy, "TextColor").GetAsDouble(2);
     textColor.setRgbF(r, g, b);
     opacity = vtkSMPropertyHelper(proxy, "Opacity").GetAsDouble();
+    backgroundColor.setAlphaF(opacity);
+    font_family = vtkSMPropertyHelper(proxy, "FontFamily").GetAsString();
+    bold = vtkSMPropertyHelper(proxy, "Bold").GetAsInt();
+    italic = vtkSMPropertyHelper(proxy, "Italic").GetAsInt();
+    font_size = vtkSMPropertyHelper(proxy, "FontSize").GetAsInt();
+    justification = vtkSMPropertyHelper(proxy, "Justification").GetAsInt();
+
+    r = vtkSMPropertyHelper(proxy, "CaptionBackgroundColor").GetAsDouble(0);
+    g = vtkSMPropertyHelper(proxy, "CaptionBackgroundColor").GetAsDouble(1);
+    b = vtkSMPropertyHelper(proxy, "CaptionBackgroundColor").GetAsDouble(2);
+    captionBackgroundColor.setRgbF(r, g, b);
+    r = vtkSMPropertyHelper(proxy, "CaptionTextColor").GetAsDouble(0);
+    g = vtkSMPropertyHelper(proxy, "CaptionTextColor").GetAsDouble(1);
+    b = vtkSMPropertyHelper(proxy, "CaptionTextColor").GetAsDouble(2);
+    captionTextColor.setRgbF(r, g, b);
+    captionOpacity = vtkSMPropertyHelper(proxy, "CaptionOpacity").GetAsDouble();
+    captionBackgroundColor.setAlphaF(captionOpacity);
+    caption_font_family = vtkSMPropertyHelper(proxy, "CaptionFontFamily").GetAsString();
+    caption_bold = vtkSMPropertyHelper(proxy, "CaptionBold").GetAsInt();
+    caption_italic = vtkSMPropertyHelper(proxy, "CaptionItalic").GetAsInt();
+    caption_font_size = vtkSMPropertyHelper(proxy, "CaptionFontSize").GetAsInt();
+    caption_justification = vtkSMPropertyHelper(proxy, "CaptionJustification").GetAsInt();
+
+    caption = vtkSMPropertyHelper(proxy, "Caption").GetAsString();
+    text = vtkSMPropertyHelper(proxy, "Text").GetAsString();
+    html = vtkSMPropertyHelper(proxy, "EnableHTML").GetAsInt();
   }
-  backgroundColor.setAlphaF(opacity);
+
+  QFont caption_font(caption_font_family, caption_font_size, caption_bold ? QFont::Bold : QFont::Normal, caption_italic);
+  QFontMetrics fm = QFontMetrics(caption_font);
+  QString caption_short = fm.elidedText(caption, Qt::ElideMiddle, this->rect().width() - 8);
+  QSize caption_size = fm.size(Qt::TextSingleLine, caption_short);
+
+  const int header_height = caption_size.height();
 
   p->save();
   p->setRenderHint(QPainter::Antialiasing, true);
 
-  p->fillRect(this->rect(), QColor(255, 255, 255, int(opacity * 255)));
+  QRectF rect = this->rect();
+  rect.setHeight(header_height + 4);
+  p->fillRect(rect, captionBackgroundColor);
 
   p->restore();
   p->save();
 
-  QRectF rect = this->rect();
-  rect.adjust(0, 25, 0, 0);
+  rect = this->rect();
+  rect.adjust(2, header_height + 4, 0, 0);
   p->fillRect(rect, backgroundColor);
 
   QColor borderColor("#282828");
@@ -68,51 +115,53 @@ void StickyNoteGraphicsItem::paint(QPainter *p, const QStyleOptionGraphicsItem *
   }
   p->restore();
 
-  QString caption, text;
-  bool html = false;
-  if (auto proxy = source_->getProxy()) {
-    caption = vtkSMPropertyHelper(proxy, "Caption").GetAsString();
-    text = vtkSMPropertyHelper(proxy, "Text").GetAsString();
-    html = vtkSMPropertyHelper(proxy, "EnableHTML").GetAsInt();
-  }
   p->save();
-  QFont nameFont("Noto Sans", 13, /*QFont::Black*/ QFont::Normal, false);
-  nameFont.setPixelSize(13 * 4. / 3.);
-  p->setFont(nameFont);
-  p->setPen(QColor(0, 0, 0));
-  QFontMetrics fm = QFontMetrics(nameFont);
+
+  p->setFont(caption_font);
+  p->setPen(captionTextColor);
 
   rect = this->rect();
-  rect.adjust(4, 0, 4, 0);
-  rect.setHeight(25 - 2);
+  rect.adjust(4, 2, 4, 0);
+  rect.setHeight(header_height - 2);
 
-  QString caption_short = fm.elidedText(caption, Qt::ElideMiddle, rect.width());
+  if (caption_justification == 1) { // center
+    rect.setLeft(0.5 * (rect.left() + rect.right()) - caption_size.width() / 2.);
+  } else if (caption_justification == 2) { // right
+    rect.setLeft(rect.right() - caption_size.width() - 4);
+  }
+
   p->drawText(rect, caption_short);
 
-  QTextDocument td;
-  QTextOption textOption;
-  textOption.setAlignment(Qt::AlignLeft);
-  textOption.setWrapMode(QTextOption::WordWrap);
-  td.setDefaultTextOption(textOption);
-  if (html) {
-    td.setHtml(text);
-  } else {
-    td.setPlainText(text);
-  }
-  rect = this->rect();
-  rect.adjust(4, 25 + 2, 4, 4);
-  p->translate(rect.topLeft());
-  td.setTextWidth(rect.width() * 4. / 3.);
+  if (this->rect().height() > header_height) {
+    QTextDocument td;
+    QTextOption textOption;
+    textOption.setAlignment((justification == 1) ? Qt::AlignCenter : ((justification == 2) ? Qt::AlignRight : Qt::AlignLeft));
+    textOption.setWrapMode(QTextOption::WordWrap);
+    td.setDefaultTextOption(textOption);
 
-  QAbstractTextDocumentLayout::PaintContext ctx;
-  ctx.palette.setColor(QPalette::Text, textColor);
-  if (rect.isValid())
-  {
-    p->setClipRect(rect);
-    ctx.clip = rect;
+    QFont contentFont(font_family, font_size, bold ? QFont::Bold : QFont::Normal, italic);
+    td.setDefaultFont(contentFont);
+    if (html) {
+      td.setHtml(text);
+    } else {
+      td.setPlainText(text);
+    }
+    rect = this->rect();
+    rect.adjust(2, header_height, 2, 2);
+    rect.setHeight(rect.height() - 2);
+    rect.setWidth(rect.width() - 2);
+    p->translate(rect.topLeft());
+    td.setTextWidth(rect.width());
+    td.setPageSize(rect.size());
+
+    QAbstractTextDocumentLayout::PaintContext ctx;
+    ctx.palette.setColor(QPalette::Text, textColor);
+    if (rect.isValid()) {
+      p->setClipRect(rect.translated(-rect.topLeft()));
+      ctx.clip = rect.translated(-rect.topLeft());
+    }
+    td.documentLayout()->draw(p, ctx);
   }
-  // td.drawContents(p, rect);
-  td.documentLayout()->draw(p, ctx);
 
   p->restore();
 }
@@ -130,7 +179,7 @@ void StickyNoteGraphicsItem::showToolTip(QGraphicsSceneHelpEvent *e) {
   QString s;
   s += "<html><body><table width=\"300px\">";
   s += "<tr><td>" + caption + "</td></tr>";
-  s += "<tr><td>" + (html ? text : text.toHtmlEscaped()) + "</td></tr>";
+  s += "<tr><td>" + (html ? text : text.toHtmlEscaped().replace("\n", "<br/>")) + "</td></tr>";
   s += "</table></body></html>";
   this->showToolTipHelper(e, s);
 }
@@ -178,7 +227,16 @@ void StickyNoteGraphicsItem::mouseMoveEvent(QGraphicsSceneMouseEvent *event) {
     } else if (this->handle_selected_ == HANDLE_RIGHT) {
       rect.setRight( this->mouse_press_rect_.right() + mouse_pos.x() - this->mouse_press_pos_.x());
     }
-
+    float nw = (std::round(rect.width() / 25.f)) * 25.f;
+    float nh = (std::round(rect.height() / 25.f)) * 25.f;
+    if (nw < 25.f) {
+      nw = 25.f;
+    }
+    if (nh < 25.f) {
+      nh = 25.f;
+    }
+    rect.setWidth(nw);
+    rect.setHeight(nh);
     this->setRect(rect);
     this->updateHandles();
   } else {

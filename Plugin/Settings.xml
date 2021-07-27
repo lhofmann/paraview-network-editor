@@ -88,14 +88,78 @@
                     default_values="0">
                 <BooleanDomain name="bool"/>
             </IntVectorProperty>
-            <DoubleVectorProperty default_values="1 0.85 0"
-                                  name="BackgroundColor"
-                                  label="Background Color"
+
+            <DoubleVectorProperty default_values="0 0 0"
+                                  name="CaptionTextColor"
+                                  label="Text Color"
                                   number_of_elements="3"
                                   panel_widget="color_selector">
                 <DoubleRangeDomain max="1 1 1"
                                    min="0 0 0"
                                    name="range" />
+            </DoubleVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="0"
+                               name="CaptionFontFamily"
+                               number_of_elements="1">
+                <EnumerationDomain name="enum">
+                    <Entry text="Noto Sans" value="0" />
+                    <Entry text="Arial" value="1" />
+                    <Entry text="Courier" value="2" />
+                    <Entry text="Times" value="3" />
+                </EnumerationDomain>
+            </IntVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="0"
+                               name="CaptionBold"
+                               number_of_elements="1">
+                <BooleanDomain name="bool" />
+            </IntVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="0"
+                               name="CaptionItalic"
+                               number_of_elements="1">
+                <BooleanDomain name="bool" />
+            </IntVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="13"
+                               name="CaptionFontSize"
+                               number_of_elements="1">
+                <IntRangeDomain min="0"
+                                name="range" />
+            </IntVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="0"
+                               name="CaptionJustification"
+                               number_of_elements="1">
+                <EnumerationDomain name="enum">
+                    <Entry text="Left" value="0" />
+                    <Entry text="Center" value="1" />
+                    <Entry text="Right" value="2" />
+                </EnumerationDomain>
+            </IntVectorProperty>
+            <PropertyGroup panel_widget="FontEditor" label="Caption Properties">
+                <Property name="CaptionTextColor" function="Color"/>
+                <Property name="CaptionFontFamily" function="Family"/>
+                <Property name="CaptionBold" function="Bold"/>
+                <Property name="CaptionItalic" function="Italics" />
+                <Property name="CaptionFontSize" function="Size"/>
+                <Property name="CaptionJustification" function="Justification"/>
+            </PropertyGroup>
+            <DoubleVectorProperty default_values="1 1 1"
+                                  name="CaptionBackgroundColor"
+                                  label="Caption Background Color"
+                                  number_of_elements="3"
+                                  panel_widget="color_selector">
+                <DoubleRangeDomain max="1 1 1"
+                                   min="0 0 0"
+                                   name="range" />
+            </DoubleVectorProperty>
+            <DoubleVectorProperty default_values="0.25"
+                                  name="CaptionOpacity"
+                                  label="Caption Background Opacity"
+                                  number_of_elements="1">
+                <DoubleRangeDomain max="1" min="0" name="range" />
             </DoubleVectorProperty>
             <DoubleVectorProperty default_values="0 0 0"
                                   name="TextColor"
@@ -106,9 +170,66 @@
                                    min="0 0 0"
                                    name="range" />
             </DoubleVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="0"
+                               name="FontFamily"
+                               number_of_elements="1">
+                <EnumerationDomain name="enum">
+                    <Entry text="Noto Sans" value="0" />
+                    <Entry text="Arial" value="1" />
+                    <Entry text="Courier" value="2" />
+                    <Entry text="Times" value="3" />
+                </EnumerationDomain>
+            </IntVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="0"
+                               name="Bold"
+                               number_of_elements="1">
+                <BooleanDomain name="bool" />
+            </IntVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="0"
+                               name="Italic"
+                               number_of_elements="1">
+                <BooleanDomain name="bool" />
+            </IntVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="10"
+                               name="FontSize"
+                               number_of_elements="1">
+                <IntRangeDomain min="0"
+                                name="range" />
+            </IntVectorProperty>
+            <IntVectorProperty animateable="0"
+                               default_values="0"
+                               name="Justification"
+                               number_of_elements="1">
+                <EnumerationDomain name="enum">
+                    <Entry text="Left" value="0" />
+                    <Entry text="Center" value="1" />
+                    <Entry text="Right" value="2" />
+                </EnumerationDomain>
+            </IntVectorProperty>
+            <PropertyGroup panel_widget="FontEditor" label="Text Properties">
+                <Property name="TextColor" function="Color"/>
+                <Property name="FontFamily" function="Family"/>
+                <Property name="Bold" function="Bold"/>
+                <Property name="Italic" function="Italics" />
+                <Property name="FontSize" function="Size"/>
+                <Property name="Justification" function="Justification"/>
+            </PropertyGroup>
+            <DoubleVectorProperty default_values="1 0.85 0"
+                                  name="BackgroundColor"
+                                  label="Text Background Color"
+                                  number_of_elements="3"
+                                  panel_widget="color_selector">
+                <DoubleRangeDomain max="1 1 1"
+                                   min="0 0 0"
+                                   name="range" />
+            </DoubleVectorProperty>
             <DoubleVectorProperty default_values="0.25"
                                   name="Opacity"
-                                  label="Opacity"
+                                  label="Text Background Opacity"
                                   number_of_elements="1">
                 <DoubleRangeDomain max="1" min="0" name="range" />
             </DoubleVectorProperty>
