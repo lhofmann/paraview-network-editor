@@ -5,7 +5,9 @@
 #include <vtkSMInputProperty.h>
 #include <vtkSMPropertyHelper.h>
 #include <vtkPVXMLElement.h>
+#include <vtkSMPropertyIterator.h>
 #include <vtkSMProxyManager.h>
+#include <vtkSMSessionProxyManager.h>
 #include <vtkSMProxyIterator.h>
 #include <vtkSMSourceProxy.h>
 #include <vtkSMParaViewPipelineControllerWithRendering.h>
@@ -71,6 +73,32 @@ bool can_connect(pqPipelineSource *source, int out_port, pqPipelineFilter *dest,
   if (auto filter = qobject_cast<pqPipelineFilter *>(source)) {
     result = result && !filter_reachable(filter, qobject_cast<pqPipelineSource *>(dest));
   }
+
+  return result;
+}
+
+bool can_connect(pqPipelineSource *source, int out_port, const char* groupname, const char* name) {
+  auto pxm = vtkSMProxyManager::GetProxyManager()->GetActiveSessionProxyManager();
+  if (!pxm)
+    return false;
+
+  vtkSMProxy* proxy = pxm->GetPrototypeProxy(groupname, name);
+  if (!proxy)
+    return false;
+
+  vtkSMInputProperty* input_property = vtkSMInputProperty::SafeDownCast(proxy->GetProperty("Input"));
+  vtkSMPropertyIterator* propIter = proxy->NewPropertyIterator();
+  for (propIter->Begin(); !input_property && !propIter->IsAtEnd(); propIter->Next()) {
+    input_property = vtkSMInputProperty::SafeDownCast(propIter->GetProperty());
+  }
+  propIter->Delete();
+  if (!input_property)
+    return false;
+
+  input_property->RemoveAllUncheckedProxies();
+  input_property->AddUncheckedInputConnection(source->getProxy(), out_port);
+  bool result = input_property->IsInDomains() > 0;
+  input_property->RemoveAllUncheckedProxies();
 
   return result;
 }

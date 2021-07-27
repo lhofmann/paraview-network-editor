@@ -1127,6 +1127,23 @@ void NetworkEditor::quickLaunch() {
     return;
   }
 
+  // Get the list of selected sources.
+  QList<pqOutputPort *> selectedOutputPorts;
+  pqServerManagerModel *smmodel = pqApplicationCore::instance()->getServerManagerModel();
+  vtkSMProxySelectionModel *selModel = pqActiveObjects::instance().activeSourcesSelectionModel();
+  // Determine the list of selected output ports.
+  for (unsigned int cc = 0; cc < selModel->GetNumberOfSelectedProxies(); cc++) {
+    pqServerManagerModelItem *item =
+        smmodel->findItem<pqServerManagerModelItem *>(selModel->GetSelectedProxy(cc));
+    pqOutputPort *opPort = qobject_cast<pqOutputPort *>(item);
+    pqPipelineSource *source = qobject_cast<pqPipelineSource *>(item);
+    if (opPort) {
+      selectedOutputPorts.push_back(opPort);
+    } else if (source) {
+      selectedOutputPorts.push_back(source->getOutputPort(0));
+    }
+  }
+
   vtkSmartPointer<vtkPVProxyDefinitionIterator> iter;
   iter.TakeReference(pdmgr->NewIterator());
   iter->AddTraversalGroupName("sources");
@@ -1156,16 +1173,33 @@ void NetworkEditor::quickLaunch() {
       continue;
     }
     QString label = prototype->GetXMLLabel() ? prototype->GetXMLLabel() : xmlname;
-
-    auto action = new QAction(label, this);
-    action->setObjectName(xmlgroup + xmlname);  // important: pqQuickLaunchDialog uses this as key!
+    QString name_prefix = "";
+    if (label.contains("deprecated")) {
+      name_prefix = "|";
+    }
+    if (xmlgroup == "filters") {
+      bool can_connect = false;
+      for (pqOutputPort* port : selectedOutputPorts) {
+        can_connect = can_connect || utilpq::can_connect(
+            port->getSource(), port->getPortNumber(),
+            xmlgroup.toLocal8Bit().data(), xmlname.toLocal8Bit().data());
+      }
+      if (!can_connect) {
+        name_prefix = "~";
+      }
+    }
+    if (xmlgroup == "sources" && !selectedOutputPorts.empty()) {
+      name_prefix = "~";
+    }
+    auto action = new QAction(name_prefix + label, this);
+    action->setObjectName(name_prefix + xmlname + xmlgroup);  // important: pqQuickLaunchDialog uses this as key!
     if (icon.isEmpty() && prototype->IsA("vtkSMCompoundSourceProxy")) {
       icon = ":/pqWidgets/Icons/pqBundle32.png";
     }
     if (!icon.isEmpty()) {
       action->setIcon(QIcon(icon));
     }
-    connect(action, &QAction::triggered, [xmlgroup, xmlname]() {
+    connect(action, &QAction::triggered, [xmlgroup, xmlname, selectedOutputPorts]() {
       vtkLog(5, "Creating " << xmlgroup.toStdString() << "; " << xmlname.toStdString());
       pqServer *server = pqActiveObjects::instance().activeServer();
       pqApplicationCore *core = pqApplicationCore::instance();
@@ -1180,24 +1214,6 @@ void NetworkEditor::quickLaunch() {
       }
       BEGIN_UNDO_SET(QString("Create '%1'").arg(xmlname));
       if (xmlgroup == "filters") {
-        // Get the list of selected sources.
-        QList<pqOutputPort *> selectedOutputPorts;
-
-        vtkSMProxySelectionModel *selModel = pqActiveObjects::instance().activeSourcesSelectionModel();
-        // Determine the list of selected output ports.
-        for (unsigned int cc = 0; cc < selModel->GetNumberOfSelectedProxies(); cc++) {
-          pqServerManagerModelItem *item =
-              smmodel->findItem<pqServerManagerModelItem *>(selModel->GetSelectedProxy(cc));
-
-          pqOutputPort *opPort = qobject_cast<pqOutputPort *>(item);
-          pqPipelineSource *source = qobject_cast<pqPipelineSource *>(item);
-          if (opPort) {
-            selectedOutputPorts.push_back(opPort);
-          } else if (source) {
-            selectedOutputPorts.push_back(source->getOutputPort(0));
-          }
-        }
-
         QList<const char *> inputPortNames = pqPipelineFilter::getInputPorts(prototype);
 
         auto assign_connections =
@@ -1254,7 +1270,6 @@ void NetworkEditor::quickLaunch() {
     });
     actions.append(action);
   }
-
   dialog.addActions(actions);
 
   addSourceAtMousePos_ = true;
