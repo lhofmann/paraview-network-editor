@@ -3,17 +3,16 @@
 ![CI](https://github.com/lhofmann/paraview-network-editor/workflows/CI/badge.svg)
 
 This is an attempt to create a 2D network editor for ParaView, that replaces the built-in tree view pipeline editor.
-In its current state, this is a prototype at best, so **use at your own risk**!
-
-This project is in large parts based on inviwo (https://github.com/inviwo/inviwo), which is licensed under the BSD 2-Clause license. See `LICENSE.inviwo` for details.
 
 ![Demo](demo.gif)
 
+This project is in large parts based on inviwo (https://github.com/inviwo/inviwo), which is licensed under the BSD 2-Clause license. See `LICENSE.inviwo` for details.
+
 ## Usage
 
-[GitHub Actions ](https://github.com/lhofmann/paraview-network-editor/actions) (Github login required) is set up to automatically build Linux binaries.
+[GitHub Actions ](https://github.com/lhofmann/paraview-network-editor/actions) (Github login required) is set up to automatically build Linux binaries compatible with ParaView v5.9.1.
 
-Download [ParaView-5.8.0-MPI-Linux-Python3.7-64bit](https://www.paraview.org/files/v5.8/ParaView-5.8.0-MPI-Linux-Python3.7-64bit.tar.gz) and the [build artifacts](https://github.com/lhofmann/paraview-network-editor/suites/1358473689/artifacts/22120907), and extract both in the same location.
+Download [ParaView-5.9.1-MPI-Linux-Python3.8-64bit](https://www.paraview.org/files/v5.9/ParaView-5.9.1-MPI-Linux-Python3.8-64bit.tar.gz) and [build artifacts](https://github.com/lhofmann/paraview-network-editor/actions), and extract both in the same location.
 
 ### Building from Source
 
@@ -36,12 +35,10 @@ paraview-network-editor-build/paraview.sh
 This script runs paraview and automatically loads the plugin.
 You can also manually load the file `paraview-network-editor-build/lib/NetworkEditor.so` as plugin.
 
-By default, the network editor plugin swaps places with the render view on load. 
-This behavior can be changed in ParaView settings (menu `Edit > Settings... > Network Editor`). 
 
-## Features
+## Features / "Documentation"
 
-* Swaps places with the main render view
+* Can swap places with the main render view
 * Indicators for visibility of output ports and color legends for active view
 * Indicator for modified pipeline items
 * Synchronize selection of sources and output ports
@@ -54,21 +51,30 @@ This behavior can be changed in ParaView settings (menu `Edit > Settings... > Ne
 * Hide/show selected sources and color legends (context menu or double click)
 * Copy/paste parts of the pipeline (context menu or Ctrl+C/Ctrl+V)
   * including representations (except color maps)
-  * Crtl+Shift+V to preserve connections
+  * Crtl+Shift+V to preserve connections to sources outside of the selection
+  * preserving connections works across different ParaView instances
+* Support for filters with missing input connection
+  * missing first input connection is temporarily replaced with temporary trivial producer to prevent crashes
 * Automatic graph layout using optional dependency graphviz
 * Use context menu or press Ctrl+Space to place a new source or filter at the last mouse click position
 * Node positions are saved/loaded in state files
 * All actions can be undone/redone, including moving nodes and graph layout 
-* Automatically save an image of the pipeline when state files are saved or loaded (default off)
-* Custom quick launch menu (Ctrl+Space while network editor in focus)
+* Network can be saved as image (png or svg)
+    * Automatically save an image of the pipeline when state files are saved or loaded (default:off)
+* Settings menu (`Edit > Settings... > Network Editor`)
+* Custom quick launch menu (Ctrl+Space while network editor in focus, or Meta+Space)
   * automatically assigns selected sources to multiple input ports
   * skips dialog for filters with multiple inputs
+  * filters unsuitable to current selection are prefixed with ~, but can be added
 * CI builds static graphviz libraries
 * Editor viewport and scroll position are stored and loaded from state files
+* Sticky notes for adding documentation within the network (`Network Editor Sticky Note` source)
+  * note can be resized by dragging its edges
+  * full text shown in tooltip
+  * supports HTML
 
 ## TODO / Known Issues
 
-* There are random crashes (could be related to adding/removing connections)
 * Add search, that selects pipeline items by name, type, ...
 * Add a dock widget, that contains a filterable list of sources/filters, that can be drag/dropped into the network editor
 * Display and edit property links
@@ -77,15 +83,3 @@ This behavior can be changed in ParaView settings (menu `Edit > Settings... > Ne
 * Custom graph layout algorithm, that takes grid into account (not possible with graphviz)
 * Choose better node positions when inserting new sources
 * Key shortcuts do not work when the dock widget is detached from the main window
-
-## ParaView Notes
-
-Most of this code was written by examining ParaView's source code. 
-Some of the relevant code can be found in these places: 
-
-* output data information: `pqProxyInformationWidget::fillDataInformation`
-* set input/output connections: `pqChangeInputDialog` / `pqChangePipelineInputReaction` 
-* validate connections: `pqFiltersMenuReaction::updateEnableState`
-* get list of filters: `pqProxyGroupMenuManager::lookForNewDefinitions`
-* create source: `pqFiltersMenuReaction::createFilter`
-* filters menu: `pqParaViewMenuBuilders::buildFiltersMenu`
