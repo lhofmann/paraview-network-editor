@@ -10,9 +10,7 @@ This project is in large parts based on inviwo (https://github.com/inviwo/inviwo
 
 ## Usage
 
-[GitHub Actions ](https://github.com/lhofmann/paraview-network-editor/actions) (Github login required) is set up to automatically build Linux binaries compatible with ParaView v5.9.1.
-
-Download [ParaView-5.9.1-MPI-Linux-Python3.8-64bit](https://www.paraview.org/files/v5.9/ParaView-5.9.1-MPI-Linux-Python3.8-64bit.tar.gz) and [build artifacts](https://github.com/lhofmann/paraview-network-editor/actions), and extract both in the same location.
+Linux binaries are available, see [releases](https://github.com/lhofmann/paraview-network-editor/releases).
 
 ### Building from Source
 
