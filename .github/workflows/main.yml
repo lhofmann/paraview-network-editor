@@ -37,9 +37,18 @@ jobs:
         pushd package
         docker cp "build:/tmp/package/${paraview_name}.tar.gz" .
         tar xf ${paraview_name}.tar.gz
-        rm ${paraview_name}.tar.gz
+        mv ${paraview_name}.tar.gz ../
         popd
     - uses: actions/upload-artifact@v2
       with:
         name: ParaView-5.9.1-MPI-Linux-Python3.8-64bit
         path: ./package/
+    - name: Prepare release
+      run: mv ${paraview_name}.tar.gz NetworkEditor-PV${paraview_version}-${GITHUB_REF##*/}.tar.gz
+      if: startsWith(github.ref, 'refs/tags/')
+    - name: Release
+      uses: softprops/action-gh-release@v1
+      if: startsWith(github.ref, 'refs/tags/')
+      with:
+        fail_on_unmatched_files: True
+        files: "*.tar.gz"
